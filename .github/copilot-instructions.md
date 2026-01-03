@@ -72,6 +72,10 @@ Quick, actionable guidance for AI coding agents working on this repo.
   - **Active context & progress:** update `memory/activeContext.md` and `memory/progress.md` as you work, and record TDD steps (RED/GREEN/REFACTOR) and any agent decisions in the task file.
   - Prefer running the TDD agents as subagents for Red/Green/Refactor guidance and record agent outputs in the task's Memory Bank entry.
 
+  - **Handoff & documentation (REQUIRED):** On every handoff (PR merge, release, or task completion) update or create the relevant documentation: add or update `/docs/ARCHITECTURE` entries (TEC/DEC/GAME), ensure `/memory/designs/DES###` and `/memory/tasks/TASK###` reflect the final design and decisions, and include a short handoff note in the task file and PR description. If documentation is intentionally deferred, record the reason and an owner in the task and PR.
+
+  - **Docs scan (REQUIRED):** As part of handoff, scan `/docs` and `/memory` for outdated or inconsistent content (DES/TASK, TEC/DEC/GAME files, README, CHANGELOG). For small issues, update the documents directly; for larger misalignments, create a `TASK###` to track the work, assign an owner, and record the findings/actions in the task's progress log and the PR.
+
 ## Architecture docs
 - Keep high-level architecture, technical specs, decision records and game design specs under `/docs/ARCHITECTURE.md` and the `/docs/ARCHITECTURE/` folder.
 - Naming conventions:

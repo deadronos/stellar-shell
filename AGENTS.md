@@ -13,6 +13,9 @@ Quick checklist for agents
 
 Agent behavior expectations
 - Respect the spec-driven workflow and Memory Bank: create or update `DES###` and `TASK###` files for design and implementation work, and record decisions and agent outputs there.
+- **On handoff (REQUIRED):** When a task or PR is handed off or merged, ensure related documentation is updated: add/update `/docs/ARCHITECTURE` artifacts (TEC/DEC/GAME), and update `/memory/designs/DES###` and `/memory/tasks/TASK###` with a short handoff note and links to the PR/commits. If docs are intentionally deferred, record the reason and assign an owner in the task file.
+
+- **Docs scan (REQUIRED):** As part of handoff, scan `/docs` and `/memory` for out-of-date or inconsistent content. If issues are found, make small corrections directly when feasible or create a `TASK###` to track more substantial updates, assign an owner, and record the findings and planned actions in the task progress log and PR.
 - When assigned an implementation task, prefer to add a small failing test (RED), write minimal code to satisfy it (GREEN), then refactor (REFACTOR). Record each step in the task progress log.
 - If tests are added or modified, run the test suite (`npm test`) and ensure the suite remains green before suggesting merges.
 - For potentially expensive operations (meshing, heavy loops), prefer suggesting worker-based or throttled solutions and document performance rationale in `DES###` and decision records (`/docs/ARCHITECTURE/DEC###-*.md`).
