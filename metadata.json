@@ -1,0 +1,5 @@
+{
+  "name": "Stellar Shell",
+  "description": "A 3D Voxel Incremental Sandbox where you dismantle asteroids to build a Dyson Sphere.",
+  "requestFramePermissions": []
+}
