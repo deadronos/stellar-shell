@@ -1,39 +1,30 @@
 import * as THREE from 'three';
 import { createNoise3D } from 'simplex-noise';
-import { BlockType, ChunkKey } from '../types';
+import { BlockType } from '../types';
 import { CHUNK_SIZE, IS_TRANSPARENT, BLOCK_COLORS } from '../constants';
 
-// A simple sparse voxel octree-like structure (implemented as a Map of Chunks for simplicity)
-class Chunk {
-  public data: Uint8Array;
+// bvx-kit imports
+import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
+
+// We keep this class as a "Render Chunk" controller to manage dirty state and THREE.js meshes.
+// It no longer stores the actual voxel data; that lives in the bvx-kit VoxelWorld.
+class RenderChunk {
   public dirty: boolean = true;
   public mesh: THREE.BufferGeometry | null = null;
   public position: { x: number, y: number, z: number };
 
   constructor(x: number, y: number, z: number) {
     this.position = { x, y, z };
-    this.data = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
-  }
-
-  getIndex(x: number, y: number, z: number): number {
-    return x + y * CHUNK_SIZE + z * CHUNK_SIZE * CHUNK_SIZE;
-  }
-
-  setBlock(x: number, y: number, z: number, type: BlockType) {
-    const idx = this.getIndex(x, y, z);
-    if (this.data[idx] !== type) {
-      this.data[idx] = type;
-      this.dirty = true;
-    }
-  }
-
-  getBlock(x: number, y: number, z: number): BlockType {
-    return this.data[this.getIndex(x, y, z)];
   }
 }
 
 export class BvxEngine {
-  public chunks: Map<string, Chunk> = new Map();
+  // Map of RenderChunks (16x16x16) for the game's renderer
+  public chunks: Map<string, RenderChunk> = new Map();
+  
+  // Actual Voxel Data Storage (4x4x4 chunks)
+  private bvxWorld: VoxelWorld;
+  
   private noise3D = createNoise3D();
   
   // Singleton pattern for the engine core
@@ -46,6 +37,8 @@ export class BvxEngine {
   }
 
   constructor() {
+    this.bvxWorld = new VoxelWorld();
+    
     // Generate initial world
     this.generateAsteroid(2, 0, 2, 20); // Generate an asteroid at chunk (2,0,2)
   }
@@ -54,7 +47,7 @@ export class BvxEngine {
     return `${x},${y},${z}`;
   }
 
-  // World coordinate to Chunk coordinate
+  // World coordinate to Render Chunk coordinate (Stellar Shell Chunk Size = 16)
   public worldToChunk(x: number, y: number, z: number): { cx: number, cy: number, cz: number, lx: number, ly: number, lz: number } {
     const cx = Math.floor(x / CHUNK_SIZE);
     const cy = Math.floor(y / CHUNK_SIZE);
@@ -66,44 +59,117 @@ export class BvxEngine {
   }
 
   public setBlock(wx: number, wy: number, wz: number, type: BlockType) {
-    const { cx, cy, cz, lx, ly, lz } = this.worldToChunk(wx, wy, wz);
-    const key = this.getChunkKey(cx, cy, cz);
+    // 1. Update bvx-kit VoxelWorld
+    // bvx-kit uses 4x4x4 chunks.
+    const bvxChunkSize = 4;
+    const bcx = Math.floor(wx / bvxChunkSize);
+    const bcy = Math.floor(wy / bvxChunkSize);
+    const bcz = Math.floor(wz / bvxChunkSize);
     
-    let chunk = this.chunks.get(key);
-    if (!chunk) {
-      if (type === BlockType.AIR) return; // Don't create chunks for air
-      chunk = new Chunk(cx, cy, cz);
-      this.chunks.set(key, chunk);
+    const bKey = MortonKey.from(bcx, bcy, bcz);
+    let bChunk = this.bvxWorld.get(bKey);
+    
+    if (!bChunk) {
+        if (type === BlockType.AIR) return; // Optimization: Don't create chunks for air
+        bChunk = new VoxelChunk8(bKey);
+        this.bvxWorld.insert(bChunk);
     }
-    chunk.setBlock(lx, ly, lz, type);
+    
+    // Calculate local index within 4x4x4 chunk
+    const blx = ((wx % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
+    const bly = ((wy % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
+    const blz = ((wz % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
+    
+    const vIndex = VoxelIndex.from(blx, bly, blz);
+    
+    // Set Metadata (Block Type)
+    // Cast strict BlockType enum to number for setMetaData
+    (bChunk as VoxelChunk8).setMetaData(vIndex, type);
+    
+    // Set Geometry Bit (Solid vs Air) used for internal bvx operations
+    if (type !== BlockType.AIR) {
+        bChunk.setBitVoxel(vIndex);
+    } else {
+        bChunk.unsetBitVoxel(vIndex);
+    }
+    
+    // 2. Mark Render Chunk as dirty
+    const { cx, cy, cz } = this.worldToChunk(wx, wy, wz);
+    const renderKey = this.getChunkKey(cx, cy, cz);
+    
+    let renderChunk = this.chunks.get(renderKey);
+    if (!renderChunk) {
+        // Create render chunk wrapper if it doesn't exist (e.g. first block in this area)
+        renderChunk = new RenderChunk(cx, cy, cz);
+        this.chunks.set(renderKey, renderChunk);
+    }
+    renderChunk.dirty = true;
+    
+    // Mark neighbors dirty if on boundary
+    // ... (simplified: omit for now, but critical for proper meshing across boundaries)
+    this.markNeighborsDirty(wx, wy, wz, cx, cy, cz);
+  }
+
+  private markNeighborsDirty(wx: number, wy: number, wz: number, cx: number, cy: number, cz: number) {
+      const lx = ((wx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+      const ly = ((wy % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+      const lz = ((wz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+      if (lx === 0) this.ensureDirty(cx - 1, cy, cz);
+      if (lx === CHUNK_SIZE - 1) this.ensureDirty(cx + 1, cy, cz);
+      if (ly === 0) this.ensureDirty(cx, cy - 1, cz);
+      if (ly === CHUNK_SIZE - 1) this.ensureDirty(cx, cy + 1, cz);
+      if (lz === 0) this.ensureDirty(cx, cy, cz - 1);
+      if (lz === CHUNK_SIZE - 1) this.ensureDirty(cx, cy, cz + 1);
+  }
+
+  private ensureDirty(cx: number, cy: number, cz: number) {
+      const key = this.getChunkKey(cx, cy, cz);
+      const chunk = this.chunks.get(key);
+      if (chunk) chunk.dirty = true;
   }
 
   public getBlock(wx: number, wy: number, wz: number): BlockType {
-    const { cx, cy, cz, lx, ly, lz } = this.worldToChunk(wx, wy, wz);
-    const chunk = this.chunks.get(this.getChunkKey(cx, cy, cz));
-    return chunk ? chunk.getBlock(lx, ly, lz) : BlockType.AIR;
+    const bvxChunkSize = 4;
+    const bcx = Math.floor(wx / bvxChunkSize);
+    const bcy = Math.floor(wy / bvxChunkSize);
+    const bcz = Math.floor(wz / bvxChunkSize);
+    
+    const bKey = MortonKey.from(bcx, bcy, bcz);
+    const bChunk = this.bvxWorld.get(bKey);
+    
+    if (!bChunk) return BlockType.AIR;
+    
+    const blx = ((wx % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
+    const bly = ((wy % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
+    const blz = ((wz % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
+    
+    const vIndex = VoxelIndex.from(blx, bly, blz);
+    return (bChunk as VoxelChunk8).getMetaData(vIndex) as BlockType;
   }
 
   // Find all blueprints (Frames) for drones
   public findBlueprints(): {x: number, y: number, z: number}[] {
     const blueprints: {x: number, y: number, z: number}[] = [];
-    // This is a naive scan. In a real engine, we'd maintain a list of active blueprints.
+    
+    // Iterating over Render Chunks is safer for now as they represent the "active" area we care about in the game logic
     this.chunks.forEach(chunk => {
+      // Iterate all voxels in this logical chunk
       for (let x = 0; x < CHUNK_SIZE; x++) {
         for (let y = 0; y < CHUNK_SIZE; y++) {
           for (let z = 0; z < CHUNK_SIZE; z++) {
-            const block = chunk.getBlock(x,y,z);
-            if (block === BlockType.FRAME) {
-              blueprints.push({
-                x: chunk.position.x * CHUNK_SIZE + x,
-                y: chunk.position.y * CHUNK_SIZE + y,
-                z: chunk.position.z * CHUNK_SIZE + z
-              });
-            }
+             const wx = chunk.position.x * CHUNK_SIZE + x;
+             const wy = chunk.position.y * CHUNK_SIZE + y;
+             const wz = chunk.position.z * CHUNK_SIZE + z;
+             
+             if (this.getBlock(wx, wy, wz) === BlockType.FRAME) {
+                 blueprints.push({ x: wx, y: wy, z: wz });
+             }
           }
         }
       }
     });
+
     return blueprints;
   }
 
@@ -116,38 +182,38 @@ export class BvxEngine {
         [0, 0, 1], [0, 0, -1]
     ];
 
-    // Shuffle chunks iterator slightly or just iterate? 
-    // Standard iteration is fine, but we'll stop early.
+    // Scan Render Chunks
     for (const chunk of this.chunks.values()) {
         if (targets.length >= limit) break;
         
-        for (let i = 0; i < chunk.data.length; i++) {
-            if (targets.length >= limit) break;
+        // Optimize: Skip checking air-only chunks if we had a flag (RenderChunk doesn't track this yet)
+        
+        for (let x = 0; x < CHUNK_SIZE; x++) {
+            for (let y = 0; y < CHUNK_SIZE; y++) {
+                for (let z = 0; z < CHUNK_SIZE; z++) {
+                    if (targets.length >= limit) break;
 
-            const block = chunk.data[i];
-            if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE) {
-                // Recover coordinates from index
-                const cz = Math.floor(i / (CHUNK_SIZE * CHUNK_SIZE));
-                const rem = i % (CHUNK_SIZE * CHUNK_SIZE);
-                const cy = Math.floor(rem / CHUNK_SIZE);
-                const cx = rem % CHUNK_SIZE;
-                
-                const wx = chunk.position.x * CHUNK_SIZE + cx;
-                const wy = chunk.position.y * CHUNK_SIZE + cy;
-                const wz = chunk.position.z * CHUNK_SIZE + cz;
+                    const wx = chunk.position.x * CHUNK_SIZE + x;
+                    const wy = chunk.position.y * CHUNK_SIZE + y;
+                    const wz = chunk.position.z * CHUNK_SIZE + z;
+                    
+                    const block = this.getBlock(wx, wy, wz);
 
-                // Check exposure: At least one neighbor must be AIR
-                let isExposed = false;
-                for (const dir of directions) {
-                    const neighbor = this.getBlock(wx + dir[0], wy + dir[1], wz + dir[2]);
-                    if (neighbor === BlockType.AIR || neighbor === BlockType.FRAME) {
-                        isExposed = true;
-                        break;
+                    if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE) {
+                        // Check exposure
+                        let isExposed = false;
+                        for (const dir of directions) {
+                            const neighbor = this.getBlock(wx + dir[0], wy + dir[1], wz + dir[2]);
+                            if (neighbor === BlockType.AIR || neighbor === BlockType.FRAME) {
+                                isExposed = true;
+                                break;
+                            }
+                        }
+
+                        if (isExposed) {
+                            targets.push({ x: wx, y: wy, z: wz });
+                        }
                     }
-                }
-
-                if (isExposed) {
-                    targets.push({ x: wx, y: wy, z: wz });
                 }
             }
         }
@@ -165,9 +231,8 @@ export class BvxEngine {
     for(let x = cx - range; x <= cx + range; x++) {
       for(let y = cy - range; y <= cy + range; y++) {
         for(let z = cz - range; z <= cz + range; z++) {
-            const chunk = new Chunk(x, y, z);
-            let hasSolid = false;
             
+            // We need to touch every voxel in this range potentially
             for (let lx = 0; lx < CHUNK_SIZE; lx++) {
                 for (let ly = 0; ly < CHUNK_SIZE; ly++) {
                     for (let lz = 0; lz < CHUNK_SIZE; lz++) {
@@ -179,14 +244,10 @@ export class BvxEngine {
                         const noise = this.noise3D(wx * 0.1, wy * 0.1, wz * 0.1);
                         
                         if (dist < radius + noise * 5) {
-                            chunk.setBlock(lx, ly, lz, dist < radius * 0.5 ? BlockType.ASTEROID_CORE : BlockType.ASTEROID_SURFACE);
-                            hasSolid = true;
+                            this.setBlock(wx, wy, wz, dist < radius * 0.5 ? BlockType.ASTEROID_CORE : BlockType.ASTEROID_SURFACE);
                         }
                     }
                 }
-            }
-            if(hasSolid) {
-                this.chunks.set(this.getChunkKey(x,y,z), chunk);
             }
         }
       }
@@ -194,7 +255,7 @@ export class BvxEngine {
   }
 
   // Meshing: Simple Face Culling
-  public generateChunkMesh(chunk: Chunk): { positions: Float32Array, normals: Float32Array, colors: Float32Array, indices: number[] } {
+  public generateChunkMesh(chunk: RenderChunk): { positions: Float32Array, normals: Float32Array, colors: Float32Array, indices: number[] } {
     const positions: number[] = [];
     const normals: number[] = [];
     const colors: number[] = [];
@@ -213,30 +274,18 @@ export class BvxEngine {
     for (let x = 0; x < CHUNK_SIZE; x++) {
       for (let y = 0; y < CHUNK_SIZE; y++) {
         for (let z = 0; z < CHUNK_SIZE; z++) {
-          const block = chunk.getBlock(x, y, z);
+          const wx = chunk.position.x * CHUNK_SIZE + x;
+          const wy = chunk.position.y * CHUNK_SIZE + y;
+          const wz = chunk.position.z * CHUNK_SIZE + z;
+
+          const block = this.getBlock(wx, wy, wz);
           if (block === BlockType.AIR) continue;
 
           // Check 6 neighbors
           for (const { dir, normal } of neighbors) {
-            const nx = x + dir[0];
-            const ny = y + dir[1];
-            const nz = z + dir[2];
-            
-            let neighborBlock = BlockType.AIR;
+            const neighborBlock = this.getBlock(wx + dir[0], wy + dir[1], wz + dir[2]);
 
-            // Internal neighbor
-            if (nx >= 0 && nx < CHUNK_SIZE && ny >= 0 && ny < CHUNK_SIZE && nz >= 0 && nz < CHUNK_SIZE) {
-              neighborBlock = chunk.getBlock(nx, ny, nz);
-            } else {
-              // External neighbor (check other chunks)
-              // For simplicity in this demo, we treat boundaries as transparent if chunk missing
-              // Ideally we check the neighbor chunk
-              const wx = chunk.position.x * CHUNK_SIZE + nx;
-              const wy = chunk.position.y * CHUNK_SIZE + ny;
-              const wz = chunk.position.z * CHUNK_SIZE + nz;
-              neighborBlock = this.getBlock(wx, wy, wz);
-            }
-
+            // Visibility check
             if (IS_TRANSPARENT[neighborBlock] && !(IS_TRANSPARENT[block] && neighborBlock === block)) {
               // Add Face
               this.addFace(positions, normals, colors, indices, x, y, z, normal, block);
