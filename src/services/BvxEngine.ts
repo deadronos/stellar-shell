@@ -1,8 +1,10 @@
 import * as THREE from 'three';
-import { createNoise3D } from 'simplex-noise';
 import { BlockType } from '../types';
-import { CHUNK_SIZE, IS_TRANSPARENT, BLOCK_COLORS } from '../constants';
+import { CHUNK_SIZE } from '../constants';
 import { ECS, Entity } from '../ecs/world';
+import { VoxelMesher } from './voxel/VoxelMesher';
+import { VoxelGenerator } from './voxel/VoxelGenerator';
+import { VoxelQuery } from './voxel/VoxelQuery';
 
 // bvx-kit imports
 import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
@@ -15,8 +17,6 @@ export class BvxEngine {
   // Cache of ECS Entities for each 16x16x16 Render Chunk
   // We use this to quickly mark chunks dirty without querying the ECS every time.
   private chunkEntities: Map<string, Entity> = new Map();
-
-  private noise3D = createNoise3D();
 
   // Singleton pattern for the engine core
   private static instance: BvxEngine;
@@ -172,122 +172,17 @@ export class BvxEngine {
 
   // Find all blueprints (Frames) for drones
   public findBlueprints(): { x: number; y: number; z: number }[] {
-    const blueprints: { x: number; y: number; z: number }[] = [];
-
-    // Iterating over Render Chunks (Entities)
-    for (const entity of this.chunkEntities.values()) {
-        if (!entity.chunkPosition) continue;
-        const { x: cx, y: cy, z: cz } = entity.chunkPosition;
-
-         // Iterate all voxels in this logical chunk
-      for (let x = 0; x < CHUNK_SIZE; x++) {
-        for (let y = 0; y < CHUNK_SIZE; y++) {
-          for (let z = 0; z < CHUNK_SIZE; z++) {
-            const wx = cx * CHUNK_SIZE + x;
-            const wy = cy * CHUNK_SIZE + y;
-            const wz = cz * CHUNK_SIZE + z;
-
-            if (this.getBlock(wx, wy, wz) === BlockType.FRAME) {
-              blueprints.push({ x: wx, y: wy, z: wz });
-            }
-          }
-        }
-      }
-    }
-
-    return blueprints;
+    return VoxelQuery.findBlueprints(this.chunkEntities.values(), this);
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
   public findMiningTargets(limit: number = 20): { x: number; y: number; z: number }[] {
-    const targets: { x: number; y: number; z: number }[] = [];
-    const directions = [
-      [1, 0, 0],
-      [-1, 0, 0],
-      [0, 1, 0],
-      [0, -1, 0],
-      [0, 0, 1],
-      [0, 0, -1],
-    ];
-
-    // Scan Chunk Entities
-    for (const entity of this.chunkEntities.values()) {
-      if (targets.length >= limit) break;
-        if (!entity.chunkPosition) continue;
-        const { x: cx, y: cy, z: cz } = entity.chunkPosition;
-
-      for (let x = 0; x < CHUNK_SIZE; x++) {
-        for (let y = 0; y < CHUNK_SIZE; y++) {
-          for (let z = 0; z < CHUNK_SIZE; z++) {
-            if (targets.length >= limit) break;
-
-            const wx = cx * CHUNK_SIZE + x;
-            const wy = cy * CHUNK_SIZE + y;
-            const wz = cz * CHUNK_SIZE + z;
-
-            const block = this.getBlock(wx, wy, wz);
-
-            if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE) {
-              // Check exposure
-              let isExposed = false;
-              for (const dir of directions) {
-                const neighbor = this.getBlock(wx + dir[0], wy + dir[1], wz + dir[2]);
-                if (neighbor === BlockType.AIR || neighbor === BlockType.FRAME) {
-                  isExposed = true;
-                  break;
-                }
-              }
-
-              if (isExposed) {
-                targets.push({ x: wx, y: wy, z: wz });
-              }
-            }
-          }
-        }
-      }
-    }
-    return targets;
+    return VoxelQuery.findMiningTargets(this.chunkEntities.values(), this, limit);
   }
 
   // Procedural Generation
   public generateAsteroid(cx: number, cy: number, cz: number, radius: number) {
-    const center = new THREE.Vector3(
-      cx * CHUNK_SIZE + CHUNK_SIZE / 2,
-      cy * CHUNK_SIZE + CHUNK_SIZE / 2,
-      cz * CHUNK_SIZE + CHUNK_SIZE / 2,
-    );
-
-    // Scan a larger area of chunks to ensure the asteroid fits
-    const range = Math.ceil(radius / CHUNK_SIZE) + 1;
-
-    for (let x = cx - range; x <= cx + range; x++) {
-      for (let y = cy - range; y <= cy + range; y++) {
-        for (let z = cz - range; z <= cz + range; z++) {
-          // We need to touch every voxel in this range potentially
-          for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-            for (let ly = 0; ly < CHUNK_SIZE; ly++) {
-              for (let lz = 0; lz < CHUNK_SIZE; lz++) {
-                const wx = x * CHUNK_SIZE + lx;
-                const wy = y * CHUNK_SIZE + ly;
-                const wz = z * CHUNK_SIZE + lz;
-
-                const dist = center.distanceTo(new THREE.Vector3(wx, wy, wz));
-                const noise = this.noise3D(wx * 0.1, wy * 0.1, wz * 0.1);
-
-                if (dist < radius + noise * 5) {
-                  this.setBlock(
-                    wx,
-                    wy,
-                    wz,
-                    dist < radius * 0.5 ? BlockType.ASTEROID_CORE : BlockType.ASTEROID_SURFACE,
-                  );
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    VoxelGenerator.generateAsteroid(cx, cy, cz, radius, this);
   }
 
   // Meshing: Simple Face Culling
@@ -298,149 +193,6 @@ export class BvxEngine {
     colors: Float32Array;
     indices: number[];
   } {
-    const positions: number[] = [];
-    const normals: number[] = [];
-    const colors: number[] = [];
-    const indices: number[] = [];
-
-    // Neighbor offsets
-    const neighbors = [
-      { dir: [1, 0, 0], normal: [1, 0, 0] },
-      { dir: [-1, 0, 0], normal: [-1, 0, 0] },
-      { dir: [0, 1, 0], normal: [0, 1, 0] },
-      { dir: [0, -1, 0], normal: [0, -1, 0] },
-      { dir: [0, 0, 1], normal: [0, 0, 1] },
-      { dir: [0, 0, -1], normal: [0, 0, -1] },
-    ];
-
-    for (let x = 0; x < CHUNK_SIZE; x++) {
-      for (let y = 0; y < CHUNK_SIZE; y++) {
-        for (let z = 0; z < CHUNK_SIZE; z++) {
-          const wx = cx * CHUNK_SIZE + x;
-          const wy = cy * CHUNK_SIZE + y;
-          const wz = cz * CHUNK_SIZE + z;
-
-          const block = this.getBlock(wx, wy, wz);
-          if (block === BlockType.AIR) continue;
-
-          // Check 6 neighbors
-          for (const { dir, normal } of neighbors) {
-            const neighborBlock = this.getBlock(wx + dir[0], wy + dir[1], wz + dir[2]);
-
-            // Visibility check
-            if (
-              IS_TRANSPARENT[neighborBlock] &&
-              !(IS_TRANSPARENT[block] && neighborBlock === block)
-            ) {
-              // Add Face
-              this.addFace(positions, normals, colors, indices, x, y, z, normal, block);
-            }
-          }
-        }
-      }
-    }
-
-    return {
-      positions: new Float32Array(positions),
-      normals: new Float32Array(normals),
-      colors: new Float32Array(colors),
-      indices: indices,
-    };
-  }
-
-  private addFace(
-    pos: number[],
-    norm: number[],
-    col: number[],
-    ind: number[],
-    x: number,
-    y: number,
-    z: number,
-    normal: number[],
-    type: BlockType,
-  ) {
-    const i = pos.length / 3;
-
-    // Determine face vertices based on normal
-    // 0.5 offset for centering
-    const dx = normal[0] * 0.5;
-    const dy = normal[1] * 0.5;
-    const dz = normal[2] * 0.5;
-
-    // Basis vectors for the face
-    let ux = 0,
-      uy = 0,
-      uz = 0;
-    let vx = 0,
-      vy = 0,
-      vz = 0;
-
-    if (Math.abs(normal[0]) > 0.9) {
-      ux = 0;
-      uy = 1;
-      uz = 0;
-      vx = 0;
-      vy = 0;
-      vz = 1;
-    } else if (Math.abs(normal[1]) > 0.9) {
-      ux = 1;
-      uy = 0;
-      uz = 0;
-      vx = 0;
-      vy = 0;
-      vz = 1;
-    } else {
-      ux = 1;
-      uy = 0;
-      uz = 0;
-      vx = 0;
-      vy = 1;
-      vz = 0;
-    }
-
-    // 4 corners
-    const c1 = [
-      x + 0.5 + dx - ux * 0.5 - vx * 0.5,
-      y + 0.5 + dy - uy * 0.5 - vy * 0.5,
-      z + 0.5 + dz - uz * 0.5 - vz * 0.5,
-    ];
-    const c2 = [
-      x + 0.5 + dx + ux * 0.5 - vx * 0.5,
-      y + 0.5 + dy + uy * 0.5 - vy * 0.5,
-      z + 0.5 + dz + uz * 0.5 - vz * 0.5,
-    ];
-    const c3 = [
-      x + 0.5 + dx + ux * 0.5 + vx * 0.5,
-      y + 0.5 + dy + uy * 0.5 + vy * 0.5,
-      z + 0.5 + dz + uz * 0.5 + vz * 0.5,
-    ];
-    const c4 = [
-      x + 0.5 + dx - ux * 0.5 + vx * 0.5,
-      y + 0.5 + dy - uy * 0.5 + vy * 0.5,
-      z + 0.5 + dz - uz * 0.5 + vz * 0.5,
-    ];
-
-    pos.push(...c1, ...c2, ...c3, ...c4);
-    norm.push(...normal, ...normal, ...normal, ...normal);
-
-    // Color
-    const colorHex = BLOCK_COLORS[type] || '#ff00ff';
-    const c = new THREE.Color(colorHex);
-
-    // Add visual noise to surface/core blocks for "texture" without actual textures
-    if (type === BlockType.ASTEROID_SURFACE || type === BlockType.ASTEROID_CORE) {
-      // Deterministic pseudo-random noise based on world position to avoid flickering
-      const noiseVal = (Math.sin(x * 12.9898 + y * 78.233 + z * 53.53) * 43758.5453) % 1;
-      const variance = (noiseVal - 0.5) * 0.15; // +/- 7% brightness
-      c.r = Math.max(0, Math.min(1, c.r + variance));
-      c.g = Math.max(0, Math.min(1, c.g + variance));
-      c.b = Math.max(0, Math.min(1, c.b + variance));
-    }
-
-    col.push(c.r, c.g, c.b, c.r, c.g, c.b, c.r, c.g, c.b, c.r, c.g, c.b);
-
-    // Indices (2 triangles)
-    ind.push(i, i + 1, i + 2);
-    ind.push(i, i + 2, i + 3);
+    return VoxelMesher.generateChunkMesh(cx, cy, cz, this);
   }
 }
