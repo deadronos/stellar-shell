@@ -21,6 +21,7 @@
     "@react-three/fiber": "^9.5.0",
     "miniplex": "^2.0.0",
     "miniplex-react": "^2.0.1",
+    "multithreading": "^0.3.45",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "simplex-noise": "^4.0.3",
