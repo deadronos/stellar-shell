@@ -2,28 +2,19 @@ import * as THREE from 'three';
 import { createNoise3D } from 'simplex-noise';
 import { BlockType } from '../types';
 import { CHUNK_SIZE, IS_TRANSPARENT, BLOCK_COLORS } from '../constants';
+import { ECS, Entity } from '../ecs/world';
 
 // bvx-kit imports
 import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
 
-// We keep this class as a "Render Chunk" controller to manage dirty state and THREE.js meshes.
-// It no longer stores the actual voxel data; that lives in the bvx-kit VoxelWorld.
-class RenderChunk {
-  public dirty: boolean = true;
-  public mesh: THREE.BufferGeometry | null = null;
-  public position: { x: number; y: number; z: number };
-
-  constructor(x: number, y: number, z: number) {
-    this.position = { x, y, z };
-  }
-}
-
 export class BvxEngine {
-  // Map of RenderChunks (16x16x16) for the game's renderer
-  public chunks: Map<string, RenderChunk> = new Map();
-
   // Actual Voxel Data Storage (4x4x4 chunks)
+  // detailed bvx data
   private bvxWorld: VoxelWorld;
+
+  // Cache of ECS Entities for each 16x16x16 Render Chunk
+  // We use this to quickly mark chunks dirty without querying the ECS every time.
+  private chunkEntities: Map<string, Entity> = new Map();
 
   private noise3D = createNoise3D();
 
@@ -97,20 +88,31 @@ export class BvxEngine {
       bChunk.unsetBitVoxel(vIndex);
     }
 
-    // 2. Mark Render Chunk as dirty
+    // 2. Mark Render Chunk (ECS Entity) as dirty
     const { cx, cy, cz } = this.worldToChunk(wx, wy, wz);
     const renderKey = this.getChunkKey(cx, cy, cz);
 
-    let renderChunk = this.chunks.get(renderKey);
-    if (!renderChunk) {
-      // Create render chunk wrapper if it doesn't exist (e.g. first block in this area)
-      renderChunk = new RenderChunk(cx, cy, cz);
-      this.chunks.set(renderKey, renderChunk);
+    let entity = this.chunkEntities.get(renderKey);
+    if (!entity) {
+      // Create new Chunk Entity in ECS
+      entity = ECS.add({
+        isChunk: true,
+        chunkKey: renderKey,
+        chunkPosition: { x: cx, y: cy, z: cz },
+        needsUpdate: true,
+        position: new THREE.Vector3(cx * CHUNK_SIZE, cy * CHUNK_SIZE, cz * CHUNK_SIZE), // World position for convenient access
+      });
+      this.chunkEntities.set(renderKey, entity);
+    } else {
+      // Mark existing entity as dirty
+      // In Miniplex, modifying the object directly works, but for React reactivity we might want to re-add component or use explicit setter if using 'with' query
+      // For simple 'needsUpdate', modifying the property is enough if the System checks it.
+      // However, to trigger reactivity in UI (if UI was watching it), we might need more.
+      // For now, we assume a System will check `entity.needsUpdate`.
+      entity.needsUpdate = true;
     }
-    renderChunk.dirty = true;
 
     // Mark neighbors dirty if on boundary
-    // ... (simplified: omit for now, but critical for proper meshing across boundaries)
     this.markNeighborsDirty(wx, wy, wz, cx, cy, cz);
   }
 
@@ -136,8 +138,10 @@ export class BvxEngine {
 
   private ensureDirty(cx: number, cy: number, cz: number) {
     const key = this.getChunkKey(cx, cy, cz);
-    const chunk = this.chunks.get(key);
-    if (chunk) chunk.dirty = true;
+    const entity = this.chunkEntities.get(key);
+    if (entity) {
+      entity.needsUpdate = true;
+    }
   }
 
   public getBlock(wx: number, wy: number, wz: number): BlockType {
@@ -163,15 +167,18 @@ export class BvxEngine {
   public findBlueprints(): { x: number; y: number; z: number }[] {
     const blueprints: { x: number; y: number; z: number }[] = [];
 
-    // Iterating over Render Chunks is safer for now as they represent the "active" area we care about in the game logic
-    this.chunks.forEach((chunk) => {
-      // Iterate all voxels in this logical chunk
+    // Iterating over Render Chunks (Entities)
+    for (const entity of this.chunkEntities.values()) {
+        if (!entity.chunkPosition) continue;
+        const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+
+         // Iterate all voxels in this logical chunk
       for (let x = 0; x < CHUNK_SIZE; x++) {
         for (let y = 0; y < CHUNK_SIZE; y++) {
           for (let z = 0; z < CHUNK_SIZE; z++) {
-            const wx = chunk.position.x * CHUNK_SIZE + x;
-            const wy = chunk.position.y * CHUNK_SIZE + y;
-            const wz = chunk.position.z * CHUNK_SIZE + z;
+            const wx = cx * CHUNK_SIZE + x;
+            const wy = cy * CHUNK_SIZE + y;
+            const wz = cz * CHUNK_SIZE + z;
 
             if (this.getBlock(wx, wy, wz) === BlockType.FRAME) {
               blueprints.push({ x: wx, y: wy, z: wz });
@@ -179,7 +186,7 @@ export class BvxEngine {
           }
         }
       }
-    });
+    }
 
     return blueprints;
   }
@@ -196,20 +203,20 @@ export class BvxEngine {
       [0, 0, -1],
     ];
 
-    // Scan Render Chunks
-    for (const chunk of this.chunks.values()) {
+    // Scan Chunk Entities
+    for (const entity of this.chunkEntities.values()) {
       if (targets.length >= limit) break;
-
-      // Optimize: Skip checking air-only chunks if we had a flag (RenderChunk doesn't track this yet)
+        if (!entity.chunkPosition) continue;
+        const { x: cx, y: cy, z: cz } = entity.chunkPosition;
 
       for (let x = 0; x < CHUNK_SIZE; x++) {
         for (let y = 0; y < CHUNK_SIZE; y++) {
           for (let z = 0; z < CHUNK_SIZE; z++) {
             if (targets.length >= limit) break;
 
-            const wx = chunk.position.x * CHUNK_SIZE + x;
-            const wy = chunk.position.y * CHUNK_SIZE + y;
-            const wz = chunk.position.z * CHUNK_SIZE + z;
+            const wx = cx * CHUNK_SIZE + x;
+            const wy = cy * CHUNK_SIZE + y;
+            const wz = cz * CHUNK_SIZE + z;
 
             const block = this.getBlock(wx, wy, wz);
 
@@ -277,7 +284,8 @@ export class BvxEngine {
   }
 
   // Meshing: Simple Face Culling
-  public generateChunkMesh(chunk: RenderChunk): {
+  // Now stateless: takes cx, cy, cz
+  public generateChunkMesh(cx: number, cy: number, cz: number): {
     positions: Float32Array;
     normals: Float32Array;
     colors: Float32Array;
@@ -301,9 +309,9 @@ export class BvxEngine {
     for (let x = 0; x < CHUNK_SIZE; x++) {
       for (let y = 0; y < CHUNK_SIZE; y++) {
         for (let z = 0; z < CHUNK_SIZE; z++) {
-          const wx = chunk.position.x * CHUNK_SIZE + x;
-          const wy = chunk.position.y * CHUNK_SIZE + y;
-          const wz = chunk.position.z * CHUNK_SIZE + z;
+          const wx = cx * CHUNK_SIZE + x;
+          const wy = cy * CHUNK_SIZE + y;
+          const wz = cz * CHUNK_SIZE + z;
 
           const block = this.getBlock(wx, wy, wz);
           if (block === BlockType.AIR) continue;

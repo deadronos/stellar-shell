@@ -1,18 +1,22 @@
 # Active Context — stellar-shell
 
-**Current focus:** Create and populate the Memory Bank directory with core project context files and a starter task so future agents and contributors can find project-level guidance and pending work.
+**Current focus:** Refactoring the project architecture to align with best practices, specifically moving Chunk Management to ECS and ensuring documentation is up-to-date.
 
 **Recent changes:**
 
-- Added initial memory files (project brief, product context).
-- Repository core: React + TypeScript, Vite, Three.js, React Three Fiber, BvxEngine for voxel data, ECS for game entities.
+- **Refactored Voxel Engine:**
+  - `BvxEngine` is now a stateless data service.
+  - Chunk Management moved to Miniplex ECS (`isChunk` entities).
+  - Rendering is reactive via `ChunkSystem` and `useEntities` hook in `VoxelWorld`.
+- Updated unit tests (`tests/bvx-engine.spec.ts`) to support ECS integration.
+- Documented ECS Refactor in `docs/ARCHITECTURE/DEC002-ecs-chunks.md`.
 
 **Next steps:**
 
-- Create `systemPatterns.md`, `techContext.md`, `progress.md` and the `tasks/` folder with a `_index.md` and initial task files.
-- Keep the `memory/` files up-to-date whenever project-level decisions or active tasks change.
-- Add `memory/requirements.md` with EARS-style requirements to clarify acceptance criteria for core behaviors.
+- Continue with feature development (Mining, Drones) on the new stable ECS architecture.
+- Monitor performance of the new reactive rendering system.
 
 **Notes:**
 
-- Follow the Memory Bank conventions: store requirements in `memory/requirements.md`, designs in `memory/designs/`, and tasks in `memory/tasks/`.
+- The project now strictly follows the "Best Practices" guide for BVX-Kit + R3F + Miniplex.
+- Ensure all new game logic interacts with Chunks via ECS Entities, not by directly manipulating the Engine's internal state unless necessary for raw data operations.

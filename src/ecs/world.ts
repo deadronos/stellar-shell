@@ -24,6 +24,13 @@ export type Entity = {
   isParticle?: boolean;
   life?: number;
   active?: boolean;
+
+  // Chunk components
+  isChunk?: boolean;
+  chunkKey?: string; // e.g. "1,2,3"
+  chunkPosition?: { x: number; y: number; z: number };
+  needsUpdate?: boolean;
+  geometry?: THREE.BufferGeometry;
 };
 
 // Create a typed world

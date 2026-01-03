@@ -1,54 +1,26 @@
-import React, { useLayoutEffect, useRef, useState, useMemo } from 'react';
+import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { BvxEngine } from '../services/BvxEngine';
-import { CHUNK_SIZE } from '../constants';
+import { useEntities } from 'miniplex-react';
+import { ECS, Entity } from '../ecs/world';
 
-const ChunkRenderer: React.FC<{ chunkKey: string; engine: BvxEngine }> = ({ chunkKey, engine }) => {
+const ChunkRenderer: React.FC<{ entity: Entity }> = ({ entity }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const chunk = engine.chunks.get(chunkKey);
-  const [version, setVersion] = useState(0); // Force re-render
 
-  useLayoutEffect(() => {
-    if (!chunk || !meshRef.current) return;
-
-    // Check if dirty
-    if (chunk.dirty) {
-      const { positions, normals, colors, indices } = engine.generateChunkMesh(chunk);
-
-      const geometry = meshRef.current.geometry;
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      geometry.setIndex(indices);
-
-      geometry.computeBoundingSphere();
-      chunk.dirty = false;
-    }
-  }, [version, chunk, engine]);
-
-  // Poll for dirty state (simplified reactivity for game loop)
-  useFrame((state) => {
-    if (state.clock.elapsedTime % 0.5 < 0.1) {
-      // Check periodically
-      if (chunk && chunk.dirty) {
-        setVersion((v) => v + 1);
-      }
+  useFrame(() => {
+    if (meshRef.current && entity.geometry && meshRef.current.geometry !== entity.geometry) {
+      meshRef.current.geometry = entity.geometry;
     }
   });
 
-  if (!chunk) return null;
+  if (!entity.geometry) return null;
 
   return (
     <mesh
       ref={meshRef}
-      position={[
-        chunk.position.x * CHUNK_SIZE,
-        chunk.position.y * CHUNK_SIZE,
-        chunk.position.z * CHUNK_SIZE,
-      ]}
+      position={entity.position}
+      geometry={entity.geometry}
     >
-      <bufferGeometry />
       {/* Enhanced Material for Space Rock look */}
       <meshStandardMaterial
         vertexColors
@@ -61,21 +33,17 @@ const ChunkRenderer: React.FC<{ chunkKey: string; engine: BvxEngine }> = ({ chun
 };
 
 export const VoxelWorld = () => {
-  const engine = useMemo(() => BvxEngine.getInstance(), []);
-  // In a real app we'd subscribe to chunk creation/deletion.
-  // For this MVP, we assume a fixed set of initial chunks or re-render explicitly if key count changes.
-  const [chunkKeys, setChunkKeys] = useState(Array.from(engine.chunks.keys()));
-
-  useFrame((state) => {
-    if (engine.chunks.size !== chunkKeys.length) {
-      setChunkKeys(Array.from(engine.chunks.keys()));
-    }
-  });
+    // Subscribe to all entities that are chunks and have a geometry
+    // Actually, we render them even if they might not have geometry yet (ChunkRenderer handles null check)
+    // But it's cleaner to only render if geometry exists?
+    // No, if we want to update it later, we need the component mounted.
+    // So distinct chunks are enough.
+  const { entities } = useEntities(ECS.with('isChunk', 'chunkPosition'));
 
   return (
     <group>
-      {chunkKeys.map((key) => (
-        <ChunkRenderer key={key} chunkKey={key} engine={engine} />
+      {entities.map((entity) => (
+        <ChunkRenderer key={entity.chunkKey} entity={entity} />
       ))}
     </group>
   );

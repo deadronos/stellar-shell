@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber';
 import { BrainSystem } from './systems/BrainSystem';
 import { MovementSystem } from './systems/MovementSystem';
+import { ChunkSystem } from './systems/ChunkSystem';
 import { useEffect } from 'react';
 import { ECS } from './world';
 import * as THREE from 'three';
@@ -38,6 +39,7 @@ export const SystemRunner = () => {
     useFrame((state, delta) => {
         BrainSystem(state.clock);
         MovementSystem(delta);
+        ChunkSystem();
     });
 
     return null;
