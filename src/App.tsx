@@ -16,16 +16,16 @@ export default function App() {
           <Suspense fallback={null}>
             <Stars radius={200} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
             <Sun />
-            
+
             {/* Game World */}
             <VoxelWorld />
             <Drones />
-            
+
             {/* Input & Camera */}
             <PlayerController />
           </Suspense>
         </Canvas>
-        
+
         {/* UI Overlay */}
         <HUD />
       </div>

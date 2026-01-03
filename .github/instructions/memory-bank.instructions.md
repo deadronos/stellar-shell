@@ -1,23 +1,7 @@
 ---
 name: memory-bank
 applyTo: '**'
-tools:
-  [
-    'createFile',
-    'appendFile',
-    'readFile',
-    'deleteFile',
-    'listFiles',
-    'searchFiles',
-    'updateFile',
-    'getFileContent',
-    'getFileMetadata',
-    'thinking',
-    'plan',
-    'memoryBank',
-    'memoryBankUpdate',
-    'taskManagement',
-  ]
+description: 'Guidelines for managing the Memory Bank for project context persistence'
 ---
 
 Coding standards, domain knowledge, and preferences that AI should follow.

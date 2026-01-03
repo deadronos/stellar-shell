@@ -8,7 +8,7 @@ interface StoreState {
   droneCost: number;
   selectedTool: 'LASER' | 'BUILD';
   selectedBlueprint: BlockType;
-  
+
   // Actions
   addMatter: (amount: number) => void;
   consumeMatter: (amount: number) => boolean;
@@ -26,7 +26,7 @@ export const useStore = create<StoreState>((set, get) => ({
   selectedBlueprint: BlockType.FRAME,
 
   addMatter: (amount) => set((state) => ({ matter: state.matter + amount })),
-  
+
   consumeMatter: (amount) => {
     const { matter } = get();
     if (matter >= amount) {
@@ -39,10 +39,10 @@ export const useStore = create<StoreState>((set, get) => ({
   addDrone: () => {
     const { matter, droneCost, droneCount } = get();
     if (matter >= droneCost) {
-      set({ 
-        matter: matter - droneCost, 
+      set({
+        matter: matter - droneCost,
         droneCount: droneCount + 1,
-        droneCost: Math.floor(droneCost * 1.2)
+        droneCost: Math.floor(droneCost * 1.2),
       });
     }
   },

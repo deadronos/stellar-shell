@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.github
+.codex
+docs
+memory
+tests-playwright
+
+*.min.*
+*.map

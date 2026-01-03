@@ -2,9 +2,9 @@ export enum BlockType {
   AIR = 0,
   ASTEROID_CORE = 1,
   ASTEROID_SURFACE = 2,
-  FRAME = 10,   // Blueprint stage
-  PANEL = 20,   // Completed Dyson Panel
-  HUB = 30      // Drone control hub
+  FRAME = 10, // Blueprint stage
+  PANEL = 20, // Completed Dyson Panel
+  HUB = 30, // Drone control hub
 }
 
 export interface Vector3 {

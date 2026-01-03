@@ -3,264 +3,82 @@ description: 'Specification-Driven Workflow v1 provides a structured approach to
 applyTo: '**'
 ---
 
-# Spec-Driven Workflow — Quick Loop
+# Spec-Driven Workflow (v1)
 
-Hint: use memory folder ( look at .github/instructions/memory-bank.instructions.md for templates)
-use /memory/designs folder to store designs
-ensure design IDs stay unique across `/memory/designs` and `/memory/designs/COMPLETED`; check both locations before assigning a new number because completed designs may be archived there.
-use /memory/tasks folder to store task files
-ensure task IDs stay unique across `/memory/tasks` and `/memory/tasks/COMPLETED`; verify both directories before reserving a new number.
+Receipt: “Follow a 6-phase spec-driven loop: Analyze → Design → Implement → Validate → Reflect → Handoff.”
 
-Receipt: "Follow a 6-phase spec-driven loop: Analyze → Design → Implement → Validate → Reflect → Handoff."
+This is a lightweight workflow to keep changes intentional, testable, and well-documented.
 
-6-phase micro-plan (one sentence each):
+## Memory Bank Rules (Repo Convention)
 
-- Analyze: gather facts, write 2–5 EARS-style requirements.
-- Design: write a short design (diagram + interfaces) and tasks list.
-- Implement: iterate with TDD (Red → Green → Refactor), small commits, update tasks.md as you go.
-- Validate: run automated tests, manual checks, and performance verifications.
-- Reflect: refactor, update docs, and record technical debt.
-- Handoff: prepare PR with executive summary, changelog, tests, and artifacts.
+- Store designs under `/memory/designs/` and tasks under `/memory/tasks/`.
+- Keep IDs unique across both active and archived folders:
+  - Designs: check `/memory/designs/` and `/memory/designs/COMPLETED/` before picking the next `DES###`.
+  - Tasks: check `/memory/tasks/` and `/memory/tasks/COMPLETED/` before picking the next `TASK###`.
+- Record decisions and progress in the relevant `TASK###` file as work proceeds.
 
-Quick templates
+Recommended placement:
 
-- Requirement (EARS): WHEN <event>, THE SYSTEM SHALL <behavior> [Acceptance: how to test].
-- PR summary (3 lines): 1) Goal: <one-line> 2) Key changes: <files/functions> 3) Validation: <tests/metrics>. Attach decision records if any.
+- Requirements: `/memory/requirements.md`
+- Design notes: `/memory/designs/DES###-*.md`
+- Task plan + progress: `/memory/tasks/TASK###-*.md` and `/memory/tasks/_index.md`
+- Current focus: `/memory/activeContext.md`
 
-Minimal acceptance checklist before merge:
+## Phase 1: Analyze
 
-- [ ] 2–5 testable requirements written.
-- [ ] Design doc linked in PR.
-- [ ] Tests for each requirement (unit/integration).
-- [ ] Performance baseline if applicable.
-- [ ] Decision records for non-trivial trade-offs.
-- [ ] Exec summary and streamlined action log included.
+Write 2–5 testable requirements using EARS.
 
-If blocked: re-run Analyze → adjust Confidence Score → pick PoC if medium/low confidence.
+Template:
 
-End.
+- WHEN <event>, THE SYSTEM SHALL <behavior>. [Acceptance: how to test]
 
-- Create a comprehensive technical design and a detailed implementation plan.
+If blocked or uncertain, explicitly estimate a confidence score and choose an execution strategy:
 
-**Checklist:**
+- High confidence (>85%): proceed with full plan.
+- Medium confidence (66–85%): do a small PoC/MVP first with clear success criteria.
+- Low confidence (<66%): research first (read code, search patterns, write a short research note), then re-run Analyze.
 
-- [ ] **Define adaptive execution strategy based on Confidence Score:**
-  - **High Confidence (>85%)**
-    - Draft a comprehensive, step-by-step implementation plan.
-    - Skip proof-of-concept steps.
-    - Proceed with full, automated implementation.
-    - Maintain standard comprehensive documentation.
-  - **Medium Confidence (66–85%)**
-    - Prioritize a **Proof-of-Concept (PoC)** or **Minimum Viable Product (MVP)**.
-    - Define clear success criteria for PoC/MVP.
-    - Build and validate PoC/MVP first, then expand plan incrementally.
-    - Document PoC/MVP goals, execution, and validation results.
-  - **Low Confidence (<66%)**
-    - Dedicate first phase to research and knowledge-building.
-    - Use semantic search and analyze similar implementations.
-    - Synthesize findings into a research document.
-    - Re-run ANALYZE phase after research.
-    - Escalate only if confidence remains low.
+## Phase 2: Design
 
-  - **Architecture:** High-level overview of components and interactions.
-  - **Data Flow:** Diagrams and descriptions.
-  - **Interfaces:** API contracts, schemas, public-facing function signatures.
-  - **Data Models:** Data structures and database schemas.
+Create a short design note capturing:
 
-> Note: This repository uses a centralized Memory Bank for project context and task tracking. Store design and related artifacts under the `/memory` folder so they are discoverable by agents and maintainers (for example: `memory/designs/design.md`, `memory/requirements.md`).
+- Architecture overview (components + responsibilities)
+- Interfaces / public APIs (function signatures, schemas)
+- Data flow (diagram if helpful)
+- Error handling expectations
+- Test strategy (what tests prove each requirement)
 
-**Recommended memory placement:**
+## Phase 3: Implement (TDD)
 
-- Requirements: `memory/requirements.md` (EARS-style requirements)
-- Design: `memory/designs/design.md` (architecture, interfaces, diagrams)
-- Tasks & plan: `memory/tasks/_index.md` and `memory/tasks/TASKID-*.md`
-- Active context & progress: `memory/activeContext.md`, `memory/progress.md`
+Use a strict RED → GREEN → REFACTOR loop for each small behavior.
 
-- [ ] **Document error handling:**
-
-> Store implementation plans and task files inside the memory bank tasks folder (`memory/tasks/`) following the Memory Bank structure required by the project. Use `memory/tasks/_index.md` as the master index and create `memory/tasks/TASKID-taskname.md` for each task.
-
-- Create an error matrix with procedures and expected responses.
-
-- [ ] **Define unit testing strategy.**
-
-- [ ] **Create implementation plan in `tasks.md`:**
-  - For each task, include description, expected outcome, and dependencies.
-
-**Critical Constraint (recommended):**
-
-- Prefer to complete design and a minimal validated plan before large-scope implementation. For low-risk changes it may be acceptable to iterate with small, test-backed increments; when deviating, document the deviation and seek owner approval where practical.
-
-### **Phase 3: IMPLEMENT**
-
-**Objective:**
-
-- Write production-quality code according to the design and plan.
-
-**Checklist:**
-
-- [ ] Code in small, testable increments using TDD. Document each increment with code changes, results, and test links.
-- [ ] Implement from dependencies upward. Document resolution order, justification, and verification.
-- [ ] Follow conventions. Document adherence and any deviations with a Decision Record.
-- [ ] Add meaningful comments. Focus on intent ("why"), not mechanics ("what").
-- [ ] Create files as planned. Document file creation log.
-- [ ] Update task status in real time and record progress in the Memory Bank (`memory/tasks/`).
-
-#### **TDD loop (required within Phase 3) — STRONGLY PREFERRED**
-
-This repository requires a strict Red → Green → Refactor cycle for implementing behaviour.
-
-- **Red (Write a failing test first):**
-  - Add one small, focused failing test that describes the next behaviour (unit or integration as appropriate).
-  - Run the narrow test and confirm it fails for the right reason.
-  - Suggested subagent: run the **TDD Red** agent to help design test cases and edge conditions (`.github/agents/tdd-red.agent.md`, agent name: "TDD Red Phase - Write Failing Tests First").
-
-- **Green (Make tests pass with minimal changes):**
-  - Implement the smallest amount of production code necessary to make the failing test pass.
-  - Run the same narrow test and confirm it passes; re-run the full test suite to ensure no regressions.
-  - Suggested subagent: run the **TDD Green** agent to implement the minimal change safely (`.github/agents/tdd-green.agent.md`, agent name: "TDD Green Phase - Make Tests Pass Quickly").
-
-- **Refactor (Improve quality while keeping tests green):**
-  - Refactor naming, structure, and remove duplication. Harden edge cases and add additional tests for uncovered scenarios.
-  - Re-run the tests and ensure all remain green.
-  - Suggested subagent: run the **TDD Refactor** agent for quality, security, and design improvements (`.github/agents/tdd-refactor.agent.md`, agent name: "TDD Refactor Phase - Improve Quality & Security").
+- RED: add one failing test that describes the next behavior.
+- GREEN: implement the minimum to pass.
+- REFACTOR: improve quality without changing behavior; keep tests green.
 
 Operational rules:
 
-- Never write production code without a failing test; prefer one test per small behaviour.
-- Commit in small increments: RED commit (test), GREEN commit (minimal implementation), REFACTOR commit (improvements).
-- Use deterministic inputs in tests for procedural generation (seeding or small radii).
-- When using agents, run them as subagents by name (or reference their `.github/agents/*.agent.md` files) and record agent decisions in the task's Memory Bank entry.
+- Don’t write production code without a failing test first (when practical).
+- Prefer deterministic tests for procedural systems (seed/small radius).
+- Record notable decisions (tradeoffs, constraints, “why”) in the task file.
 
-**Critical Constraint (recommended):**
+## Phase 4: Validate
 
-- Aim to document and test implementation steps before merge/deploy. In emergency or experimental scenarios, prefer feature branches and clear risk notes; when merging incomplete work, obtain owner/maintainer approval if possible.
+- Run the narrow tests for the change, then the broader suite.
+- Verify acceptance criteria from the EARS requirements.
+- If performance-sensitive, capture a small baseline/measurement.
 
-### **Phase 4: VALIDATE**
+## Phase 5: Reflect
 
-**Objective:**
+- Refactor for clarity and maintainability.
+- Update docs and Memory Bank notes.
+- Record technical debt explicitly if you chose a shortcut.
 
-- Verify that implementation meets all requirements and quality standards.
+## Phase 6: Handoff
 
-**Checklist:**
+Provide a short handoff summary (PR description or task note):
 
-- [ ] Execute automated tests. - Document outputs, logs, and coverage reports. - For failures, document root cause analysis and remediation.
-- [ ] Perform manual verification if necessary. - Document procedures, checklists, and results.
-- [ ] Test edge cases and errors. - Document results and evidence of correct error handling.
-- [ ] Verify performance. - Document metrics and profile critical sections.
-- [ ] Log execution traces. - Document path analysis and runtime behavior.
-
-**Critical Constraint (recommended):**
-
-- Prefer to complete validation steps and resolve critical issues before proceeding. For non-blocking items, triage with maintainers and document outstanding issues in the PR.
-
-### **Phase 5: REFLECT**
-
-**Objective:**
-
-- Improve codebase, update documentation, and analyze performance.
-
-**Checklist:**
-
-- [ ] Refactor for maintainability. - Document decisions, before/after comparisons, and impact.
-- [ ] Update all project documentation. - Ensure all READMEs, diagrams, and comments are current.
-- [ ] Identify potential improvements. - Document backlog with prioritization.
-- [ ] Validate success criteria. - Document final verification matrix.
-- [ ] Perform meta-analysis. - Reflect on efficiency, tool usage, and protocol adherence.
-- [ ] Auto-create technical debt issues. - Document inventory and remediation plans.
-
-**Critical Constraint (recommended):**
-
-- Prefer to close the phase only after documentation and improvement actions are recorded; if exceptional circumstances require early closure, log the reason and follow up with a retrospective.
-
-### **Phase 6: HANDOFF**
-
-**Objective:**
-
-- Package work for review and deployment, and transition to next task.
-
-**Checklist:**
-
-- [ ] Generate executive summary. - Use **Compressed Decision Record** format.
-- [ ] Prepare pull request (if applicable):
-  1. Executive summary.
-  2. Changelog from **Streamlined Action Log**.
-  3. Links to validation artifacts and Decision Records.
-  4. Links to final `requirements.md`, `design.md`, and `tasks.md`.
-- [ ] Finalize workspace. - Archive intermediate files, logs, and temporary artifacts to `.agent_work/`.
-- [ ] Continue to next task. - Document transition or completion.
-
-**Critical Constraint (recommended):**
-
-- Consider tasks complete when the core acceptance criteria are met and handoff notes are provided; follow team conventions for required documentation and approvals before final closure.
-
-## Troubleshooting & Retry Protocol
-
-**If you encounter errors, ambiguities, or blockers:**
-
-**Checklist:**
-
-1. **Re-analyze**:
-   - Revisit the ANALYZE phase.
-   - Confirm all requirements and constraints are clear and complete.
-2. **Re-design**:
-   - Revisit the DESIGN phase.
-   - Update technical design, plans, or dependencies as needed.
-3. **Re-plan**:
-   - Adjust the implementation plan in `tasks.md` to address new findings.
-4. **Retry execution**:
-   - Re-execute failed steps with corrected parameters or logic.
-5. **Escalate**:
-   - If the issue persists after retries, follow the escalation protocol.
-
-**Critical Constraint (recommended):**
-
-- Avoid proceeding with unresolved errors or ambiguities when feasible; if a pragmatic exception is required, clearly document the risks, mitigation, and plan to resolve outstanding items.
-
-## Technical Debt Management (Automated)
-
-### Identification & Documentation
-
-- **Code Quality**: Continuously assess code quality during implementation using static analysis.
-- **Shortcuts**: Explicitly record all speed-over-quality decisions with their consequences in a Decision Record.
-- **Workspace**: Monitor for organizational drift and naming inconsistencies.
-- **Documentation**: Track incomplete, outdated, or missing documentation.
-
-### Auto-Issue Creation Template
-
-```text
-**Title**: [Technical Debt] - [Brief Description]
----
-description: 'Spec-driven workflow — condensed 6-phase checklist + PR/requirement templates (Cookbook style).'
-applyTo: '**'
----
-
-# Spec-Driven Workflow — Quick Loop
-
-Receipt: "Follow a 6-phase spec-driven loop: Analyze → Design → Implement → Validate → Reflect → Handoff."
-
-6-phase micro-plan (one sentence each):
-- Analyze: gather facts, write 2–5 EARS-style requirements.
-- Design: write a short design (diagram + interfaces) and tasks list.
-- Implement: small commits, tests, and update tasks.md as you go.
-- Validate: run automated tests, manual checks, and performance verifications.
-- Reflect: refactor, update docs, and record technical debt.
-- Handoff: prepare PR with executive summary, changelog, tests, and artifacts.
-
-Quick templates
-- Requirement (EARS): WHEN <event>, THE SYSTEM SHALL <behavior> [Acceptance: how to test].
-- PR summary (3 lines): 1) Goal: <one-line> 2) Key changes: <files/functions> 3) Validation: <tests/metrics>. Attach decision records if any.
-
-Minimal acceptance checklist before merge:
-- [ ] 2–5 testable requirements written.
-- [ ] Design doc linked in PR.
-- [ ] Tests for each requirement (unit/integration).
-- [ ] Performance baseline if applicable.
-- [ ] Decision records for non-trivial trade-offs.
-- [ ] Exec summary and streamlined action log included.
-
-If blocked: re-run Analyze → adjust Confidence Score → pick PoC if medium/low confidence.
-
-End.
-**EARS (Easy Approach to Requirements Syntax)** - Standard format for requirements:
-```
+- Goal: one line
+- Key changes: main files/symbols
+- Validation: commands/tests run
+- Follow-ups: any debt or deferred docs
