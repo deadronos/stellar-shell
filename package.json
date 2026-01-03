@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@astrumforge/bvx-kit": "^1.39.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "three": "^0.182.0",
     "simplex-noise": "^4.0.3",
-    "zustand": "^5.0.9",
-    "@react-three/fiber": "^9.5.0",
-    "@react-three/drei": "^10.7.7"
+    "three": "^0.182.0",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
