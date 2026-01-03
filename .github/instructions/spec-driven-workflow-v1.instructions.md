@@ -99,30 +99,38 @@ End.
 
 **Checklist:**
 
-- [ ] Code in small, testable increments using TDD. - Document each increment with code changes, results, and test links.
-- [ ] Implement from dependencies upward. - Document resolution order, justification, and verification.
-- [ ] Follow conventions. - Document adherence and any deviations with a Decision Record.
-- [ ] Add meaningful comments. - Focus on intent ("why"), not mechanics ("what").
-- [ ] Create files as planned. - Document file creation log.
-- [ ] Update task status in real time.
+- [ ] Code in small, testable increments using TDD. Document each increment with code changes, results, and test links.
+- [ ] Implement from dependencies upward. Document resolution order, justification, and verification.
+- [ ] Follow conventions. Document adherence and any deviations with a Decision Record.
+- [ ] Add meaningful comments. Focus on intent ("why"), not mechanics ("what").
+- [ ] Create files as planned. Document file creation log.
+- [ ] Update task status in real time and record progress in the Memory Bank (`memory/tasks/`).
 
-#### **TDD loop (required within Phase 3)**
+#### **TDD loop (required within Phase 3) — STRONGLY PREFERRED**
 
-For most code changes in this repo, use a strict Red → Green → Refactor cycle.
+This repository requires a strict Red → Green → Refactor cycle for implementing behaviour.
 
-- **Red**: add one small failing test that describes the next behavior.
-  - Run the narrowest test command that proves it fails for the right reason.
-- **Green**: implement the minimum code to make that single test pass.
-  - Re-run the same narrow test command.
-- **Refactor**: improve naming/structure, remove duplication, and harden edge
-  cases while keeping tests green.
-  - Re-run the same test again.
+- **Red (Write a failing test first):**
+  - Add one small, focused failing test that describes the next behaviour (unit or integration as appropriate).
+  - Run the narrow test and confirm it fails for the right reason.
+  - Suggested subagent: run the **TDD Red** agent to help design test cases and edge conditions (`.github/agents/tdd-red.agent.md`, agent name: "TDD Red Phase - Write Failing Tests First").
 
-Rules:
+- **Green (Make tests pass with minimal changes):**
+  - Implement the smallest amount of production code necessary to make the failing test pass.
+  - Run the same narrow test and confirm it passes; re-run the full test suite to ensure no regressions.
+  - Suggested subagent: run the **TDD Green** agent to implement the minimal change safely (`.github/agents/tdd-green.agent.md`, agent name: "TDD Green Phase - Make Tests Pass Quickly").
 
-- Do not write production code without a failing test.
-- Do not write multiple tests at once; iterate one behavior at a time.
-- Prefer pure, testable helpers for performance-critical logic.
+- **Refactor (Improve quality while keeping tests green):**
+  - Refactor naming, structure, and remove duplication. Harden edge cases and add additional tests for uncovered scenarios.
+  - Re-run the tests and ensure all remain green.
+  - Suggested subagent: run the **TDD Refactor** agent for quality, security, and design improvements (`.github/agents/tdd-refactor.agent.md`, agent name: "TDD Refactor Phase - Improve Quality & Security").
+
+Operational rules:
+
+- Never write production code without a failing test; prefer one test per small behaviour.
+- Commit in small increments: RED commit (test), GREEN commit (minimal implementation), REFACTOR commit (improvements).
+- Use deterministic inputs in tests for procedural generation (seeding or small radii).
+- When using agents, run them as subagents by name (or reference their `.github/agents/*.agent.md` files) and record agent decisions in the task's Memory Bank entry.
 
 **Critical Constraint (recommended):**
 

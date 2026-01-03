@@ -61,7 +61,23 @@ Quick, actionable guidance for AI coding agents working on this repo.
   3. REFACTOR — improve design, remove duplication, and harden edge cases while keeping tests green (see `.github/agents/tdd-refactor.agent.md`).
 - Tests for procedural generation should use deterministic, seeded inputs (or very small radii) to remain stable and fast.
 - Recommended test runner: **Vitest** (see `./.github/instructions/nodejs-javascript-vitest.instructions.md`) — add `vitest` and a `test` script to `package.json` and update CI if you add tests.
-- When creating features, add tasks and a short design to `memory/tasks/` (Memory Bank) and reference them in PRs to preserve the spec-driven process.
+- When creating features, use the **Memory Bank** and follow the Spec-Driven Workflow (`.github/instructions/spec-driven-workflow-v1.instructions.md`):
+  - **Designs:** place short designs and architecture notes in `/memory/designs/` using the `DES###-short-name.md` pattern (e.g., `/memory/designs/DES001-tdd-and-memory-bank.md`). When creating a new design ID:
+  - Check both `/memory/designs/` and `/memory/designs/COMPLETED/` for existing numbers to avoid collisions.
+  - **Enforcement:** Agents and contributors MUST refuse to create a new ID that collides. Locate the highest `DES###` and propose `DES{next}` (e.g., if highest is `DES005`, propose `DES006`). Record the assigned ID in the task and update `memory/tasks/_index.md` or `memory/designs/_index.md` where applicable.
+  - Use sequential numbering (don't re-use IDs); add a short summary and `Status: Draft|Completed` frontmatter.
+  - Prefer `DES###` (not `DESIGN###`) for consistency.
+  - **Tasks & Planning:** create an implementation plan in `/memory/tasks/TASK###-short-name.md` and update `memory/tasks/_index.md`. When creating a new task ID, check `/memory/tasks/` and `/memory/tasks/COMPLETED/` to avoid collisions and follow the same sequential numbering rule.
+  - **Active context & progress:** update `memory/activeContext.md` and `memory/progress.md` as you work, and record TDD steps (RED/GREEN/REFACTOR) and any agent decisions in the task file.
+  - Prefer running the TDD agents as subagents for Red/Green/Refactor guidance and record agent outputs in the task's Memory Bank entry.
+
+## Architecture docs
+- Keep high-level architecture, technical specs, decision records and game design specs under `/docs/ARCHITECTURE.md` and the `/docs/ARCHITECTURE/` folder.
+- Naming conventions:
+  - Technical specs: `TEC###-*.md` (e.g., `TEC001-rendering-architecture.md`)
+  - Decision records: `DEC###-*.md` (e.g., `DEC001-chunk-meshing.md`)
+  - Game design: `GAME###-*.md` (e.g., `GAME001-drone-mechanics.md`)
+- Cross-reference architecture files from memory tasks and PRs when decisions or design changes are made.
 
 ---
 If any section is unclear or you want a different level of detail (examples, tests, or PR checklist expanded), tell me which parts to expand and I'll iterate. ✅

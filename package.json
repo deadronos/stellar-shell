@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrumforge/bvx-kit": "^1.39.0",
@@ -24,6 +26,7 @@
     "@types/node": "^25.0.3",
     "@vitejs/plugin-react": "^5.1.2",
     "typescript": "~5.9.3",
-    "vite": "^7.3.0"
+    "vite": "^7.3.0",
+    "vitest": "^4.0.16"
   }
 }

@@ -2,7 +2,7 @@
 
 ## In Progress
 
-- No active tasks right now.
+- No in progress tasks at the moment.
 
 ## Pending
 
@@ -10,5 +10,5 @@
 
 ## Completed
 
-- [TASK001] Create Memory Bank files - Completed 2026-01-03 - Initial memory files added and reviewed.
+- [TASK001] Memory Bank + TDD & Vitest Setup - Completed 2026-01-03 - Memory Bank created and initial Vitest configuration and tests added.
 
