@@ -7,14 +7,14 @@ applyTo: '**/*.js, **/*.mjs, **/*.cjs'
 
 ## Coding standards
 
-- Use JavaScript with ES2022 features and Node.js (20+) ESM modules
+- Use JavaScript with ES2022 features and Node.js (18+) ESM modules (align with this repo's CI/runtime)
 - Use Node.js built-in modules and avoid external dependencies where possible
 - Ask the user if you require any additional dependencies before adding them
 - Always use async/await for asynchronous code, and use 'node:util' promisify function to avoid callbacks
 - Keep the code simple and maintainable
 - Use descriptive variable and function names
 - Do not add comments unless absolutely necessary, the code should be self-explanatory
-- Never use `null`, always use `undefined` for optional values
+- Prefer `undefined` for optional values unless an API contract requires `null`
 - Prefer functions over classes
 
 ## Testing

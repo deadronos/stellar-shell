@@ -1,6 +1,6 @@
 ---
 description: 'Playwright test generation instructions'
-applyTo: '**'
+applyTo: 'tests-playwright/**'
 ---
 
 ## Test Writing Guidelines
@@ -8,8 +8,8 @@ applyTo: '**'
 ### Code Quality Standards
 
 - **Locators**: Prioritize user-facing, role-based locators (`getByRole`, `getByLabel`, `getByText`, etc.) for resilience and accessibility. Use `test.step()` to group interactions and improve test readability and reporting.
-- **Assertions**: Use auto-retrying web-first assertions. These assertions start with the `await` keyword (e.g., `await expect(locator).toHaveText()`). Avoid `expect(locator).toBeVisible()` unless specifically testing for visibility changes.
-- **Timeouts**: Rely on Playwright's built-in auto-waiting mechanisms. Avoid hard-coded waits or increased default timeouts.
+- **Assertions**: Prefer Playwright's auto-retrying, web-first assertions (e.g., `await expect(locator).toHaveText()`, `await expect(locator).toBeVisible()`). Avoid non-web-first checks like `expect(await locator.isVisible()).toBe(true)`.
+- **Timeouts**: Rely on Playwright's built-in auto-waiting. Avoid `page.waitForTimeout(...)` and avoid raising global timeouts; prefer waiting on a specific locator or URL (`toHaveURL`, `toBeVisible`, `toHaveText`, etc.).
 - **Clarity**: Use descriptive test and step titles that clearly state the intent. Add comments only to explain complex logic or non-obvious interactions.
 
 ### Test Structure
@@ -21,7 +21,7 @@ applyTo: '**'
 
 ### File Organization
 
-- **Location**: Store all test files in the `tests/` directory.
+- **Location**: Store all test files in the `tests-playwright/` directory.
 - **Naming**: Use the convention `<feature-or-page>.spec.ts` (e.g., `login.spec.ts`, `search.spec.ts`).
 - **Scope**: Aim for one test file per major application feature or page.
 

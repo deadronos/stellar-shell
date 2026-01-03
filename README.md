@@ -18,3 +18,13 @@ View your app in AI Studio: https://ai.studio/apps/drive/12qcPm6CVVuHVNB1kqP9ncA
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Linting & formatting
+
+This repo uses ESLint **flat config** (ESLint v9+): `eslint.config.js`.
+The older `.eslintrc*` format is deprecated upstream, so new configuration should go into the flat config file.
+
+- Lint: `npm run lint`
+- Auto-fix: `npm run lint:fix`
+- Format: `npm run format`
+- Check formatting: `npm run format:check`
