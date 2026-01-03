@@ -6,12 +6,16 @@ import { useEffect } from 'react';
 import { ECS } from './world';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
+import { BvxEngine } from '../services/BvxEngine';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
     const droneCount = useStore((state) => state.droneCount);
 
     useEffect(() => {
+        // Ensure Engine is initialized and world is generated
+        BvxEngine.getInstance();
+
         // Sync ECS Population
         const drones = ECS.with('isDrone').entities;
         const currentCount = drones.length;

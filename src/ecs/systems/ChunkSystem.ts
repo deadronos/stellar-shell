@@ -7,9 +7,11 @@ export const ChunkSystem = () => {
     const dirtyChunks = ECS.with('isChunk', 'chunkPosition', 'needsUpdate');
 
     for (const entity of dirtyChunks) {
+        // Double check not strictly needed if query is correct, but safe.
+        // Also TypeScript might want confirmation.
         if (entity.needsUpdate) {
             const { x, y, z } = entity.chunkPosition;
-            const engine = BvxEngine.getInstance();
+            const engine = BvxEngine.getInstance(); // Ensure instance
             
             // Generate Mesh Data
             const { positions, normals, colors, indices } = engine.generateChunkMesh(x, y, z);
@@ -36,8 +38,9 @@ export const ChunkSystem = () => {
                 geometry.computeBoundingSphere();
             }
 
-            // Mark as updated
-            entity.needsUpdate = false;
+            // Mark as updated (Consume the dirty flag)
+            // entity.needsUpdate = false; // <-- This doesn't notify miniplex
+            ECS.removeComponent(entity, 'needsUpdate'); 
         }
     }
 };

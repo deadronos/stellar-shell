@@ -30,7 +30,18 @@ export class BvxEngine {
   constructor() {
     this.bvxWorld = new VoxelWorld();
 
+    // Hydrate local cache from existing ECS state (prevents duplicates on HMR/Singleton reload)
+    const existingChunks = ECS.with('isChunk', 'chunkKey');
+    for (const entity of existingChunks) {
+        if (typeof entity.chunkKey === 'string') {
+            this.chunkEntities.set(entity.chunkKey, entity);
+        }
+    }
+
     // Generate initial world
+    // Note: If we really wanted to be HMR safe, we should probably check if chunks exist before generating?
+    // But for now, regenerating the voxel data into the new BvxWorld instance is necessary anyway since that data is lost.
+    // Reusing the ECS entities means we just update the existing render chunks.
     this.generateAsteroid(2, 0, 2, 20); // Generate an asteroid at chunk (2,0,2)
   }
 
@@ -104,12 +115,8 @@ export class BvxEngine {
       });
       this.chunkEntities.set(renderKey, entity);
     } else {
-      // Mark existing entity as dirty
-      // In Miniplex, modifying the object directly works, but for React reactivity we might want to re-add component or use explicit setter if using 'with' query
-      // For simple 'needsUpdate', modifying the property is enough if the System checks it.
-      // However, to trigger reactivity in UI (if UI was watching it), we might need more.
-      // For now, we assume a System will check `entity.needsUpdate`.
-      entity.needsUpdate = true;
+      // Mark existing entity as dirty using addComponent to notify Miniplex
+      ECS.addComponent(entity, 'needsUpdate', true);
     }
 
     // Mark neighbors dirty if on boundary
@@ -140,7 +147,7 @@ export class BvxEngine {
     const key = this.getChunkKey(cx, cy, cz);
     const entity = this.chunkEntities.get(key);
     if (entity) {
-      entity.needsUpdate = true;
+      ECS.addComponent(entity, 'needsUpdate', true);
     }
   }
 
