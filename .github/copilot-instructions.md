@@ -3,6 +3,7 @@
 Quick, actionable guidance for AI coding agents working on this repo.
 
 ## Quick start (developer commands)
+- Agents: consult `AGENTS.md` at the repository root for agent-specific responsibilities and then follow `.github/copilot-instructions.md` for repo rules.
 - Install: `npm ci` (CI uses `npm ci` / Node 18).
 - Run locally: `npm run dev` (Vite). Preview build: `npm run preview`, build: `npm run build`.
 - Local env: set `GEMINI_API_KEY` in `.env.local` for features that call Gemini.
