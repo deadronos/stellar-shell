@@ -1,10 +1,11 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
-import { VoxelWorld } from './components/VoxelWorld';
+import { SystemRunner } from './ecs/SystemRunner';
+import { VoxelWorld } from './scenes/VoxelWorld';
 import { PlayerController } from './components/PlayerController';
-import { Sun } from './components/Sun';
-import { Drones } from './components/Drones';
+import { Sun } from './scenes/Sun';
+import { Drones } from './scenes/Drones';
 import { HUD } from './components/HUD';
 
 // Post-processing could be added here, but keeping it simple for the single-file constraint robustness
@@ -18,6 +19,7 @@ export default function App() {
             <Sun />
 
             {/* Game World */}
+            <SystemRunner />
             <VoxelWorld />
             <Drones />
 

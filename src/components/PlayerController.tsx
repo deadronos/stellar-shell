@@ -3,7 +3,7 @@ import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { BvxEngine } from '../services/BvxEngine';
 import { BlockType } from '../types';
-import { useStore } from '../store';
+import { useStore } from '../state/store';
 import { FRAME_COST } from '../constants';
 
 const ENGINE = BvxEngine.getInstance();

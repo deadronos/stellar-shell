@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { BlockType } from './types';
+import { BlockType } from '../types';
 
 interface StoreState {
   matter: number;
