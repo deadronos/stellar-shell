@@ -22,3 +22,12 @@ Tip: Don't regenerate the mesh every frame. Only regenerate a chunk's mesh when 
 The Input: Raycasting
 
 Since bvx-kit knows where voxels are, you can use a raycaster from your renderer (like Three.js Raycaster) to find the impact point, then ask bvx-kit "Which voxel is at XYZ?" to modify it.
+
+
+
+Technical Pro-Tip for Idle Games
+Idle games often run in the background.
+
+Do not rely on the bvx-kit geometry generation while the tab is inactive (browsers throttle rendering).
+
+Do keep the VoxelWorld data logic running in a Web Worker. When the player returns to the tab, the worker sends the new chunk data to the main thread, and you rebuild the meshes all at once (or queue them up). This ensures the game "progresses" smoothly even when hidden.

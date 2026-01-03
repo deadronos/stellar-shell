@@ -27,3 +27,10 @@ The older `.eslintrc*` format is deprecated upstream, so new configuration shoul
 - Auto-fix: `npm run lint:fix`
 - Format: `npm run format`
 - Check formatting: `npm run format:check`
+
+## Tailwind CSS
+
+Tailwind is installed locally (no CDN) using Tailwind v4+ with the Vite plugin.
+
+- Vite plugin: `@tailwindcss/vite` (configured in `vite.config.ts`)
+- CSS entry: `src/index.css` using the v4+ syntax `@import "tailwindcss";`
