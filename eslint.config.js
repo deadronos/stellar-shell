@@ -23,7 +23,25 @@ const vitestGlobals = {
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      '.codex/**',
+      '.github/**',
+      'docs/**',
+      'memory/**',
+    ],
+  },
+
+  // Project-wide language defaults.
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
   },
 
   // Base JS rules.
@@ -41,10 +59,6 @@ export default tseslint.config(
         sourceType: 'module',
         ecmaFeatures: { jsx: true },
       },
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
     },
     settings: {
       react: {
@@ -60,6 +74,20 @@ export default tseslint.config(
       ...(reactPlugin.configs.recommended?.rules ?? {}),
       ...(reactPlugin.configs['jsx-runtime']?.rules ?? {}),
       ...(reactHooksPlugin.configs.recommended?.rules ?? {}),
+
+      // React Three Fiber uses custom JSX props/elements.
+      'react/no-unknown-property': 'off',
+
+      // This repo uses an ECS and other mutable data for simulation.
+      'react-hooks/immutability': 'off',
+
+      // Avoid blocking adoption on existing code; keep this as a warning.
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'prefer-const': 'warn',
 
       // React 19 + TS: prop-types are redundant.
       'react/prop-types': 'off',

@@ -10,7 +10,7 @@ export type Entity = {
 
   // Components
   isDrone?: boolean;
-  
+
   // Drone State
   target?: THREE.Vector3; // If present, entity is moving towards this
   state?: 'IDLE' | 'MOVING_TO_BUILD' | 'MOVING_TO_MINE' | 'RETURNING_RESOURCE';
@@ -19,7 +19,7 @@ export type Entity = {
 
   // Visuals
   color?: THREE.Color;
-  
+
   // Particle State
   isParticle?: boolean;
   life?: number;

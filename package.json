@@ -12,7 +12,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@astrumforge/bvx-kit": "^1.39.0",
@@ -37,7 +38,7 @@
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^17.0.0",
     "prettier": "^3.7.4",
-    "typescript": "~5.9.3",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0",
     "vite": "^7.3.0",
     "vitest": "^4.0.16"
