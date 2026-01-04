@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { useStore } from '../state/store';
 import { BLOCK_COLORS } from '../constants';
 import { ECS } from '../ecs/world';
+import { ParticleEvents } from '../services/ParticleEvents';
 
 const MAX_PARTICLES = 1000;
 
@@ -30,7 +31,9 @@ export const Drones = () => {
   const particles = useRef<Particle[]>([]);
 
   // Initialize particles
+  // Initialize particles & subscribe to events
   useMemo(() => {
+    // Fill pool
     for (let i = 0; i < MAX_PARTICLES; i++) {
       particles.current.push({
         position: new THREE.Vector3(),
@@ -40,10 +43,44 @@ export const Drones = () => {
         active: false,
       });
     }
+
+    // Subscribe
+    return ParticleEvents.subscribe((pos, color, count = 1) => {
+      let spawned = 0;
+      for (const p of particles.current) {
+        if (!p.active) {
+            p.active = true;
+            p.position.copy(pos);
+            // Random velocity spray
+            const rx = Math.random() - 0.5;
+            const ry = Math.random() - 0.5;
+            const rz = Math.random() - 0.5;
+            p.velocity.set(rx * 5, ry * 5, rz * 5);
+            
+            p.color.copy(color);
+            const rLife = Math.random();
+            p.life = 0.5 + rLife * 0.5;
+            spawned++;
+            if (spawned >= count) break;
+        }
+      }
+    });
+
   }, []);
 
   // Archetypes
   const dronesArchetype = useMemo(() => ECS.with('isDrone', 'position', 'velocity'), []);
+
+  // Laser Lines Geometry
+  // We'll use a simple BufferGeometry for lines, updating positions every frame
+  const laserGeo = useMemo(() => {
+      const geo = new THREE.BufferGeometry();
+      // Max 1000 lines?
+      const positions = new Float32Array(1000 * 2 * 3); // 2 points per line
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      return geo;
+  }, []);
+  const laserRef = useRef<THREE.LineSegments>(null);
 
   useFrame((state, delta) => {
     if (!droneMeshRef.current || !cargoMeshRef.current) return;
@@ -52,6 +89,9 @@ export const Drones = () => {
     // Logic is now handled by SystemRunner -> MovementSystem / BrainSystem
 
     let i = 0;
+    let laserIdx = 0;
+    const laserPositions = laserGeo.attributes.position.array as Float32Array;
+
     for (const drone of dronesArchetype) {
       dummy.position.copy(drone.position);
 
@@ -78,6 +118,24 @@ export const Drones = () => {
         dummyCargo.updateMatrix();
         cargoMeshRef.current.setMatrixAt(i, dummyCargo.matrix);
       }
+      
+      // Update Laser
+      if ((drone.state === 'MOVING_TO_MINE' || drone.state === 'MOVING_TO_BUILD') && drone.targetBlock) {
+          const dist = drone.position.distanceTo(new THREE.Vector3(drone.targetBlock.x, drone.targetBlock.y, drone.targetBlock.z));
+          // Show laser if close enough
+          if (dist < 3) {
+             const idx = laserIdx * 6; // 2 points * 3 coords
+             laserPositions[idx] = drone.position.x;
+             laserPositions[idx+1] = drone.position.y;
+             laserPositions[idx+2] = drone.position.z;
+             
+             laserPositions[idx+3] = drone.targetBlock.x;
+             laserPositions[idx+4] = drone.targetBlock.y;
+             laserPositions[idx+5] = drone.targetBlock.z;
+             
+             laserIdx++;
+          }
+      }
 
       i++;
     }
@@ -88,6 +146,12 @@ export const Drones = () => {
     cargoMeshRef.current.count = i;
     cargoMeshRef.current.instanceMatrix.needsUpdate = true;
     if (cargoMeshRef.current.instanceColor) cargoMeshRef.current.instanceColor.needsUpdate = true;
+    
+    // Update Lasers
+    if (laserRef.current) {
+        laserGeo.setDrawRange(0, laserIdx * 2);
+        laserGeo.attributes.position.needsUpdate = true;
+    }
 
     // --- PARTICLE SYSTEM (Legacy - Visual Only) ---
     // Note: To fully decouple, particles should probably be entities too, but for visual effects 
@@ -153,6 +217,11 @@ export const Drones = () => {
         <boxGeometry args={[1, 1, 1]} />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
+      
+      {/* Lasers */}
+      <lineSegments ref={laserRef} geometry={laserGeo} frustumCulled={false}>
+          <lineBasicMaterial color="#00ffff" opacity={0.5} transparent />
+      </lineSegments>
     </group>
   );
 };
