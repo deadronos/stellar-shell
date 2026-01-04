@@ -38,11 +38,24 @@ export class VoxelGenerator {
                 const noise = this.noise3D(wx * 0.1, wy * 0.1, wz * 0.1);
 
                 if (dist < radius + noise * 5) {
+                  let blockType = BlockType.ASTEROID_SURFACE;
+                  const isCore = dist < radius * 0.5;
+                  
+                  if (isCore) {
+                      blockType = BlockType.ASTEROID_CORE;
+                  }
+                  
+                  // Rare Ore Veins (High frequency noise)
+                  const rareNoise = this.noise3D(wx * 0.3, wy * 0.3, wz * 0.3);
+                  if (rareNoise > 0.6) {
+                      blockType = BlockType.RARE_ORE;
+                  }
+
                   voxelModifier.setBlock(
                     wx,
                     wy,
                     wz,
-                    dist < radius * 0.5 ? BlockType.ASTEROID_CORE : BlockType.ASTEROID_SURFACE,
+                    blockType,
                   );
                 }
               }

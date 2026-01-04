@@ -2,7 +2,9 @@ export enum BlockType {
   AIR = 0,
   ASTEROID_CORE = 1,
   ASTEROID_SURFACE = 2,
+  RARE_ORE = 3,
   FRAME = 10, // Blueprint stage
+  BLUEPRINT_FRAME = 11, // Ghost frame
   PANEL = 20, // Completed Dyson Panel
   HUB = 30, // Drone control hub
 }
@@ -25,6 +27,7 @@ export interface Drone {
   target: Vector3 | null;
   state: 'IDLE' | 'MINING' | 'BUILDING' | 'RETURNING';
   carrying: BlockType | null;
+  miningProgress?: number;
 }
 
 export interface GameState {

@@ -1,14 +1,15 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
-import { BlockType } from '../../types';
-import { useStore } from '../../state/store'; // Access store directly or pass state? Direct access is common in systems if store is singleton.
+import { BlockType, Vector3 } from '../../types';
+import { useStore } from '../../state/store'; 
 import { FRAME_COST } from '../../constants';
+import { BlueprintManager } from '../../services/BlueprintManager';
 
 const ENGINE = BvxEngine.getInstance();
+const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
 
 // Query caches
-let cachedBlueprints: { x: number; y: number; z: number }[] | null = null;
 let cachedMines: { x: number; y: number; z: number }[] | null = null;
 let lastCacheTime = 0;
 
@@ -17,22 +18,19 @@ export const BrainSystem = (clock: THREE.Clock) => {
   const currentMatter = state.matter;
   const droneCount = state.droneCount;
 
-  // Refresh caches periodically (e.g. every 0.1s or per frame if efficient)
-  // For now, let's refresh every frame for simplicity, but we can throttle
+  // Refresh caches periodically (e.g. every 0.5s)
   if (clock.elapsedTime - lastCacheTime > 0.5) {
-      cachedBlueprints = null;
       cachedMines = null;
       lastCacheTime = clock.elapsedTime;
   }
 
-  const getBlueprints = () => {
-    if (!cachedBlueprints) cachedBlueprints = ENGINE.findBlueprints();
-    return cachedBlueprints;
-  };
   const getMines = () => {
     if (!cachedMines) cachedMines = ENGINE.findMiningTargets(droneCount + 20);
     return cachedMines;
   };
+  
+  // Get active blueprints directly from manager - efficient enough for now
+  const getBlueprints = () => BLUEPRINT_MANAGER.getBlueprints();
 
   const idleDrones = ECS.with('isDrone', 'position', 'velocity').without('target');
   const targetBlockDrones = ECS.with('targetBlock');
@@ -71,8 +69,15 @@ export const BrainSystem = (clock: THREE.Clock) => {
       }
     };
 
-    if (canBuild) findClosest(blueprints, 'BUILD');
-    if (!bestTarget) findClosest(getMines(), 'MINE');
+    // Priority: BUILD > MINE
+    if (canBuild && blueprints.length > 0) {
+        findClosest(blueprints, 'BUILD');
+    }
+    
+    // If no build target found (or cannot build), look for mine
+    if (!bestTarget) {
+        findClosest(getMines(), 'MINE');
+    }
 
     if (bestTarget && targetType) {
       const t = bestTarget as { x: number; y: number; z: number };
@@ -90,6 +95,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       const radius = 30 + Math.sin(time * 2.0) * 5;
       const height = Math.sin(time * 0.5) * 15;
 
+      // Orbit around Star (0,0,0) generally
       const orbitPos = new THREE.Vector3(
         Math.cos(time) * radius,
         height,

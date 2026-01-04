@@ -4,6 +4,7 @@ import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { FRAME_COST } from '../../constants';
+import { BlueprintManager } from '../../services/BlueprintManager';
 
 const ENGINE = BvxEngine.getInstance();
 const DRONE_SPEED = 20;
@@ -38,13 +39,19 @@ export const MovementSystem = (delta: number) => {
     if (!isOrbiting && distToTarget < 1.5) {
       if (drone.state === 'MOVING_TO_BUILD' && drone.targetBlock) {
         const { x, y, z } = drone.targetBlock;
-        if (ENGINE.getBlock(x, y, z) === BlockType.FRAME) {
+        const currentBlock = ENGINE.getBlock(x, y, z);
+        
+        if (BlueprintManager.getInstance().hasBlueprint({ x, y, z })) {
+           if (store.consumeMatter(FRAME_COST)) {
+             ENGINE.setBlock(x, y, z, BlockType.FRAME);
+             BlueprintManager.getInstance().removeBlueprint({ x, y, z });
+           }
+        } else if (currentBlock === BlockType.FRAME) {
           if (store.consumeMatter(FRAME_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
-            // TODO: Spawn Explosion Event (spawnExplosion(drone.target, '#00d0ff', 12))
           }
         }
-        // Reset
+        
         drone.state = 'IDLE';
         ECS.removeComponent(drone, 'target');
         ECS.removeComponent(drone, 'targetBlock');
@@ -53,33 +60,43 @@ export const MovementSystem = (delta: number) => {
       } else if (drone.state === 'MOVING_TO_MINE' && drone.targetBlock) {
         const { x, y, z } = drone.targetBlock;
         const block = ENGINE.getBlock(x, y, z);
-        if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE) {
-          ENGINE.setBlock(x, y, z, BlockType.AIR);
-          // TODO: Spawn Explosion Event
-          
-          drone.carryingType = block;
-          drone.state = 'RETURNING_RESOURCE';
+        
+        if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE || block === BlockType.RARE_ORE) {
+           // Mining Progress Logic
+           if (!drone.miningProgress) drone.miningProgress = 0;
+           drone.miningProgress += delta * 50; // Mine speed: 50% per second approx
+           
+           if (drone.miningProgress >= 100) {
+              ENGINE.setBlock(x, y, z, BlockType.AIR);
+              
+              drone.carryingType = block;
+              drone.state = 'RETURNING_RESOURCE';
+              drone.miningProgress = 0;
 
-          // Set new target: Hub
-          const returnPos = HUB_POSITION.clone().add(
-            new THREE.Vector3(
-              (Math.random() - 0.5) * 8,
-              (Math.random() - 0.5) * 4,
-              (Math.random() - 0.5) * 8,
-            ),
-          );
-          drone.target.copy(returnPos);
-          ECS.removeComponent(drone, 'targetBlock');
+              // Set new target: Hub
+              const returnPos = HUB_POSITION.clone().add(
+                new THREE.Vector3(
+                  (Math.random() - 0.5) * 8,
+                  (Math.random() - 0.5) * 4,
+                  (Math.random() - 0.5) * 8,
+                ),
+              );
+              drone.target.copy(returnPos);
+              ECS.removeComponent(drone, 'targetBlock');
+           }
+           // Else: Stay here and keep mining next frame
 
         } else {
           // Fail
           drone.state = 'IDLE';
           ECS.removeComponent(drone, 'target');
           ECS.removeComponent(drone, 'targetBlock');
+          drone.miningProgress = 0;
         }
 
       } else if (drone.state === 'RETURNING_RESOURCE') {
         if (drone.carryingType === BlockType.ASTEROID_CORE) store.addMatter(2);
+        else if (drone.carryingType === BlockType.RARE_ORE) store.addRareMatter(1);
         else store.addMatter(1);
 
         drone.carryingType = null;

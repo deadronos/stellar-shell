@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { SystemRunner } from './ecs/SystemRunner';
 import { VoxelWorld } from './scenes/VoxelWorld';
 import { PlayerController } from './components/PlayerController';
@@ -17,6 +18,9 @@ export default function App() {
           <Suspense fallback={null}>
             <Stars radius={200} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
             <Sun />
+            <EffectComposer>
+              <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} radius={0.4} />
+            </EffectComposer>
 
             {/* Game World */}
             <SystemRunner />

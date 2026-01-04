@@ -49,10 +49,10 @@ export const Sun = () => {
       </sprite>
 
       {/* Main Light Source - Increased intensity for better illumination */}
-      <pointLight intensity={10} distance={2000} decay={1} color="#ffddaa" />
+      <pointLight intensity={2.5} distance={2000} decay={0} color="#ffddaa" />
 
       {/* Stronger Ambient Fill Light to illuminate shadow sides */}
-      <ambientLight intensity={1.2} color="#665588" />
+      <ambientLight intensity={0.15} color="#665588" />
     </group>
   );
 };

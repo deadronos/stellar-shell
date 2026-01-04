@@ -3,6 +3,7 @@ import { BlockType } from '../types';
 
 interface StoreState {
   matter: number;
+  rareMatter: number;
   energy: number;
   droneCount: number;
   droneCost: number;
@@ -11,6 +12,7 @@ interface StoreState {
 
   // Actions
   addMatter: (amount: number) => void;
+  addRareMatter: (amount: number) => void;
   consumeMatter: (amount: number) => boolean;
   addDrone: () => void;
   setTool: (tool: 'LASER' | 'BUILD') => void;
@@ -19,6 +21,7 @@ interface StoreState {
 
 export const useStore = create<StoreState>((set, get) => ({
   matter: 0,
+  rareMatter: 0,
   energy: 100,
   droneCount: 0,
   droneCost: 50,
@@ -26,6 +29,7 @@ export const useStore = create<StoreState>((set, get) => ({
   selectedBlueprint: BlockType.FRAME,
 
   addMatter: (amount) => set((state) => ({ matter: state.matter + amount })),
+  addRareMatter: (amount) => set((state) => ({ rareMatter: state.rareMatter + amount })),
 
   consumeMatter: (amount) => {
     const { matter } = get();

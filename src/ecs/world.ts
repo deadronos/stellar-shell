@@ -16,6 +16,7 @@ export type Entity = {
   state?: 'IDLE' | 'MOVING_TO_BUILD' | 'MOVING_TO_MINE' | 'RETURNING_RESOURCE';
   targetBlock?: { x: number; y: number; z: number };
   carryingType?: BlockType | null;
+  miningProgress?: number;
 
   // Visuals
   color?: THREE.Color;

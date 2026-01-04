@@ -19,6 +19,10 @@ export const HUD = () => {
           <div className="text-2xl font-mono text-cyan-400">{matter} kg</div>
         </div>
         <div>
+          <div className="text-xs text-purple-400 uppercase tracking-widest">Rare</div>
+          <div className="text-xl font-mono text-purple-300">{useStore((state) => state.rareMatter)}</div>
+        </div>
+        <div>
           <div className="text-xs text-gray-400 uppercase tracking-widest">Drones</div>
           <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
         </div>
