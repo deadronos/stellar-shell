@@ -37,7 +37,7 @@ describe('PlayerSystem', () => {
                 mine: false,
                 build: false,
             },
-            cameraRotation: { x: 0, y: 0 }
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 }
         });
 
         // Run System
@@ -63,7 +63,7 @@ describe('PlayerSystem', () => {
                 mine: false,
                 build: false,
             },
-            cameraRotation: { x: 0, y: 0 }
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 }
         });
         
         PlayerSystem(1.0);

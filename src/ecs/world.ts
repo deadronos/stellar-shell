@@ -30,9 +30,11 @@ export type Entity = {
     mine: boolean; // Left click interaction
     build: boolean; // Alt interaction
   };
-  cameraRotation?: {
+  cameraQuaternion?: {
     x: number;
     y: number;
+    z: number;
+    w: number;
   };
   
   // Visuals

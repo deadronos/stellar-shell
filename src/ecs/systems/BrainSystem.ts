@@ -32,7 +32,11 @@ export const BrainSystem = (clock: THREE.Clock) => {
   // Get active blueprints directly from manager - efficient enough for now
   const getBlueprints = () => BLUEPRINT_MANAGER.getBlueprints();
 
-  const idleDrones = ECS.with('isDrone', 'position', 'velocity').without('target');
+  /* 
+     Fix: Previously we used .without('target'), but IDLE drones have orbit targets.
+     We should query all drones and check state 'IDLE'.
+  */
+  const allDrones = ECS.with('isDrone', 'position', 'velocity');
   const targetBlockDrones = ECS.with('targetBlock');
 
   // Build reserved set from ECS
@@ -43,7 +47,10 @@ export const BrainSystem = (clock: THREE.Clock) => {
     }
   }
 
-  for (const drone of idleDrones) {
+  for (const drone of allDrones) {
+    if (drone.state !== 'IDLE') continue;
+
+
     const blueprints = getBlueprints();
     const canBuild = currentMatter >= FRAME_COST;
 
@@ -102,13 +109,14 @@ export const BrainSystem = (clock: THREE.Clock) => {
       
       ECS.addComponent(drone, 'target', new THREE.Vector3(t.x, t.y, t.z));
       ECS.addComponent(drone, 'targetBlock', t);
+      ECS.addComponent(drone, 'targetBlock', t);
 
       drone.state = targetType === 'BUILD' ? 'MOVING_TO_BUILD' : 'MOVING_TO_MINE';
       drone.carryingType = targetType === 'BUILD' ? BlockType.FRAME : null;
 
       reservedBlocks.add(`${t.x},${t.y},${t.z}`);
     } else {
-      // Dynamic Orbit
+      // Dynamic Orbit - Only for IDLE drones
       const time = clock.elapsedTime * 0.1 + (drone.id || Math.random() * 100) * 0.137;
       const radius = 30 + Math.sin(time * 2.0) * 5;
       const height = Math.sin(time * 0.5) * 15;
@@ -120,6 +128,8 @@ export const BrainSystem = (clock: THREE.Clock) => {
         Math.sin(time) * radius,
       );
 
+      // Directly update target if already present (to avoid thrashing component add/remove if avoidable, though Miniplex handles add effectively as update)
+      // ECS.addComponent will update the value if it exists.
       ECS.addComponent(drone, 'target', orbitPos);
     }
   }

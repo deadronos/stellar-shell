@@ -25,7 +25,7 @@ export const PlayerController = () => {
                mine: false,
                build: false,
            },
-           cameraRotation: { x: 0, y: 0 }
+           cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 }
        });
     }
 
@@ -64,6 +64,12 @@ export const PlayerController = () => {
         const dy = e.movementY;
         mouseState.dragDistance += Math.abs(dx) + Math.abs(dy);
 
+        // Update Camera Rotation (Euler is fine for local manipulation, but calculation is clearer)
+        // Default ThreeJS Camera is XYZ.
+        // We generally want "Yaw around World Y" and "Pitch around Local X".
+        // Modifying rotation.y and rotation.x directly works if we are careful,
+        // but explicit Euler order YXZ is often better for FPS.
+        camera.rotation.order = 'YXZ'; 
         camera.rotation.y -= dx * 0.002;
         camera.rotation.x -= dy * 0.002;
         camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
@@ -115,7 +121,7 @@ export const PlayerController = () => {
   // Sync Loop
   useFrame(() => {
       const player = ECS.with('isPlayer').first;
-      if (!player || !player.input || !player.cameraRotation) return;
+      if (!player || !player.input || !player.cameraQuaternion) return;
 
       // 1. Sync Input to ECS
       player.input.forward = !!keys.current['KeyW'];
@@ -126,8 +132,11 @@ export const PlayerController = () => {
       player.input.down = !!keys.current['ShiftLeft'];
 
       // 2. Sync Camera Rotation to ECS (So system knows direction)
-      player.cameraRotation.x = camera.rotation.x;
-      player.cameraRotation.y = camera.rotation.y;
+      // Use Quaternion to be checking-math safe
+      player.cameraQuaternion.x = camera.quaternion.x;
+      player.cameraQuaternion.y = camera.quaternion.y;
+      player.cameraQuaternion.z = camera.quaternion.z;
+      player.cameraQuaternion.w = camera.quaternion.w;
 
       // 3. Sync ECS Position to Camera (So view follows physics)
       // Lerp for smoothness? For now, hard sync.

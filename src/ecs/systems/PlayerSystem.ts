@@ -10,15 +10,14 @@ const ENGINE = BvxEngine.getInstance();
 const SPEED = 15;
 
 export const PlayerSystem = (delta: number) => {
-  const players = ECS.with('isPlayer', 'position', 'input', 'cameraRotation');
+  const players = ECS.with('isPlayer', 'position', 'input', 'cameraQuaternion');
   const store = useStore.getState();
 
   for (const player of players) {
-    const { input, cameraRotation, position } = player;
+    const { input, cameraQuaternion, position } = player;
 
     // --- 1. Movement Logic ---
-    const quaternion = new THREE.Quaternion();
-    quaternion.setFromEuler(new THREE.Euler(cameraRotation.x, cameraRotation.y, 0, 'YXZ'));
+    const quaternion = new THREE.Quaternion(cameraQuaternion.x, cameraQuaternion.y, cameraQuaternion.z, cameraQuaternion.w);
 
     const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(quaternion);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion);
