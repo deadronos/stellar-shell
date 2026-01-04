@@ -29,7 +29,7 @@ function Game() {
       {/* Offscreen rendering: pass a worker. Fallback is null because we want the worker to do everything. */}
       {/* If fallback is provided, it runs on main thread until worker is ready or if worker fails. */}
       {/* However, our PlayerController is refactored to use WorkerInput, so it won't work on Main Thread anymore unless we mock it. */}
-      <Canvas worker={worker} gl={{ antialias: false }} fallback={null} dpr={[1, 2]} />
+      <Canvas worker={worker} gl={{ antialias: false }} dpr={[1, 2]} />
 
       <InputCapture worker={worker} />
 
