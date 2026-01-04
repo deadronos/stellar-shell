@@ -19,6 +19,7 @@
     "@astrumforge/bvx-kit": "^1.39.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@react-three/offscreen": "github:deadronos/react-three-offscreen#react19",
     "miniplex": "^2.0.0",
     "miniplex-react": "^2.0.1",
     "multithreading": "^0.3.45",
