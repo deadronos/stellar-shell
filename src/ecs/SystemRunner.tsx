@@ -7,6 +7,9 @@ import { ECS } from './world';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
 import { BvxEngine } from '../services/BvxEngine';
+import { EnergySystem } from './systems/EnergySystem';
+import { MiningSystem } from './systems/MiningSystem';
+import { ConstructionSystem } from './systems/ConstructionSystem';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
@@ -42,7 +45,10 @@ export const SystemRunner = () => {
 
     useFrame((state, delta) => {
         BrainSystem(state.clock);
+        MiningSystem(delta);
+        ConstructionSystem(delta);
         MovementSystem(delta);
+        EnergySystem(delta);
         ChunkSystem();
     });
 
