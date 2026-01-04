@@ -8,10 +8,12 @@ interface StoreState {
   energyGenerationRate: number;
   droneCount: number;
   droneCost: number;
+  prestigeLevel: number;
   selectedTool: 'LASER' | 'BUILD';
   selectedBlueprint: BlockType;
 
   // Actions
+  resetWorld: () => void;
   addMatter: (amount: number) => void;
   addRareMatter: (amount: number) => void;
   addEnergy: (amount: number) => void;
@@ -30,6 +32,7 @@ export const useStore = create<StoreState>((set, get) => ({
   energyGenerationRate: 0,
   droneCount: 0,
   droneCost: 50,
+  prestigeLevel: 0,
   selectedTool: 'LASER',
   selectedBlueprint: BlockType.FRAME,
 
@@ -37,6 +40,16 @@ export const useStore = create<StoreState>((set, get) => ({
   addRareMatter: (amount) => set((state) => ({ rareMatter: state.rareMatter + amount })),
   addEnergy: (amount) => set((state) => ({ energy: state.energy + amount })),
   setEnergyRate: (rate) => set({ energyGenerationRate: rate }),
+  
+  resetWorld: () => set((state) => ({
+      matter: 0,
+      rareMatter: 0,
+      energy: 0,
+      energyGenerationRate: 0,
+      droneCount: 0,
+      droneCost: 50,
+      prestigeLevel: state.prestigeLevel + 1
+  })),
 
   consumeMatter: (amount) => {
     const { matter } = get();

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../state/store';
 import { BlockType } from '../types';
+import { BvxEngine } from '../services/BvxEngine';
 
 export const HUD = () => {
   const matter = useStore((state) => state.matter);
@@ -9,6 +10,8 @@ export const HUD = () => {
   const addDrone = useStore((state) => state.addDrone);
   const selectedTool = useStore((state) => state.selectedTool);
   const setTool = useStore((state) => state.setTool);
+  const prestigeLevel = useStore((state) => state.prestigeLevel);
+  const energyGenerationRate = useStore((state) => state.energyGenerationRate);
 
   return (
     <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-6">
@@ -34,6 +37,13 @@ export const HUD = () => {
           <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
         </div>
         <div className="h-8 w-px bg-white/20 mx-2"></div>
+         {/* Prestige Section */}
+        {prestigeLevel > 0 && (
+            <div>
+              <div className="text-xs text-cyan-400 uppercase tracking-widest">System Level</div>
+              <div className="text-xl font-mono text-cyan-300 animate-pulse">Lv {prestigeLevel + 1}</div>
+            </div>
+        )}
         <button
           onClick={addDrone}
           disabled={matter < droneCost}
@@ -53,6 +63,23 @@ export const HUD = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-white/50"></div>
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-px bg-white/50"></div>
       </div>
+
+      {/* Center: System Jump (Prestige) */}
+      {energyGenerationRate > 100 && (
+           <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
+              <button 
+                className="bg-red-900/90 hover:bg-red-600 text-white border-2 border-red-500 px-8 py-3 rounded shadow-[0_0_30px_rgba(255,0,0,0.6)] font-bold tracking-[0.2em] uppercase transition-all hover:scale-105 z-50 pointer-events-auto"
+                onClick={() => {
+                    const engine = BvxEngine.getInstance();
+                    engine.resetWorld();
+                    engine.generateAsteroid(2, 0, 2, 20); // Quick respawn for MVP
+                    useStore.getState().resetWorld();
+                }}
+              >
+                  ⚠ Initiate System Jump ⚠
+              </button>
+           </div>
+      )}
 
       {/* Bottom Bar: Toolbar */}
       <div className="self-center bg-black/60 backdrop-blur border border-white/10 p-2 rounded-xl flex gap-2 pointer-events-auto">

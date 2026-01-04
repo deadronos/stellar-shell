@@ -70,7 +70,10 @@ export const MovementSystem = (delta: number) => {
         if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE || block === BlockType.RARE_ORE) {
            // Mining Progress Logic
            if (!drone.miningProgress) drone.miningProgress = 0;
-           drone.miningProgress += delta * 50; // Mine speed: 50% per second approx
+           
+           // Prestige Multiplier: +50% Mining Speed per level
+           const miningMult = 1 + (store.prestigeLevel * 0.5);
+           drone.miningProgress += (delta * 50) * miningMult; 
            
            if (drone.miningProgress >= 100) {
               ENGINE.setBlock(x, y, z, BlockType.AIR);
@@ -123,10 +126,14 @@ export const MovementSystem = (delta: number) => {
         const dist = desired.length();
         desired.normalize();
 
+        // Prestige Modifier: +50% Speed per level
+        const speedMult = 1 + (store.prestigeLevel * 0.5);
+        const currentDataSpeed = DRONE_SPEED * speedMult;
+
         if (!isOrbiting && dist < 5) {
-          desired.multiplyScalar(DRONE_SPEED * (dist / 5));
+          desired.multiplyScalar(currentDataSpeed * (dist / 5));
         } else {
-          desired.multiplyScalar(DRONE_SPEED);
+          desired.multiplyScalar(currentDataSpeed);
         }
 
         const steer = new THREE.Vector3().subVectors(desired, drone.velocity);

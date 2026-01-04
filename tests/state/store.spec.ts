@@ -53,4 +53,21 @@ describe('useStore', () => {
         expect(consumeRareMatter(2)).toBe(false);
         expect(useStore.getState().rareMatter).toBe(1);
     });
+    it('resetWorld resets resources but increments prestige', () => {
+        useStore.setState({ 
+            matter: 1000, 
+            energy: 500, 
+            droneCount: 10,
+            prestigeLevel: 0
+        });
+        
+        const { resetWorld } = useStore.getState();
+        resetWorld();
+        
+        const state = useStore.getState();
+        expect(state.matter).toBe(0);
+        expect(state.energy).toBe(0);
+        expect(state.droneCount).toBe(0);
+        expect(state.prestigeLevel).toBe(1);
+    });
 });

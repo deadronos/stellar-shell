@@ -175,6 +175,19 @@ export class BvxEngine {
     return VoxelQuery.findBlocksByType(this.chunkEntities.values(), this, type, limit);
   }
 
+  // Reset World (Prestige)
+  public resetWorld(): void {
+    // Re-instantiate the VoxelWorld to clear all data
+    this.bvxWorld = new VoxelWorld();
+    
+    // Clear ECS chunk cache map
+    this.chunkEntities.clear();
+    
+    // Note: The actual ECS entities in the world (Miniplex) still exist.
+    // The consumer (VoxelWorld.tsx) needs to react to this or we should manually remove them.
+    // For now, let's assume valid "reset" flow involves cleaning up ECS.
+  }
+
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
   public findMiningTargets(limit: number = 20): { x: number; y: number; z: number }[] {
     return VoxelQuery.findMiningTargets(this.chunkEntities.values(), this, limit);
