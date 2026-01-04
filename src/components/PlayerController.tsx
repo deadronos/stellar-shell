@@ -5,6 +5,7 @@ import { BvxEngine } from '../services/BvxEngine';
 import { BlockType } from '../types';
 import { useStore } from '../state/store';
 import { FRAME_COST } from '../constants';
+import { BlueprintManager } from '../services/BlueprintManager';
 
 const ENGINE = BvxEngine.getInstance();
 const SPEED = 15;
@@ -78,8 +79,15 @@ export const PlayerController = () => {
       } else if (selectedTool === 'BUILD') {
         // BUILD
         // Place blueprint at last air pos
-        if (consumeMatter(FRAME_COST)) {
-          ENGINE.setBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z, selectedBlueprint);
+        // Don't consume matter here, drones consume it.
+        // But we DO want to ensure we don't place duplications?
+        // Logic: Set voxel to 'BLUEPRINT_FRAME' (visual ghost) and register in manager.
+        
+        // Check if space is clear (AIR)
+        const current = ENGINE.getBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z);
+        if (current === BlockType.AIR) {
+             ENGINE.setBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z, BlockType.BLUEPRINT_FRAME);
+             BlueprintManager.getInstance().addBlueprint(lastAirPos);
         }
       }
     };

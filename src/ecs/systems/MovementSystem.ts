@@ -3,7 +3,7 @@ import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
-import { FRAME_COST } from '../../constants';
+import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
 
 const ENGINE = BvxEngine.getInstance();
@@ -49,6 +49,12 @@ export const MovementSystem = (delta: number) => {
         } else if (currentBlock === BlockType.FRAME) {
           if (store.consumeMatter(FRAME_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
+            store.setEnergyRate(store.energyGenerationRate + 1);
+          }
+        } else if (currentBlock === BlockType.PANEL) {
+          if (store.consumeRareMatter(SHELL_COST)) {
+            ENGINE.setBlock(x, y, z, BlockType.SHELL);
+            store.setEnergyRate(store.energyGenerationRate + 5); // Boost by 5
           }
         }
         

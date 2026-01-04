@@ -4,15 +4,18 @@ import { Entity } from '../../ecs/world';
 import { IVoxelSource } from './types';
 
 export class VoxelQuery {
-  // Find all blueprints (Frames) for drones
-  public static findBlueprints(
+  // Find blocks of a specific type
+  public static findBlocksByType(
     chunkEntities: Iterable<Entity>,
-    voxelSource: IVoxelSource
+    voxelSource: IVoxelSource,
+    type: BlockType,
+    limit: number = 20
   ): { x: number; y: number; z: number }[] {
-    const blueprints: { x: number; y: number; z: number }[] = [];
+    const blocks: { x: number; y: number; z: number }[] = [];
 
     // Iterating over Render Chunks (Entities)
     for (const entity of chunkEntities) {
+        if (blocks.length >= limit) break;
         if (!entity.chunkPosition) continue;
         const { x: cx, y: cy, z: cz } = entity.chunkPosition;
 
@@ -20,19 +23,20 @@ export class VoxelQuery {
       for (let x = 0; x < CHUNK_SIZE; x++) {
         for (let y = 0; y < CHUNK_SIZE; y++) {
           for (let z = 0; z < CHUNK_SIZE; z++) {
+            if (blocks.length >= limit) break;
             const wx = cx * CHUNK_SIZE + x;
             const wy = cy * CHUNK_SIZE + y;
             const wz = cz * CHUNK_SIZE + z;
 
-            if (voxelSource.getBlock(wx, wy, wz) === BlockType.FRAME) {
-              blueprints.push({ x: wx, y: wy, z: wz });
+            if (voxelSource.getBlock(wx, wy, wz) === type) {
+              blocks.push({ x: wx, y: wy, z: wz });
             }
           }
         }
       }
     }
 
-    return blueprints;
+    return blocks;
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks

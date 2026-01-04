@@ -3,7 +3,7 @@ import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType, Vector3 } from '../../types';
 import { useStore } from '../../state/store'; 
-import { FRAME_COST } from '../../constants';
+import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
 
 const ENGINE = BvxEngine.getInstance();
@@ -69,9 +69,27 @@ export const BrainSystem = (clock: THREE.Clock) => {
       }
     };
 
-    // Priority: BUILD > MINE
+    // Priority: BUILD (Blueprints) > UPGRADE (Frames -> Energy) > MINE
     if (canBuild && blueprints.length > 0) {
         findClosest(blueprints, 'BUILD');
+    }
+
+    // Secondary Priority: Upgrade Frames -> Panels if Energy is needed
+    if (!bestTarget && canBuild && state.energy < 1000) {
+         const frames = ENGINE.findBlocksByType(BlockType.FRAME, 5); 
+         if (frames.length > 0) {
+             findClosest(frames, 'BUILD');
+         }
+    }
+
+    // Tertiary Priority: Upgrade Panels -> Shells (Highest Value) if Rare Matter available
+    const canUpgradeToShell = state.rareMatter >= SHELL_COST;
+    if (!bestTarget && canUpgradeToShell) {
+        // Find panels to upgrade
+        const panels = ENGINE.findBlocksByType(BlockType.PANEL, 5);
+        if (panels.length > 0) {
+            findClosest(panels, 'BUILD'); // Reuse BUILD mode
+        }
     }
     
     // If no build target found (or cannot build), look for mine

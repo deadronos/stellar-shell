@@ -23,6 +23,13 @@ export const HUD = () => {
           <div className="text-xl font-mono text-purple-300">{useStore((state) => state.rareMatter)}</div>
         </div>
         <div>
+          <div className="text-xs text-yellow-400 uppercase tracking-widest">Energy</div>
+          <div className="text-xl font-mono text-yellow-300">
+             {useStore((state) => Math.floor(state.energy))} 
+             <span className="text-xs text-yellow-600 ml-1">+{useStore((state) => state.energyGenerationRate)}/s</span>
+          </div>
+        </div>
+        <div>
           <div className="text-xs text-gray-400 uppercase tracking-widest">Drones</div>
           <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
         </div>

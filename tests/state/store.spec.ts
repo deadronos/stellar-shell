@@ -37,4 +37,20 @@ describe('useStore', () => {
         expect(success).toBe(false);
         expect(useStore.getState().matter).toBe(10);
     });
+    it('consumeRareMatter decrements rare matter if sufficient', () => {
+        useStore.setState({ rareMatter: 10 });
+        const { consumeRareMatter } = useStore.getState();
+        
+        const success = consumeRareMatter(2);
+        expect(success).toBe(true);
+        expect(useStore.getState().rareMatter).toBe(8);
+    });
+
+    it('consumeRareMatter failures', () => {
+        useStore.setState({ rareMatter: 1 });
+        const { consumeRareMatter } = useStore.getState();
+        
+        expect(consumeRareMatter(2)).toBe(false);
+        expect(useStore.getState().rareMatter).toBe(1);
+    });
 });

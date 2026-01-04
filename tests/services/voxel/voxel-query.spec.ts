@@ -20,7 +20,7 @@ describe('VoxelQuery', () => {
             // 10,10,10 is in chunk 0,0,0
         ] as any;
 
-        const blueprints = VoxelQuery.findBlueprints(chunkEntities, mockVoxelSource);
+        const blueprints = VoxelQuery.findBlocksByType(chunkEntities, mockVoxelSource, BlockType.FRAME);
         // 10,10,10 is in chunk 0,0,0. (10/16 = 0)
         // Wait, loop iterates 0..15.
         // x=10, y=10, z=10 is 0*16 + 10 = 10.

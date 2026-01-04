@@ -6,6 +6,7 @@ export enum BlockType {
   FRAME = 10, // Blueprint stage
   BLUEPRINT_FRAME = 11, // Ghost frame
   PANEL = 20, // Completed Dyson Panel
+  SHELL = 25, // Advanced Dyson Shell
   HUB = 30, // Drone control hub
 }
 

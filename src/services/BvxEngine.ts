@@ -170,9 +170,9 @@ export class BvxEngine {
     return (bChunk as VoxelChunk8).getMetaData(vIndex) as BlockType;
   }
 
-  // Find all blueprints (Frames) for drones
-  public findBlueprints(): { x: number; y: number; z: number }[] {
-    return VoxelQuery.findBlueprints(this.chunkEntities.values(), this);
+  // Find blocks of specific type
+  public findBlocksByType(type: BlockType, limit: number = 20): { x: number; y: number; z: number }[] {
+    return VoxelQuery.findBlocksByType(this.chunkEntities.values(), this, type, limit);
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
