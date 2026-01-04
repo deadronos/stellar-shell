@@ -1,29 +1,24 @@
-import { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Mesh } from 'three';
+import React, { Suspense } from 'react';
+import { Stars } from '@react-three/drei';
+import { SystemRunner } from '../ecs/SystemRunner';
+import { VoxelWorld } from '../scenes/VoxelWorld';
+import { PlayerController } from './PlayerController';
+import { Sun } from '../scenes/Sun';
+import { Drones } from '../scenes/Drones';
 
 export default function Scene() {
-  const meshRef = useRef<Mesh>(null);
-  const [hovered, setHover] = useState(false);
-  const [active, setActive] = useState(false);
-
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta;
-      meshRef.current.rotation.y += delta * 0.5;
-    }
-  });
-
   return (
-    <mesh
-      ref={meshRef}
-      scale={active ? 1.5 : 1}
-      onClick={() => setActive(!active)}
-      onPointerOver={() => setHover(true)}
-      onPointerOut={() => setHover(false)}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
-    </mesh>
+    <Suspense fallback={null}>
+      <Stars radius={200} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <Sun />
+
+      {/* Game World */}
+      <SystemRunner />
+      <VoxelWorld />
+      <Drones />
+
+      {/* Input & Camera */}
+      <PlayerController />
+    </Suspense>
   );
 }

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 import { BlockType } from '../types';
+import { StateUpdateMessage } from '../types/messages';
 
 interface StoreState {
   matter: number;
@@ -15,9 +17,12 @@ interface StoreState {
   addDrone: () => void;
   setTool: (tool: 'LASER' | 'BUILD') => void;
   setBlueprint: (type: BlockType) => void;
+
+  // Sync
+  syncState: (payload: Partial<StoreState>) => void;
 }
 
-export const useStore = create<StoreState>((set, get) => ({
+export const useStore = create(subscribeWithSelector<StoreState>((set, get) => ({
   matter: 0,
   energy: 100,
   droneCount: 0,
@@ -49,4 +54,28 @@ export const useStore = create<StoreState>((set, get) => ({
 
   setTool: (tool) => set({ selectedTool: tool }),
   setBlueprint: (type) => set({ selectedBlueprint: type }),
-}));
+
+  syncState: (payload) => set(payload),
+})));
+
+
+// Helper to broadcast changes from Worker -> Main
+// This should only be called if running in Worker context
+if (typeof self !== 'undefined' && typeof window === 'undefined') {
+  useStore.subscribe(
+    (state) => ({
+        matter: state.matter,
+        energy: state.energy,
+        droneCount: state.droneCount,
+        droneCost: state.droneCost
+    }),
+    (state) => {
+        const msg: StateUpdateMessage = {
+            type: 'STATE_UPDATE',
+            payload: state
+        };
+        postMessage(msg);
+    },
+    { equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b) } // Shallow check
+  );
+}

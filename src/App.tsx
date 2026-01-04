@@ -1,40 +1,37 @@
-import React, { StrictMode, Suspense } from 'react';
+import React, { StrictMode, useEffect } from 'react';
 import { Canvas } from '@react-three/offscreen';
-import { Stars } from '@react-three/drei';
-import { SystemRunner } from './ecs/SystemRunner';
-import { VoxelWorld } from './scenes/VoxelWorld';
-import { PlayerController } from './components/PlayerController';
-import { Sun } from './scenes/Sun';
-import { Drones } from './scenes/Drones';
 import { HUD } from './components/HUD';
-
+import { InputCapture } from './components/InputCapture';
+import { useStore } from './state/store';
+import { MainMessage } from './types/messages';
 
 // Worker thread
 const worker = new Worker(new URL('./workers/scene.worker.tsx', import.meta.url), {
   type: 'module',
 });
 
-
 function Game() {
-  const fallback = (
-    <Suspense fallback={null}>
-      <Stars radius={200} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-      <Sun />
+  const syncState = useStore((state) => state.syncState);
 
-      {/* Game World */}
-      <SystemRunner />
-      <VoxelWorld />
-      <Drones />
-
-      {/* Input & Camera */}
-      <PlayerController />
-    </Suspense>
-  );
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+        const msg = e.data as MainMessage;
+        if (msg.type === 'STATE_UPDATE') {
+            syncState(msg.payload);
+        }
+    };
+    worker.addEventListener('message', onMessage);
+    return () => worker.removeEventListener('message', onMessage);
+  }, [syncState]);
 
   return (
     <div className="w-full h-full relative bg-black">
-      {/* Offscreen rendering: pass a worker and provide a main-thread fallback; do NOT pass children (they get cloned) */}
-      <Canvas worker={worker} gl={{ antialias: false }} fallback={fallback} dpr={[1, 2]} />
+      {/* Offscreen rendering: pass a worker. Fallback is null because we want the worker to do everything. */}
+      {/* If fallback is provided, it runs on main thread until worker is ready or if worker fails. */}
+      {/* However, our PlayerController is refactored to use WorkerInput, so it won't work on Main Thread anymore unless we mock it. */}
+      <Canvas worker={worker} gl={{ antialias: false }} fallback={null} dpr={[1, 2]} />
+
+      <InputCapture worker={worker} />
 
       {/* UI Overlay */}
       <HUD />
@@ -42,9 +39,6 @@ function Game() {
   );
 }
 
-
-
-// Post-processing could be added here, but keeping it simple for the single-file constraint robustness
 export default function App() {
    return (
     <>

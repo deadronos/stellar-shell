@@ -5,13 +5,13 @@ import { BvxEngine } from '../services/BvxEngine';
 import { BlockType } from '../types';
 import { useStore } from '../state/store';
 import { FRAME_COST } from '../constants';
+import { workerInput } from '../services/WorkerInput';
 
 const ENGINE = BvxEngine.getInstance();
 const SPEED = 15;
 
 export const PlayerController = () => {
-  const { camera, gl } = useThree();
-  const keys = useRef<Record<string, boolean>>({});
+  const { camera } = useThree();
   const addMatter = useStore((state) => state.addMatter);
   const consumeMatter = useStore((state) => state.consumeMatter);
   const selectedTool = useStore((state) => state.selectedTool);
@@ -27,15 +27,7 @@ export const PlayerController = () => {
     camera.lookAt(50, 0, 50);
   }, [camera]);
 
-  // Input Handling
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => (keys.current[e.code] = true);
-    const onKeyUp = (e: KeyboardEvent) => (keys.current[e.code] = false);
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-
-    // Interaction (Mine/Build)
-    const performInteraction = () => {
+  const performInteraction = () => {
       // Raycast from center of camera
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -84,68 +76,57 @@ export const PlayerController = () => {
       }
     };
 
-    // Mouse Event Handlers
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button === 0) {
-        // Left Click
-        isDragging.current = true;
-        dragDistance.current = 0;
-      }
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (isDragging.current) {
-        const dx = e.movementX;
-        const dy = e.movementY;
-        dragDistance.current += Math.abs(dx) + Math.abs(dy);
-
-        camera.rotation.y -= dx * 0.002;
-        camera.rotation.x -= dy * 0.002;
-        camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
-      }
-    };
-
-    const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 0) {
-        isDragging.current = false;
-        // If dragging was minimal, treat as a click to interact
-        if (dragDistance.current < 5) {
-          performInteraction();
-        }
-      }
-    };
-
-    gl.domElement.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      gl.domElement.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [gl, camera, addMatter, consumeMatter, selectedTool, selectedBlueprint]);
-
-  // Movement Physics
+  // Movement Physics & Input Processing
   useFrame((state, delta) => {
+    // 1. Process Keys (Movement)
+    const keys = workerInput.keys;
     const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
 
     const moveVec = new THREE.Vector3();
-    if (keys.current['KeyW']) moveVec.add(forward);
-    if (keys.current['KeyS']) moveVec.sub(forward);
-    if (keys.current['KeyD']) moveVec.add(right);
-    if (keys.current['KeyA']) moveVec.sub(right);
-    if (keys.current['Space']) moveVec.add(up);
-    if (keys.current['ShiftLeft']) moveVec.sub(up);
+    if (keys['KeyW']) moveVec.add(forward);
+    if (keys['KeyS']) moveVec.sub(forward);
+    if (keys['KeyD']) moveVec.add(right);
+    if (keys['KeyA']) moveVec.sub(right);
+    if (keys['Space']) moveVec.add(up);
+    if (keys['ShiftLeft']) moveVec.sub(up);
 
     if (moveVec.length() > 0) {
       moveVec.normalize().multiplyScalar(SPEED * delta);
       camera.position.add(moveVec);
     }
+
+    // 2. Process Mouse (Rotation & Interaction)
+    const mouseDelta = workerInput.getAndResetMouseDelta();
+    const mouseButtons = workerInput.mouseButtons;
+
+    if (mouseButtons[0]) { // Left Button Held
+       if (!isDragging.current) {
+         // Just started pressing
+         isDragging.current = true;
+         dragDistance.current = 0;
+       }
+
+       // Handle rotation if there was movement
+       if (mouseDelta.x !== 0 || mouseDelta.y !== 0) {
+           dragDistance.current += Math.abs(mouseDelta.x) + Math.abs(mouseDelta.y);
+           camera.rotation.y -= mouseDelta.x * 0.002;
+           camera.rotation.x -= mouseDelta.y * 0.002;
+           camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+       }
+
+    } else {
+        // Left Button Released
+        if (isDragging.current) {
+            isDragging.current = false;
+            // If dragging was minimal, treat as click
+            if (dragDistance.current < 5) {
+                performInteraction();
+            }
+        }
+    }
+
   });
 
   return null;
