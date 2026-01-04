@@ -10,6 +10,7 @@ import { BvxEngine } from '../services/BvxEngine';
 import { EnergySystem } from './systems/EnergySystem';
 import { MiningSystem } from './systems/MiningSystem';
 import { ConstructionSystem } from './systems/ConstructionSystem';
+import { PlayerSystem } from './systems/PlayerSystem';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
@@ -50,6 +51,7 @@ export const SystemRunner = () => {
         MovementSystem(delta);
         EnergySystem(delta);
         ChunkSystem();
+        PlayerSystem(delta);
     });
 
     return null;

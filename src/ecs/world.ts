@@ -18,6 +18,23 @@ export type Entity = {
   carryingType?: BlockType | null;
   miningProgress?: number;
 
+  // Player Components
+  isPlayer?: boolean;
+  input?: {
+    forward: boolean;
+    backward: boolean;
+    left: boolean;
+    right: boolean;
+    up: boolean;
+    down: boolean;
+    mine: boolean; // Left click interaction
+    build: boolean; // Alt interaction
+  };
+  cameraRotation?: {
+    x: number;
+    y: number;
+  };
+  
   // Visuals
   color?: THREE.Color;
 
