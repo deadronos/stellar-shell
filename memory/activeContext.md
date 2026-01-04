@@ -9,6 +9,7 @@
   - Chunk Management moved to Miniplex ECS (`isChunk` entities).
   - Rendering is reactive via `ChunkSystem` and `useEntities` hook in `VoxelWorld`.
 - Updated unit tests (`tests/bvx-engine.spec.ts`) to support ECS integration.
+- Fixed `VoxelWorld` rendering issue where chunks wouldn't appear until a re-render was forced.
 - Documented ECS Refactor in `docs/ARCHITECTURE/DEC002-ecs-chunks.md`.
 
 **Next steps:**

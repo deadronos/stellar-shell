@@ -22,3 +22,6 @@ This approach violated the separation of concerns and the "Best Practices" for i
 **Negative:**
 - **Complexity**: Requires understanding ECS patterns.
 - **Entity Overhead**: Creates more entities in the world, but Miniplex is optimized for thousands of entities, so this is negligible for typical chunk counts.
+
+## Lessons Learned
+- **Reactive Dependencies**: When using `useEntities`, remember that the hook only updates when the *set* of entities changes. If you rely on a component (like `geometry`) that is added asynchronously, you *must* include it in the query keys (e.g., `ECS.with('isChunk', 'geometry')`) or the Component won't re-render to reflect the new data.

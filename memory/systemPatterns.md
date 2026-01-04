@@ -13,7 +13,7 @@
 
 - **ECS-Driven Chunks**: Chunks are represented as entities with `chunkPosition`, `needsUpdate`, and `geometry` components.
     - `ChunkSystem`: Watches for `needsUpdate: true`, calls `BvxEngine.generateChunkMesh`, and updates the `geometry`.
-    - `VoxelWorld`: Renders chunk entities using `useEntities` hook.
+    - `VoxelWorld`: Renders chunk entities using `useEntities` hook. **Crucial:** Must query for `geometry` to trigger re-render when mesh is ready.
 - **Data/Logic Separation**:
     - `BvxEngine`: Handles raw block data (`setBlock`, `getBlock`) and mesh generation algorithms.
     - ECS: Handles lifecycle, updates, and interactions (e.g. mining triggers `setBlock` which updates ECS Entity).
