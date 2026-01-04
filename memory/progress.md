@@ -5,6 +5,7 @@
 - Basic voxel world rendering using React Three Fiber.
 - `BvxEngine` provides core voxel storage and chunking behavior.
 - Simple drone entities and player controller exist in `src/components`.
+- Basic tests for `BvxEngine` and ECS Integration (`npm test`).
 
 **What's left / planned work:**
 
@@ -14,7 +15,6 @@
 
 **Known issues / TODOs:**
 
-- No test script in `package.json`.
 - Improve documentation for code contributors (design notes, examples).
 
 **Last updated:** 2026-01-03

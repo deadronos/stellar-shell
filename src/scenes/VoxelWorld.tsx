@@ -38,7 +38,7 @@ export const VoxelWorld = () => {
     // But it's cleaner to only render if geometry exists?
     // No, if we want to update it later, we need the component mounted.
     // So distinct chunks are enough.
-  const { entities } = useEntities(ECS.with('isChunk', 'chunkPosition'));
+  const { entities } = useEntities(ECS.with('isChunk', 'chunkPosition', 'geometry'));
 
   return (
     <group>
