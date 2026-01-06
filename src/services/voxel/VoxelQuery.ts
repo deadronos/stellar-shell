@@ -55,6 +55,10 @@ export class VoxelQuery {
       [0, 0, -1],
     ];
 
+    // ...
+    // Debug counter
+    let potentialFound = 0;
+    
     // Scan Chunk Entities
     for (const entity of chunkEntities) {
       if (targets.length >= limit) break;
@@ -73,6 +77,7 @@ export class VoxelQuery {
             const block = voxelSource.getBlock(wx, wy, wz);
 
             if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE) {
+              potentialFound++;
               // Check exposure
               let isExposed = false;
               for (const dir of directions) {
@@ -91,6 +96,11 @@ export class VoxelQuery {
         }
       }
     }
+    
+    if (Math.random() < 0.05) {
+        console.log(`[VoxelQuery] Scan complete. Potential: ${potentialFound}. Found: ${targets.length}. Limit: ${limit}`);
+    }
+    
     return targets;
   }
 }

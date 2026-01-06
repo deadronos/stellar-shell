@@ -9,8 +9,14 @@ import { Sun } from './scenes/Sun';
 import { Drones } from './scenes/Drones';
 import { HUD } from './components/HUD';
 
+import { useStore } from './state/store';
+
 // Post-processing could be added here, but keeping it simple for the single-file constraint robustness
 export default function App() {
+  React.useEffect(() => {
+    (window as any).gameStore = useStore;
+  }, []);
+
   return (
     <>
       <div className="w-full h-full relative bg-black">

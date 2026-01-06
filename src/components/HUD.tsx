@@ -2,6 +2,8 @@ import React from 'react';
 import { useStore } from '../state/store';
 import { BlockType } from '../types';
 import { BvxEngine } from '../services/BvxEngine';
+import { SettingsModal } from './SettingsModal';
+import { DroneDebugPanel } from './DroneDebugPanel';
 
 export const HUD = () => {
   const matter = useStore((state) => state.matter);
@@ -12,9 +14,13 @@ export const HUD = () => {
   const setTool = useStore((state) => state.setTool);
   const prestigeLevel = useStore((state) => state.prestigeLevel);
   const energyGenerationRate = useStore((state) => state.energyGenerationRate);
+  const toggleSettings = useStore((state) => state.toggleSettings);
 
   return (
     <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-6">
+      <SettingsModal />
+      <DroneDebugPanel />
+
       {/* Top Bar: Resources */}
       <div className="flex gap-8 items-center bg-black/60 backdrop-blur border border-white/10 p-4 rounded-lg self-start pointer-events-auto">
         <div>
@@ -55,6 +61,19 @@ export const HUD = () => {
              }`}
         >
           Build Drone ({droneCost})
+        </button>
+
+        <div className="h-8 w-px bg-white/20 mx-2"></div>
+
+        <button
+            onClick={toggleSettings}
+            className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
+            title="Settings"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
         </button>
       </div>
 

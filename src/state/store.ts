@@ -12,6 +12,10 @@ interface StoreState {
   selectedTool: 'LASER' | 'BUILD';
   selectedBlueprint: BlockType;
 
+  // UI State
+  isSettingsOpen: boolean;
+  showDebugPanel: boolean;
+
   // Actions
   resetWorld: () => void;
   addMatter: (amount: number) => void;
@@ -23,6 +27,10 @@ interface StoreState {
   addDrone: () => void;
   setTool: (tool: 'LASER' | 'BUILD') => void;
   setBlueprint: (type: BlockType) => void;
+  
+  // UI Actions
+  toggleSettings: () => void;
+  toggleDebugPanel: () => void;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -35,6 +43,11 @@ export const useStore = create<StoreState>((set, get) => ({
   prestigeLevel: 0,
   selectedTool: 'LASER',
   selectedBlueprint: BlockType.FRAME,
+  isSettingsOpen: false,
+  showDebugPanel: false,
+
+  toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
+  toggleDebugPanel: () => set((state) => ({ showDebugPanel: !state.showDebugPanel })),
 
   addMatter: (amount) => set((state) => ({ matter: state.matter + amount })),
   addRareMatter: (amount) => set((state) => ({ rareMatter: state.rareMatter + amount })),

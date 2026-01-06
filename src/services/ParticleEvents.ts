@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 
-type ParticleCallback = (position: THREE.Vector3, color: THREE.Color, count?: number) => void;
+interface ParticleOptions {
+  velocity?: THREE.Vector3;
+  life?: number;
+}
+
+type ParticleCallback = (position: THREE.Vector3, color: THREE.Color, count?: number, options?: ParticleOptions) => void;
 
 class ParticleEventsService {
   private listeners: ParticleCallback[] = [];
@@ -12,8 +17,8 @@ class ParticleEventsService {
     };
   }
 
-  public emit(position: THREE.Vector3, color: THREE.Color, count: number = 1) {
-    this.listeners.forEach((cb) => cb(position, color, count));
+  public emit(position: THREE.Vector3, color: THREE.Color, count: number = 1, options?: ParticleOptions) {
+    this.listeners.forEach((cb) => cb(position, color, count, options));
   }
 }
 

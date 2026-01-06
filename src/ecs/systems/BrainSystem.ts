@@ -50,6 +50,14 @@ export const BrainSystem = (clock: THREE.Clock) => {
   for (const drone of allDrones) {
     if (drone.state !== 'IDLE') continue;
 
+    // SELF-HEALING: Clear stale components if IDLE
+    // If a drone is IDLE, it shouldn't have a targetBlock or carryingType
+    if (drone.targetBlock || drone.carryingType) {
+        console.warn(`[Brain] Drone ${drone.id} is IDLE but has stale components. Cleaning up.`);
+        ECS.removeComponent(drone, 'targetBlock');
+        drone.carryingType = null;
+    }
+
 
     const blueprints = getBlueprints();
     const canBuild = currentMatter >= FRAME_COST;
@@ -101,7 +109,11 @@ export const BrainSystem = (clock: THREE.Clock) => {
     
     // If no build target found (or cannot build), look for mine
     if (!bestTarget) {
-        findClosest(getMines(), 'MINE');
+        const mines = getMines();
+        if (Math.random() < 0.01) {
+            console.log(`[Brain] Drone ${drone.id} searching. Mines Found: ${mines?.length}. Blueprints: ${blueprints.length}. Reserved: ${reservedBlocks.size}`);
+        }
+        findClosest(mines, 'MINE');
     }
 
     if (bestTarget && targetType) {

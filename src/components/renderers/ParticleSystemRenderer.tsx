@@ -34,21 +34,32 @@ export const ParticleSystemRenderer = () => {
 
   React.useEffect(() => {
     // Subscribe
-    return ParticleEvents.subscribe((pos, color, count = 1) => {
+    return ParticleEvents.subscribe((pos, color, count = 1, options) => {
       let spawned = 0;
       for (const p of particles.current) {
         if (!p.active) {
             p.active = true;
             p.position.copy(pos);
-            // Random velocity spray
-            const rx = Math.random() - 0.5;
-            const ry = Math.random() - 0.5;
-            const rz = Math.random() - 0.5;
-            p.velocity.set(rx * 5, ry * 5, rz * 5);
+            
+            if (options?.velocity) {
+                p.velocity.copy(options.velocity);
+            } else {
+                // Random velocity spray
+                const rx = Math.random() - 0.5;
+                const ry = Math.random() - 0.5;
+                const rz = Math.random() - 0.5;
+                p.velocity.set(rx * 5, ry * 5, rz * 5);
+            }
             
             p.color.copy(color);
-            const rLife = Math.random();
-            p.life = 0.5 + rLife * 0.5;
+            
+            if (options?.life) {
+                p.life = options.life;
+            } else {
+                const rLife = Math.random();
+                p.life = 0.5 + rLife * 0.5;
+            }
+            
             spawned++;
             if (spawned >= count) break;
         }
