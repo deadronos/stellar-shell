@@ -51,6 +51,12 @@ export type Entity = {
   chunkPosition?: { x: number; y: number; z: number };
   needsUpdate?: boolean;
   geometry?: THREE.BufferGeometry;
+  meshData?: {
+    positions: Float32Array;
+    normals: Float32Array;
+    colors: Float32Array;
+    indices: number[];
+  };
 };
 
 // Create a typed world
