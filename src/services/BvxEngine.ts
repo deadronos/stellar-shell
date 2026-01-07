@@ -116,6 +116,8 @@ export class BvxEngine {
       this.chunkEntities.set(renderKey, entity);
     } else {
       // Mark existing entity as dirty using addComponent to notify Miniplex
+      // Force toggle to ensure change detection triggers query updates
+      ECS.removeComponent(entity, 'needsUpdate');
       ECS.addComponent(entity, 'needsUpdate', true);
     }
 

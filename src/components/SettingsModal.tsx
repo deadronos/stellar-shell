@@ -10,7 +10,7 @@ export const SettingsModal = () => {
   if (!isSettingsOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-auto">
       <div className="bg-gray-900 border border-white/20 rounded-xl p-6 w-96 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white tracking-widest uppercase">Settings</h2>

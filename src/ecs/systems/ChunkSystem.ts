@@ -6,7 +6,7 @@ export const ChunkSystem = () => {
     // Identify chunks that need updating
     const dirtyChunks = ECS.with('isChunk', 'chunkPosition', 'needsUpdate');
 
-    for (const entity of dirtyChunks) {
+    for (const entity of [...dirtyChunks.entities]) {
         // Double check not strictly needed if query is correct, but safe.
         // Also TypeScript might want confirmation.
         if (entity.needsUpdate) {
