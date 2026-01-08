@@ -31,7 +31,7 @@ describe('ChunkSystem', () => {
             chunkPosition: { x: 0, y: 0, z: 0 },
             velocity: new THREE.Vector3(0, 0, 0)
         });
-        
+
         // Add a dirty chunk needed by system
         // ChunkSystem iterates 'dirtyChunks̈́'
         const chunk = ECS.add({
@@ -46,7 +46,8 @@ describe('ChunkSystem', () => {
         ChunkSystem();
 
         expect(mockGenerate).toHaveBeenCalled();
-        expect(chunk.geometry).toBeDefined();
+        // expect(chunk.geometry).toBeDefined(); // Logic split: geometry is created in renderer
+        expect(chunk.meshData).toBeDefined(); // System produces data
 
         ECS.remove(player);
         ECS.remove(chunk);

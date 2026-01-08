@@ -6,41 +6,27 @@ export const ChunkSystem = () => {
     // Identify chunks that need updating
     const dirtyChunks = ECS.with('isChunk', 'chunkPosition', 'needsUpdate');
 
-    for (const entity of dirtyChunks) {
+    for (const entity of [...dirtyChunks.entities]) {
         // Double check not strictly needed if query is correct, but safe.
         // Also TypeScript might want confirmation.
         if (entity.needsUpdate) {
             const { x, y, z } = entity.chunkPosition;
             const engine = BvxEngine.getInstance(); // Ensure instance
-            
-            // Generate Mesh Data
-            const { positions, normals, colors, indices } = engine.generateChunkMesh(x, y, z);
-            
-            // If empty, we can release the geometry or keep it null
-            if (positions.length === 0) {
-                 if (entity.geometry) {
-                     entity.geometry.dispose();
-                 }
-                 ECS.removeComponent(entity, 'geometry');
-            } else {
-                // Update or Create Geometry
-                let geometry = entity.geometry;
-                if (!geometry) {
-                    geometry = new THREE.BufferGeometry();
-                    ECS.addComponent(entity, 'geometry', geometry);
-                }
 
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-                geometry.setIndex(indices);
-                
-                geometry.computeBoundingSphere();
-            }
+            // Generate Mesh Data
+            const meshData = engine.generateChunkMesh(x, y, z);
+
+            // Logic split: System produces DATA, Renderer consumes it.
+            // We store the raw mesh data on the entity.
+            // The renderer (RenderChunk) will pick this up and update the THREE.Geometry.
+
+            // Force update by removing first
+            if (entity.meshData) ECS.removeComponent(entity, 'meshData');
+            ECS.addComponent(entity, 'meshData', meshData);
 
             // Mark as updated (Consume the dirty flag)
             // entity.needsUpdate = false; // <-- This doesn't notify miniplex
-            ECS.removeComponent(entity, 'needsUpdate'); 
+            ECS.removeComponent(entity, 'needsUpdate');
         }
     }
 };
