@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ParticleEvents } from '../../services/ParticleEvents';
@@ -16,13 +16,12 @@ interface Particle {
 export const ParticleSystemRenderer = () => {
   const particleMeshRef = useRef<THREE.InstancedMesh>(null);
   const dummyParticle = useMemo(() => new THREE.Object3D(), []);
-  const particles = useRef<Particle[]>([]);
 
-  // Initialize particles & subscribe to events
-  useMemo(() => {
-    // Fill pool
+  // Use useMemo to initialize the pool once, instead of pushing to ref.current in render
+  const particles = useMemo(() => {
+    const pool: Particle[] = [];
     for (let i = 0; i < MAX_PARTICLES; i++) {
-      particles.current.push({
+      pool.push({
         position: new THREE.Vector3(),
         velocity: new THREE.Vector3(),
         color: new THREE.Color(),
@@ -30,17 +29,18 @@ export const ParticleSystemRenderer = () => {
         active: false,
       });
     }
+    return pool;
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Subscribe
     return ParticleEvents.subscribe((pos, color, count = 1, options) => {
       let spawned = 0;
-      for (const p of particles.current) {
+      for (const p of particles) {
         if (!p.active) {
             p.active = true;
             p.position.copy(pos);
-            
+
             if (options?.velocity) {
                 p.velocity.copy(options.velocity);
             } else {
@@ -50,27 +50,27 @@ export const ParticleSystemRenderer = () => {
                 const rz = Math.random() - 0.5;
                 p.velocity.set(rx * 5, ry * 5, rz * 5);
             }
-            
+
             p.color.copy(color);
-            
+
             if (options?.life) {
                 p.life = options.life;
             } else {
                 const rLife = Math.random();
                 p.life = 0.5 + rLife * 0.5;
             }
-            
+
             spawned++;
             if (spawned >= count) break;
         }
       }
     });
-  }, []);
+  }, [particles]);
 
   useFrame((state, delta) => {
     if (!particleMeshRef.current) return;
 
-    particles.current.forEach((p, idx) => {
+    particles.forEach((p, idx) => {
       if (p.active) {
         p.life -= delta;
         p.velocity.multiplyScalar(0.95);

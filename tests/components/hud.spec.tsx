@@ -24,7 +24,12 @@ describe('HUD', () => {
 
         render(<HUD />);
 
-        expect(screen.getByText(/Matter: 100/i)).toBeInTheDocument();
-        expect(screen.getByText(/Drones: 5/i)).toBeInTheDocument();
+        // Check for Matter label and value separately as they are in different elements
+        expect(screen.getByText(/Matter/i)).toBeInTheDocument();
+        expect(screen.getByText(/100/i)).toBeInTheDocument();
+
+        // Check for Drones label and value
+        expect(screen.getByText(/Drones/i)).toBeInTheDocument();
+        expect(screen.getByText(/5/i)).toBeInTheDocument();
     });
 });

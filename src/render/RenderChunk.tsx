@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Entity } from '../ecs/world';
@@ -10,7 +10,8 @@ interface RenderChunkProps {
 
 export const RenderChunk: React.FC<RenderChunkProps> = ({ entity }) => {
     const meshRef = useRef<THREE.Mesh>(null);
-    const geometryRef = useRef<THREE.BufferGeometry>(new THREE.BufferGeometry());
+    // Use state to hold the geometry instance so it's stable and safe to access in render
+    const [geometry] = useState(() => new THREE.BufferGeometry());
     const lastMeshDataRef = useRef<any>(null); // Track last mesh data version
 
     useFrame(() => {
@@ -18,7 +19,7 @@ export const RenderChunk: React.FC<RenderChunkProps> = ({ entity }) => {
         // This is necessary because VoxelWorld doesn't re-render on entity component changes
         if (entity.meshData && entity.meshData !== lastMeshDataRef.current) {
             lastMeshDataRef.current = entity.meshData;
-            MeshUpdater.updateGeometry(geometryRef.current, entity.meshData);
+            MeshUpdater.updateGeometry(geometry, entity.meshData);
         }
     });
 
@@ -26,7 +27,7 @@ export const RenderChunk: React.FC<RenderChunkProps> = ({ entity }) => {
         <mesh
             ref={meshRef}
             position={entity.position}
-            geometry={geometryRef.current}
+            geometry={geometry}
         >
             <meshStandardMaterial
                 vertexColors
