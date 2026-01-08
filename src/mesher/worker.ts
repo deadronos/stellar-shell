@@ -2,21 +2,6 @@ import { VoxelMesher } from './VoxelMesher';
 import { IVoxelSource } from '../services/voxel/types';
 import { BlockType } from '../types';
 
-// Simple implementation of VoxelSource that can be hydrated from a buffer
-class WorkerVoxelSource implements IVoxelSource {
-    private data: Map<string, BlockType> = new Map();
-
-    constructor(data: any) {
-        // Need a way to efficiently pass voxel data.
-        // For now, let's assume we pass a simplified map or array.
-        // Optimizing this transfer is a separate task.
-        // Let's implement a dummy for now.
-    }
-
-    getBlock(x: number, y: number, z: number): BlockType {
-        return BlockType.AIR; // Todo
-    }
-}
 
 self.onmessage = (e: MessageEvent) => {
     const { taskId, cx, cy, cz, voxelData } = e.data;

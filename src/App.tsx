@@ -14,7 +14,8 @@ import { useStore } from './state/store';
 // Post-processing could be added here, but keeping it simple for the single-file constraint robustness
 export default function App() {
   React.useEffect(() => {
-    (window as any).gameStore = useStore;
+    // Expose for debugging in devtools; avoid `any` to satisfy lint rules
+    (window as unknown as { gameStore?: typeof useStore }).gameStore = useStore;
   }, []);
 
   return (

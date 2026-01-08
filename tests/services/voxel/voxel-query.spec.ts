@@ -14,11 +14,11 @@ describe('VoxelQuery', () => {
     };
 
     it('findBlueprints finds framework blocks', () => {
-        const chunkEntities = [
+        const chunkEntities: { chunkPosition: { x: number; y: number; z: number } }[] = [
             { chunkPosition: { x: 0, y: 0, z: 0 } },
             { chunkPosition: { x: 1, y: 1, z: 1 } } // Contains 10,10,10 ?? 16+? No. 1*16 = 16.
             // 10,10,10 is in chunk 0,0,0
-        ] as any;
+        ];
 
         const blueprints = VoxelQuery.findBlocksByType(chunkEntities, mockVoxelSource, BlockType.FRAME);
         // 10,10,10 is in chunk 0,0,0. (10/16 = 0)
@@ -36,9 +36,9 @@ describe('VoxelQuery', () => {
     });
 
     it('findMiningTargets finds exposed asteroids', () => {
-        const chunkEntities = [
+        const chunkEntities: { chunkPosition: { x: number; y: number; z: number } }[] = [
              { chunkPosition: { x: 0, y: 0, z: 0 } }
-        ] as any;
+        ];
 
         const targets = VoxelQuery.findMiningTargets(chunkEntities, mockVoxelSource);
         // 5,5,5 is ASTEROID_SURFACE.

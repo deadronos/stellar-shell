@@ -19,7 +19,7 @@ vi.mock('@react-three/fiber', () => ({
 // Mock drei
 vi.mock('@react-three/drei', () => ({
     Instance: () => null,
-    Instances: ({ children }: any) => children,
+    Instances: ({ children }: { children?: React.ReactNode }) => children,
     Text: () => null
 }));
 

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlayerSystem } from '../../src/ecs/systems/PlayerSystem';
 import { ECS } from '../../src/ecs/world';
 import * as THREE from 'three';
-import { BvxEngine } from '../../src/services/BvxEngine';
 
 // Mock BvxEngine
 vi.mock('../../src/services/BvxEngine', () => {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { useStore } from '../state/store';
-import { BlockType } from '../types';
 import { BvxEngine } from '../services/BvxEngine';
 import { SettingsModal } from './SettingsModal';
 import { DroneDebugPanel } from './DroneDebugPanel';
@@ -127,7 +126,14 @@ export const HUD = () => {
   );
 };
 
-const ToolButton = ({ label, active, onClick, color }: any) => (
+type ToolButtonProps = {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  color?: string;
+};
+
+const ToolButton: React.FC<ToolButtonProps> = ({ label, active, onClick, color }) => (
   <button
     onClick={onClick}
     className={`px-6 py-3 rounded-lg font-mono text-sm font-bold transition-all border

@@ -47,6 +47,14 @@ export class BlueprintManager {
     };
   }
 
+  /**
+   * Reset internal state for tests only. Kept intentionally small and clearly named.
+   */
+  public resetForTests() {
+    this.blueprints.clear();
+    this.listeners = [];
+  }
+
   private notifyListeners() {
     this.listeners.forEach((l) => l());
   }
