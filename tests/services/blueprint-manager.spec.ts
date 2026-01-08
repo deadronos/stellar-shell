@@ -13,9 +13,8 @@ describe('BlueprintManager', () => {
     // A better pattern for testing singletons is to allow resetting or accessing internal state
     // But let's work with the public API
     
-    // Hack ref to clear for test isolation
-    (manager as any).blueprints.clear();
-    (manager as any).listeners = [];
+    // Ensure clean state for tests via helper
+    manager.resetForTests();
   });
 
   it('should add blueprints', () => {

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
-import { BlockType, Vector3 } from '../../types';
+import { BlockType } from '../../types';
 import { useStore } from '../../state/store'; 
 import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';

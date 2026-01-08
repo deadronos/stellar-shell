@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { MesherWorker } from '../../src/mesher/MesherWorker';
 
 describe('MesherWorker', () => {
@@ -13,7 +13,7 @@ describe('MesherWorker', () => {
             dispatchEvent() { return true; }
             onerror = null;
             onmessageerror = null;
-        } as any;
+        } as unknown as typeof Worker;
 
         const mesher = new MesherWorker();
         expect(mesher).toBeDefined();

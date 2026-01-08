@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
 import { PlayerController } from '../../src/components/PlayerController';
 
 // Note: PlayerController likely uses React Three Fiber hooks.

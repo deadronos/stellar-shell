@@ -12,7 +12,7 @@ export const RenderChunk: React.FC<RenderChunkProps> = ({ entity }) => {
     const meshRef = useRef<THREE.Mesh>(null);
     // Use state to hold the geometry instance so it's stable and safe to access in render
     const [geometry] = useState(() => new THREE.BufferGeometry());
-    const lastMeshDataRef = useRef<any>(null); // Track last mesh data version
+    const lastMeshDataRef = useRef<Entity['meshData'] | null>(null); // Track last mesh data version
 
     useFrame(() => {
         // Poll for mesh data changes

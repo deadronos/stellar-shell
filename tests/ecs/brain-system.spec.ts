@@ -1,8 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { BrainSystem } from '../../src/ecs/systems/BrainSystem';
 import { ECS } from '../../src/ecs/world';
-import { BlockType } from '../../src/types';
 
 describe('BrainSystem', () => {
   it('assigns tasks to idle drones', () => {
@@ -16,8 +15,8 @@ describe('BrainSystem', () => {
     });
     
     // Pass a mock clock or object with elapsedTime
-    const mockClock = { elapsedTime: 10 } as any;
-    BrainSystem(mockClock);
+    const mockClock: { elapsedTime: number } = { elapsedTime: 10 };
+    BrainSystem(mockClock as unknown as THREE.Clock);
     
     // Since we didn't setup mining targets, it should probably remain IDLE or switch state if logic dictates.
     expect(drone.state).toBeDefined();

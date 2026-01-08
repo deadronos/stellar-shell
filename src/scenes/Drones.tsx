@@ -19,7 +19,7 @@ export const Drones = () => {
   // Archetypes
   const dronesArchetype = useMemo(() => ECS.with('isDrone', 'position', 'velocity'), []);
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     if (!droneMeshRef.current || !cargoMeshRef.current) return;
 
     let i = 0;
