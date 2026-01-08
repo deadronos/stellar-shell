@@ -19,6 +19,9 @@ export const ChunkSystem = () => {
             // Logic split: System produces DATA, Renderer consumes it.
             // We store the raw mesh data on the entity.
             // The renderer (RenderChunk) will pick this up and update the THREE.Geometry.
+
+            // Force update by removing first
+            if (entity.meshData) ECS.removeComponent(entity, 'meshData');
             ECS.addComponent(entity, 'meshData', meshData);
 
             // Mark as updated (Consume the dirty flag)
