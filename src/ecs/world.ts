@@ -16,7 +16,27 @@ export type Entity = {
   state?: 'IDLE' | 'MOVING_TO_BUILD' | 'MOVING_TO_MINE' | 'RETURNING_RESOURCE';
   targetBlock?: { x: number; y: number; z: number };
   carryingType?: BlockType | null;
+  miningProgress?: number;
 
+  // Player Components
+  isPlayer?: boolean;
+  input?: {
+    forward: boolean;
+    backward: boolean;
+    left: boolean;
+    right: boolean;
+    up: boolean;
+    down: boolean;
+    mine: boolean; // Left click interaction
+    build: boolean; // Alt interaction
+  };
+  cameraQuaternion?: {
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+  };
+  
   // Visuals
   color?: THREE.Color;
 
@@ -24,6 +44,19 @@ export type Entity = {
   isParticle?: boolean;
   life?: number;
   active?: boolean;
+
+  // Chunk components
+  isChunk?: boolean;
+  chunkKey?: string; // e.g. "1,2,3"
+  chunkPosition?: { x: number; y: number; z: number };
+  needsUpdate?: boolean;
+  geometry?: THREE.BufferGeometry;
+  meshData?: {
+    positions: Float32Array;
+    normals: Float32Array;
+    colors: Float32Array;
+    indices: number[];
+  };
 };
 
 // Create a typed world

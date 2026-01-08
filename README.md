@@ -1,36 +1,63 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Stellar Shell
 
-# Run and deploy your AI Studio app
+Stellar Shell is a sci-fi voxel automation game where you command a swarm of autonomous drones to strip-mine asteroids and build a megastructure in space.
 
-This contains everything you need to run your app locally.
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Version](https://img.shields.io/badge/version-0.0.0-orange)
 
-View your app in AI Studio: https://ai.studio/apps/drive/12qcPm6CVVuHVNB1kqP9ncA-tGdlnlsjm
+## 🎮 Gameplay
 
-## Run Locally
+You play as an overseer of a drone swarm. Your goal is to gather resources ("Matter") and use them to expand your fleet and build structures.
 
-**Prerequisites:** Node.js
+- **Explore**: A procedurally generated voxel asteroid field.
+- **Mine**: Use your laser or command drones to harvest **Matter** from asteroids.
+- **Build**: Place blueprints for structures. Your drones will automatically find tasks and build them using collected matter.
+- **Expand**: Construct more drones to increase your harvesting and building power.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🕹️ Controls
 
-## Linting & formatting
+- **W, A, S, D**: Move Camera
+- **Space / Shift**: Move Up / Down
+- **Mouse Drag**: Look around
+- **Left Click**: Interact (Mine or Build)
 
-This repo uses ESLint **flat config** (ESLint v9+): `eslint.config.js`.
-The older `.eslintrc*` format is deprecated upstream, so new configuration should go into the flat config file.
+## 🛠️ Features
 
-- Lint: `npm run lint`
-- Auto-fix: `npm run lint:fix`
-- Format: `npm run format`
-- Check formatting: `npm run format:check`
+- **Voxel Engine**: Built on `@astrumforge/bvx-kit` for performant, destructible voxel worlds.
+- **ECS Architecture**: Powered by `miniplex` for managing thousands of entities.
+- **Drone "Brains"**: Autonomous behavior for mining and building tasks.
+- **Reactive UI**: Built with React and Zustand.
 
-## Tailwind CSS
+## 🚀 Getting Started
 
-Tailwind is installed locally (no CDN) using Tailwind v4+ with the Vite plugin.
+### Prerequisites
 
-- Vite plugin: `@tailwindcss/vite` (configured in `vite.config.ts`)
-- CSS entry: `src/index.css` using the v4+ syntax `@import "tailwindcss";`
+- Node.js (v18+)
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Running Locally
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+
+## 🏗️ Tech Stack
+
+- **Framework**: [React 19](https://react.dev) + [Vite](https://vitejs.dev)
+- **3D Engine**: [Three.js](https://threejs.org) + [React Three Fiber](https://docs.pmnd.rs/react-three-fiber)
+- **ECS**: [Miniplex](https://github.com/hmans/miniplex)
+- **State**: [Zustand](https://github.com/pmndrs/zustand)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com)
+
+## 📄 License
+
+MIT

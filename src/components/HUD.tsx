@@ -1,6 +1,8 @@
 import React from 'react';
-import { useStore } from '../store';
-import { BlockType } from '../types';
+import { useStore } from '../state/store';
+import { BvxEngine } from '../services/BvxEngine';
+import { SettingsModal } from './SettingsModal';
+import { DroneDebugPanel } from './DroneDebugPanel';
 
 export const HUD = () => {
   const matter = useStore((state) => state.matter);
@@ -9,9 +11,15 @@ export const HUD = () => {
   const addDrone = useStore((state) => state.addDrone);
   const selectedTool = useStore((state) => state.selectedTool);
   const setTool = useStore((state) => state.setTool);
+  const prestigeLevel = useStore((state) => state.prestigeLevel);
+  const energyGenerationRate = useStore((state) => state.energyGenerationRate);
+  const toggleSettings = useStore((state) => state.toggleSettings);
 
   return (
     <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-6">
+      <SettingsModal />
+      <DroneDebugPanel />
+
       {/* Top Bar: Resources */}
       <div className="flex gap-8 items-center bg-black/60 backdrop-blur border border-white/10 p-4 rounded-lg self-start pointer-events-auto">
         <div>
@@ -19,10 +27,28 @@ export const HUD = () => {
           <div className="text-2xl font-mono text-cyan-400">{matter} kg</div>
         </div>
         <div>
+          <div className="text-xs text-purple-400 uppercase tracking-widest">Rare</div>
+          <div className="text-xl font-mono text-purple-300">{useStore((state) => state.rareMatter)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-yellow-400 uppercase tracking-widest">Energy</div>
+          <div className="text-xl font-mono text-yellow-300">
+             {useStore((state) => Math.floor(state.energy))} 
+             <span className="text-xs text-yellow-600 ml-1">+{useStore((state) => state.energyGenerationRate)}/s</span>
+          </div>
+        </div>
+        <div>
           <div className="text-xs text-gray-400 uppercase tracking-widest">Drones</div>
           <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
         </div>
         <div className="h-8 w-px bg-white/20 mx-2"></div>
+         {/* Prestige Section */}
+        {prestigeLevel > 0 && (
+            <div>
+              <div className="text-xs text-cyan-400 uppercase tracking-widest">System Level</div>
+              <div className="text-xl font-mono text-cyan-300 animate-pulse">Lv {prestigeLevel + 1}</div>
+            </div>
+        )}
         <button
           onClick={addDrone}
           disabled={matter < droneCost}
@@ -35,6 +61,19 @@ export const HUD = () => {
         >
           Build Drone ({droneCost})
         </button>
+
+        <div className="h-8 w-px bg-white/20 mx-2"></div>
+
+        <button
+            onClick={toggleSettings}
+            className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
+            title="Settings"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
       </div>
 
       {/* Center Reticle */}
@@ -42,6 +81,23 @@ export const HUD = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-white/50"></div>
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-px bg-white/50"></div>
       </div>
+
+      {/* Center: System Jump (Prestige) */}
+      {energyGenerationRate > 100 && (
+           <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
+              <button 
+                className="bg-red-900/90 hover:bg-red-600 text-white border-2 border-red-500 px-8 py-3 rounded shadow-[0_0_30px_rgba(255,0,0,0.6)] font-bold tracking-[0.2em] uppercase transition-all hover:scale-105 z-50 pointer-events-auto"
+                onClick={() => {
+                    const engine = BvxEngine.getInstance();
+                    engine.resetWorld();
+                    engine.generateAsteroid(2, 0, 2, 20); // Quick respawn for MVP
+                    useStore.getState().resetWorld();
+                }}
+              >
+                  ⚠ Initiate System Jump ⚠
+              </button>
+           </div>
+      )}
 
       {/* Bottom Bar: Toolbar */}
       <div className="self-center bg-black/60 backdrop-blur border border-white/10 p-2 rounded-xl flex gap-2 pointer-events-auto">
@@ -70,7 +126,14 @@ export const HUD = () => {
   );
 };
 
-const ToolButton = ({ label, active, onClick, color }: any) => (
+type ToolButtonProps = {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  color?: string;
+};
+
+const ToolButton: React.FC<ToolButtonProps> = ({ label, active, onClick, color }) => (
   <button
     onClick={onClick}
     className={`px-6 py-3 rounded-lg font-mono text-sm font-bold transition-all border

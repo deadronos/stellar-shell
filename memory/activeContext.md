@@ -1,18 +1,24 @@
 # Active Context — stellar-shell
 
-**Current focus:** Create and populate the Memory Bank directory with core project context files and a starter task so future agents and contributors can find project-level guidance and pending work.
+**Current focus:** Refactoring the project architecture to split logic and rendering, specifically moving the Voxel Mesher to a pure module and offloading to a worker.
 
 **Recent changes:**
 
-- Added initial memory files (project brief, product context).
-- Repository core: React + TypeScript, Vite, Three.js, React Three Fiber, BvxEngine for voxel data, ECS for game entities.
+- **Refactored Voxel Engine:**
+  - `BvxEngine` is now a stateless data service.
+  - Chunk Management moved to Miniplex ECS (`isChunk` entities).
+  - Rendering is reactive via `ChunkSystem` and `useEntities` hook in `VoxelWorld`.
+- **Started TASK002:** Logic/Render Split Refactor.
+  - Created `memory/designs/DES002-logic-render-split.md`.
+  - Created `memory/tasks/TASK002-logic-render-split.md`.
 
 **Next steps:**
 
-- Create `systemPatterns.md`, `techContext.md`, `progress.md` and the `tasks/` folder with a `_index.md` and initial task files.
-- Keep the `memory/` files up-to-date whenever project-level decisions or active tasks change.
-- Add `memory/requirements.md` with EARS-style requirements to clarify acceptance criteria for core behaviors.
+- Extract `VoxelMesher` to `src/mesher/`.
+- Create a worker for meshing.
+- Update rendering to use the worker.
 
 **Notes:**
 
-- Follow the Memory Bank conventions: store requirements in `memory/requirements.md`, designs in `memory/designs/`, and tasks in `memory/tasks/`.
+- The project now strictly follows the "Best Practices" guide for BVX-Kit + R3F + Miniplex.
+- Ensure all new game logic interacts with Chunks via ECS Entities.

@@ -24,6 +24,7 @@ export const IS_TRANSPARENT: Record<number, boolean> = {
 
 export const DRONE_COST = 50; // Matter
 export const FRAME_COST = 5; // Matter
+export const SHELL_COST = 2; // Rare Matter
 
 // ThreeJS Materials reused
 export const MATERIALS = {
@@ -44,5 +45,12 @@ export const MATERIALS = {
     metalness: 0.8,
     emissive: '#001133',
     emissiveIntensity: 0.2,
+  }),
+  [BlockType.SHELL]: new THREE.MeshStandardMaterial({
+    color: '#ffd700', // Gold
+    roughness: 0.1,
+    metalness: 1.0,
+    emissive: '#aa8800',
+    emissiveIntensity: 0.4,
   }),
 };

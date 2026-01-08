@@ -12,14 +12,15 @@
 **Dev tooling:**
 
 - Node 18 (CI uses Node 18)
-- Tests: currently no test script; consider Vitest for unit tests of engine logic
-- Linting/format: repo follows Markdown/Docs conventions; add linters if needed for code style
+- Tests: Vitest (`npm test`)
+    - Unit tests for `BvxEngine` and ECS Systems.
+- Linting/format: ESLint + Prettier
 
 **Dependencies of note:**
 
 - `@react-three/fiber`, `three` — rendering
-- `@astrumforge/bvx-kit` or local `BvxEngine` for voxel storage/meshing
-- `miniplex` for ECS
+- `@astrumforge/bvx-kit` — voxel storage (wrapped by `BvxEngine`)
+- `miniplex` — Entity Component System (Core architecture)
 
 **Environment & run commands:**
 
@@ -27,7 +28,13 @@
 - Dev: `npm run dev`
 - Build: `npm run build`
 - Preview: `npm run preview`
+- Test: `npm test`
+- Typecheck: `npm run typecheck`
 
-**Testing strategy recommendation:**
+**Testing strategy:**
 
-- Use Vitest and small unit tests for `BvxEngine` (set/get blocks, chunk generation), meshing helpers, and ECS systems. Keep tests deterministic (use seeds for procedural generation where necessary).
+- **Unit Tests**:
+    - `tests/bvx-engine.spec.ts`: Verification of Voxel Data operations and integration with ECS (Chunk Entities).
+    - Future: Add tests for `ChunkSystem` and other logic systems.
+- **Integration**:
+    - Ensure ECS state correctly drives R3F rendering (verified via manual checks currently).
