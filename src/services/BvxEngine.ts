@@ -33,9 +33,9 @@ export class BvxEngine {
     // Hydrate local cache from existing ECS state (prevents duplicates on HMR/Singleton reload)
     const existingChunks = ECS.with('isChunk', 'chunkKey');
     for (const entity of existingChunks) {
-        if (typeof entity.chunkKey === 'string') {
-            this.chunkEntities.set(entity.chunkKey, entity);
-        }
+      if (typeof entity.chunkKey === 'string') {
+        this.chunkEntities.set(entity.chunkKey, entity);
+      }
     }
 
     // Generate initial world
@@ -173,7 +173,10 @@ export class BvxEngine {
   }
 
   // Find blocks of specific type
-  public findBlocksByType(type: BlockType, limit: number = 20): { x: number; y: number; z: number }[] {
+  public findBlocksByType(
+    type: BlockType,
+    limit: number = 20,
+  ): { x: number; y: number; z: number }[] {
     return VoxelQuery.findBlocksByType(this.chunkEntities.values(), this, type, limit);
   }
 
@@ -181,13 +184,15 @@ export class BvxEngine {
   public resetWorld(): void {
     // Re-instantiate the VoxelWorld to clear all data
     this.bvxWorld = new VoxelWorld();
-    
-    // Clear ECS chunk cache map
+
+    // Clear ECS chunk entities
+    const chunkEntities = ECS.with('isChunk');
+    for (const chunk of [...chunkEntities.entities]) {
+      ECS.remove(chunk);
+    }
+
+    // Clear local cache map
     this.chunkEntities.clear();
-    
-    // Note: The actual ECS entities in the world (Miniplex) still exist.
-    // The consumer (VoxelWorld.tsx) needs to react to this or we should manually remove them.
-    // For now, let's assume valid "reset" flow involves cleaning up ECS.
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
@@ -202,7 +207,11 @@ export class BvxEngine {
 
   // Meshing: Simple Face Culling
   // Now stateless: takes cx, cy, cz
-  public generateChunkMesh(cx: number, cy: number, cz: number): {
+  public generateChunkMesh(
+    cx: number,
+    cy: number,
+    cz: number,
+  ): {
     positions: Float32Array;
     normals: Float32Array;
     colors: Float32Array;

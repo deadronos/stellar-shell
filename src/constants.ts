@@ -8,18 +8,25 @@ export const WORLD_HEIGHT = 128; // Virtual height for key generation
 export const BLOCK_COLORS: Record<number, string> = {
   [BlockType.ASTEROID_CORE]: '#a239ca', // Rare Purple Crystal
   [BlockType.ASTEROID_SURFACE]: '#5e626e', // Blue-tinted Grey Rock
+  [BlockType.RARE_ORE]: '#ff00ff', // Bright Magenta
   [BlockType.FRAME]: '#00d0ff', // Neon Blue
+  [BlockType.BLUEPRINT_FRAME]: '#00d0ff', // Ghost Blue
   [BlockType.PANEL]: '#111122', // Dark Solar
-  [BlockType.HUB]: '#ff0055',
+  [BlockType.SHELL]: '#ffd700', // Gold
+  [BlockType.HUB]: '#ff0055', // Hot Pink
 };
 
 // block is transparent/wireframe?
 export const IS_TRANSPARENT: Record<number, boolean> = {
   [BlockType.AIR]: true,
   [BlockType.FRAME]: true,
+  [BlockType.BLUEPRINT_FRAME]: true,
   [BlockType.PANEL]: false,
   [BlockType.ASTEROID_CORE]: false,
   [BlockType.ASTEROID_SURFACE]: false,
+  [BlockType.RARE_ORE]: false,
+  [BlockType.SHELL]: false,
+  [BlockType.HUB]: false,
 };
 
 export const DRONE_COST = 50; // Matter
