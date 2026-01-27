@@ -12,7 +12,7 @@
 **Dev tooling:**
 
 - Node 18 (CI uses Node 18)
-- Tests: Vitest (`npm test`)
+- Tests: Vitest (`pnpm test`)
     - Unit tests for `BvxEngine` and ECS Systems.
 - Linting/format: ESLint + Prettier
 
@@ -24,12 +24,12 @@
 
 **Environment & run commands:**
 
-- Install: `npm ci`
-- Dev: `npm run dev`
-- Build: `npm run build`
-- Preview: `npm run preview`
-- Test: `npm test`
-- Typecheck: `npm run typecheck`
+- Install: `pnpm install`
+- Dev: `pnpm dev`
+- Build: `pnpm run build`
+- Preview: `pnpm run preview`
+- Test: `pnpm test`
+- Typecheck: `pnpm run typecheck`
 
 **Testing strategy:**
 

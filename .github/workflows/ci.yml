@@ -26,7 +26,7 @@ jobs:
       - name: Install pnpm and dependencies
         run: |
           corepack enable
-          corepack prepare pnpm@latest --activate
+          corepack prepare pnpm@10.28.2 --activate
           pnpm install --frozen-lockfile
 
       - name: Generate baselines (if needed)
