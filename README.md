@@ -37,18 +37,22 @@ You play as an overseer of a drone swarm. Your goal is to gather resources ("Mat
 ### Installation
 
 1. Clone the repository
-2. Install dependencies:
+2. Install dependencies (pnpm required):
    ```bash
-   npm install
+   pnpm install
    ```
 
 ### Running Locally
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+
+### Package Manager
+
+This project uses pnpm. Use pnpm 10.28.2 (or newer 10.x) to match the lockfile and CI.
 
 ## 🏗️ Tech Stack
 

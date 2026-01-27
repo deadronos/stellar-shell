@@ -12,7 +12,7 @@
 
 - WHEN adding gameplay rules (e.g., drone behavior), THE SYSTEM SHALL keep game logic testable and separated from rendering (Acceptance: logic that does not depend on Three.js state is implemented in engine/ECS-friendly functions that can be unit-tested).
 
-- WHEN introducing CI checks, THE SYSTEM SHALL include unit tests for core engine behavior (set/get blocks, neighbor dirty marking, simple deterministic meshing) and a `test` script in `package.json` (Acceptance: `npm test` runs deterministically and fails on regressions).
+- WHEN introducing CI checks, THE SYSTEM SHALL include unit tests for core engine behavior (set/get blocks, neighbor dirty marking, simple deterministic meshing) and a `test` script in `package.json` (Acceptance: `pnpm test` runs deterministically and fails on regressions).
 
 - WHEN documentation is needed, THE SYSTEM SHALL keep the Memory Bank up-to-date with requirements, designs, tasks, and decisions (Acceptance: `memory/*` files contain current requirements, DES files for designs, and tasks for planned work).
 
@@ -29,4 +29,4 @@
 - Unit: test `setBlock/getBlock` for basic set/get and neighbor dirty propagation.
 - Unit: small fixed chunk to test `generateChunkMesh()` output (counts of positions/normals/colors, expected faces for a simple cube configuration).
 - Integration: generate a small asteroid of radius 3, assert that some `ASTEROID_SURFACE` blocks exist and `findMiningTargets()` returns exposed blocks.
-- CI: add `vitest` and an `npm test` script and run the tests on PRs.
+- CI: add `vitest` and a `pnpm test` script and run the tests on PRs.

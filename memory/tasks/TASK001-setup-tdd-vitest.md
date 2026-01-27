@@ -10,13 +10,13 @@ Create the Memory Bank scaffolding and adopt a strict TDD workflow (RED → GREE
 ## Requirements (EARS-style)
 - WHEN contributors or agents need project-level context, THE SYSTEM SHALL provide it via `/memory` files (designs, tasks, activeContext, progress) [Acceptance: files exist and include meaningful brief content].
 - WHEN features are implemented, THE TEAM SHALL follow a TDD cycle (RED → GREEN → REFACTOR) and record steps and agent runs in task files [Acceptance: at least one task includes RED/GREEN/REFACTOR entries and links to test names].
-- WHEN tests are added, THE TESTS SHALL be deterministic for procedural generation (seeded or small sizes) and runnable via `npm test` [Acceptance: `npm test` runs and tests pass].
+- WHEN tests are added, THE TESTS SHALL be deterministic for procedural generation (seeded or small sizes) and runnable via `pnpm test` [Acceptance: `pnpm test` runs and tests pass].
 
 ## Acceptance Criteria
 - Memory Bank core files exist and a TASK001 entry documents the setup.
 - `vitest` is installed and configured; `package.json` has `test` and `test:watch` scripts.
 - Tests include basic `setBlock/getBlock` behavior and `generateChunkMesh()` verification.
-- CI will run `npm test` on PRs (no CI changes required once `test` exists).
+- CI will run `pnpm test` on PRs (no CI changes required once `test` exists).
 
 ## Implementation Plan
 - Memory Bank:
@@ -26,7 +26,7 @@ Create the Memory Bank scaffolding and adopt a strict TDD workflow (RED → GREE
   - Add `vitest` devDependency and `vitest.config.ts` (node env).
   - Add `test` and `test:watch` scripts to `package.json`.
   - Add `tests/bvx-engine.spec.ts` covering `setBlock/getBlock` and `generateChunkMesh`.
-  - Run tests locally and verify CI uses `npm test`.
+- Run tests locally and verify CI uses `pnpm test`.
 - Documentation:
   - Update `.github/copilot-instructions.md` and `spec-driven-workflow-v1.instructions.md` to require TDD and Memory Bank usage.
 
