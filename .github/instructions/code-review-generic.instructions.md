@@ -429,7 +429,7 @@ This is a generic template. Customize this section with your project-specific in
 
 - **Tech Stack**: [e.g., Java 17, Spring Boot 3.x, PostgreSQL]
 - **Architecture**: [e.g., Hexagonal/Clean Architecture, Microservices]
-- **Build Tool**: [e.g., Gradle, Maven, npm, pip]
+- **Build Tool**: [e.g., Gradle, Maven, pnpm, pip]
 - **Testing**: [e.g., JUnit 5, Jest, pytest]
 - **Code Style**: [e.g., follows Google Style Guide]
 ```

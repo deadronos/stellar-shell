@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
-import { useStore } from '../../state/store'; 
+import { useStore } from '../../state/store';
 import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
 
@@ -20,15 +20,15 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
   // Refresh caches periodically (e.g. every 0.5s)
   if (clock.elapsedTime - lastCacheTime > 0.5) {
-      cachedMines = null;
-      lastCacheTime = clock.elapsedTime;
+    cachedMines = null;
+    lastCacheTime = clock.elapsedTime;
   }
 
   const getMines = () => {
     if (!cachedMines) cachedMines = ENGINE.findMiningTargets(droneCount + 20);
     return cachedMines;
   };
-  
+
   // Get active blueprints directly from manager - efficient enough for now
   const getBlueprints = () => BLUEPRINT_MANAGER.getBlueprints();
 
@@ -53,11 +53,10 @@ export const BrainSystem = (clock: THREE.Clock) => {
     // SELF-HEALING: Clear stale components if IDLE
     // If a drone is IDLE, it shouldn't have a targetBlock or carryingType
     if (drone.targetBlock || drone.carryingType) {
-        console.warn(`[Brain] Drone ${drone.id} is IDLE but has stale components. Cleaning up.`);
-        ECS.removeComponent(drone, 'targetBlock');
-        drone.carryingType = null;
+      console.warn(`[Brain] Drone ${drone.id} is IDLE but has stale components. Cleaning up.`);
+      ECS.removeComponent(drone, 'targetBlock');
+      drone.carryingType = null;
     }
-
 
     const blueprints = getBlueprints();
     const canBuild = currentMatter >= FRAME_COST;
@@ -86,41 +85,42 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
     // Priority: BUILD (Blueprints) > UPGRADE (Frames -> Energy) > MINE
     if (canBuild && blueprints.length > 0) {
-        findClosest(blueprints, 'BUILD');
+      findClosest(blueprints, 'BUILD');
     }
 
     // Secondary Priority: Upgrade Frames -> Panels if Energy is needed
     if (!bestTarget && canBuild && state.energy < 1000) {
-         const frames = ENGINE.findBlocksByType(BlockType.FRAME, 5); 
-         if (frames.length > 0) {
-             findClosest(frames, 'BUILD');
-         }
+      const frames = ENGINE.findBlocksByType(BlockType.FRAME, 5);
+      if (frames.length > 0) {
+        findClosest(frames, 'BUILD');
+      }
     }
 
     // Tertiary Priority: Upgrade Panels -> Shells (Highest Value) if Rare Matter available
     const canUpgradeToShell = state.rareMatter >= SHELL_COST;
     if (!bestTarget && canUpgradeToShell) {
-        // Find panels to upgrade
-        const panels = ENGINE.findBlocksByType(BlockType.PANEL, 5);
-        if (panels.length > 0) {
-            findClosest(panels, 'BUILD'); // Reuse BUILD mode
-        }
+      // Find panels to upgrade
+      const panels = ENGINE.findBlocksByType(BlockType.PANEL, 5);
+      if (panels.length > 0) {
+        findClosest(panels, 'BUILD'); // Reuse BUILD mode
+      }
     }
-    
+
     // If no build target found (or cannot build), look for mine
     if (!bestTarget) {
-        const mines = getMines();
-        if (Math.random() < 0.01) {
-            console.log(`[Brain] Drone ${drone.id} searching. Mines Found: ${mines?.length}. Blueprints: ${blueprints.length}. Reserved: ${reservedBlocks.size}`);
-        }
-        findClosest(mines, 'MINE');
+      const mines = getMines();
+      if (Math.random() < 0.01) {
+        console.log(
+          `[Brain] Drone ${drone.id} searching. Mines Found: ${mines?.length}. Blueprints: ${blueprints.length}. Reserved: ${reservedBlocks.size}`,
+        );
+      }
+      findClosest(mines, 'MINE');
     }
 
     if (bestTarget && targetType) {
       const t = bestTarget as { x: number; y: number; z: number };
-      
+
       ECS.addComponent(drone, 'target', new THREE.Vector3(t.x, t.y, t.z));
-      ECS.addComponent(drone, 'targetBlock', t);
       ECS.addComponent(drone, 'targetBlock', t);
 
       drone.state = targetType === 'BUILD' ? 'MOVING_TO_BUILD' : 'MOVING_TO_MINE';
@@ -134,11 +134,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       const height = Math.sin(time * 0.5) * 15;
 
       // Orbit around Star (0,0,0) generally
-      const orbitPos = new THREE.Vector3(
-        Math.cos(time) * radius,
-        height,
-        Math.sin(time) * radius,
-      );
+      const orbitPos = new THREE.Vector3(Math.cos(time) * radius, height, Math.sin(time) * radius);
 
       // Directly update target if already present (to avoid thrashing component add/remove if avoidable, though Miniplex handles add effectively as update)
       // ECS.addComponent will update the value if it exists.

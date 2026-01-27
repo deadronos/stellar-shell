@@ -18,5 +18,5 @@
 
 **Acceptance criteria:**
 
-- Project is buildable with `npm run build` and runnable with `npm run preview`.
+- Project is buildable with `pnpm run build` and runnable with `pnpm run preview`.
 - Core features are covered by small unit tests where applicable (engine logic, meshing, ECS systems).

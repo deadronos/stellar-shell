@@ -57,8 +57,8 @@ jobs:
           node-version: 18
       - name: Install dependencies and build
         run: |
-          npm ci
-          npm run build
+          pnpm install
+          pnpm run build
       - name: Package application
         id: package_app
         run: | # Assume this creates a 'dist.zip' file
@@ -172,7 +172,7 @@ jobs:
       contents: read # This job only needs to read code, override workflow default
     steps:
       - uses: actions/checkout@v4
-      - run: npm run lint
+      - run: pnpm run lint
 ```
 
 ### **4. Dependency Review and Software Composition Analysis (SCA)**
@@ -243,7 +243,7 @@ jobs:
   uses: actions/cache@v4
   with:
     path: |
-      ~/.npm
+      ~/.pnpm-store
       ./node_modules # For monorepos, cache specific project node_modules
     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}-${{ github.run_id }}
     restore-keys: |
@@ -283,7 +283,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install ${{ matrix.browser }}
       - name: Run tests
-        run: npm test
+        run: pnpm test
 ```
 
 ### **3. Self-Hosted Runners**

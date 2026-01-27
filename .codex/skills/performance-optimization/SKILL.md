@@ -31,7 +31,7 @@ Use this skill to make performance work repeatable and evidence-driven.
    - Keep changes surgical and verify the metric improved.
 
 5. **Verify and guard against regressions**
-   - Run `npm test`, `npm run lint`, `npm run typecheck`.
+   - Run `pnpm test`, `pnpm run lint`, `pnpm run typecheck`.
    - If you introduced a new helper/heuristic, add a small unit test.
 
 ## R3F / Three.js tactics (common wins)

@@ -80,7 +80,7 @@ This design captures the current implementation, file responsibilities, runtime 
 
 ## Suggested next work items
 
-- Add `vitest` and `npm test` script and add minimal unit tests (TASK002).
+- Add `vitest` and `pnpm test` script and add minimal unit tests (TASK002).
 - Add a worker or frame-sliced meshing approach to avoid main-thread stalls during large updates.
 - Harden neighbor dirty marking with tests that show cross-chunk face correctness.
 - Add chunk lifecycle management (eviction or reference-counting for RenderChunks).

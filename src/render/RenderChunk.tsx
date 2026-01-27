@@ -1,40 +1,27 @@
-import React, { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Entity } from '../ecs/world';
 import { MeshUpdater } from '../mesher/MeshUpdater';
 
 interface RenderChunkProps {
-    entity: Entity;
+  entity: Entity;
 }
 
 export const RenderChunk: React.FC<RenderChunkProps> = ({ entity }) => {
-    const meshRef = useRef<THREE.Mesh>(null);
-    // Use state to hold the geometry instance so it's stable and safe to access in render
-    const [geometry] = useState(() => new THREE.BufferGeometry());
-    const lastMeshDataRef = useRef<Entity['meshData'] | null>(null); // Track last mesh data version
+  const meshRef = useRef<THREE.Mesh>(null);
+  // Use state to hold the geometry instance so it's stable and safe to access in render
+  const [geometry] = useState(() => new THREE.BufferGeometry());
 
-    useFrame(() => {
-        // Poll for mesh data changes
-        // This is necessary because VoxelWorld doesn't re-render on entity component changes
-        if (entity.meshData && entity.meshData !== lastMeshDataRef.current) {
-            lastMeshDataRef.current = entity.meshData;
-            MeshUpdater.updateGeometry(geometry, entity.meshData);
-        }
-    });
+  // React to meshData changes via useEffect
+  useEffect(() => {
+    if (entity.meshData) {
+      MeshUpdater.updateGeometry(geometry, entity.meshData);
+    }
+  }, [entity.meshData, geometry]);
 
-    return (
-        <mesh
-            ref={meshRef}
-            position={entity.position}
-            geometry={geometry}
-        >
-            <meshStandardMaterial
-                vertexColors
-                roughness={0.7}
-                metalness={0.1}
-                side={THREE.DoubleSide}
-            />
-        </mesh>
-    );
+  return (
+    <mesh ref={meshRef} position={entity.position} geometry={geometry}>
+      <meshStandardMaterial vertexColors roughness={0.7} metalness={0.1} side={THREE.DoubleSide} />
+    </mesh>
+  );
 };

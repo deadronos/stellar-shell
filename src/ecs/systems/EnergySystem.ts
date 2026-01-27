@@ -1,15 +1,18 @@
 import { useStore } from '../../state/store';
 
-let lastTick = 0;
+let accumulatedTime = 0;
 
-export const EnergySystem = (time: number) => {
-  if (time - lastTick >= 1.0) {
-    lastTick = time;
-    
+export const EnergySystem = (delta: number) => {
+  accumulatedTime += delta;
+
+  // Tick every second
+  if (accumulatedTime >= 1.0) {
+    accumulatedTime -= 1.0;
+
     // Increment energy based on rate
     const state = useStore.getState();
     if (state.energyGenerationRate > 0) {
-        state.addEnergy(state.energyGenerationRate);
+      state.addEnergy(state.energyGenerationRate);
     }
   }
 };
