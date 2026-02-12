@@ -11,4 +11,5 @@
 ## Completed
 
 - [TASK001] Memory Bank + TDD & Vitest Setup - Completed 2026-01-03 - Memory Bank created and initial Vitest configuration and tests added.
+- [TASK002] Logic/Render Split Refactor - Completed 2026-02-13 - Implemented worker pool for async mesh generation, separating rendering from computation.
 
