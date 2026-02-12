@@ -50,6 +50,7 @@ export type Entity = {
   chunkKey?: string; // e.g. "1,2,3"
   chunkPosition?: { x: number; y: number; z: number };
   needsUpdate?: boolean;
+  meshPending?: boolean; // True when mesh job is dispatched to worker
   geometry?: THREE.BufferGeometry;
   meshData?: {
     positions: Float32Array;
