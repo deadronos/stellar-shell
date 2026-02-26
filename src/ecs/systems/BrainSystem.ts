@@ -5,6 +5,7 @@ import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
+import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 
 const ENGINE = BvxEngine.getInstance();
 const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
@@ -17,6 +18,12 @@ export const BrainSystem = (clock: THREE.Clock) => {
   const state = useStore.getState();
   const currentMatter = state.matter;
   const droneCount = state.droneCount;
+  const orbitOffset = getAsteroidOrbitOffset(clock.elapsedTime, {
+    enabled: state.asteroidOrbitEnabled,
+    radius: state.asteroidOrbitRadius,
+    speed: state.asteroidOrbitSpeed,
+    verticalAmplitude: state.asteroidOrbitVerticalAmplitude,
+  });
 
   // Refresh caches periodically (e.g. every 0.5s)
   if (clock.elapsedTime - lastCacheTime > 0.5) {
@@ -70,9 +77,12 @@ export const BrainSystem = (clock: THREE.Clock) => {
         const key = `${item.x},${item.y},${item.z}`;
         if (reservedBlocks.has(key)) continue;
 
-        const dx = item.x - drone.position.x;
-        const dy = item.y - drone.position.y;
-        const dz = item.z - drone.position.z;
+        const tx = item.x + orbitOffset.x;
+        const ty = item.y + orbitOffset.y;
+        const tz = item.z + orbitOffset.z;
+        const dx = tx - drone.position.x;
+        const dy = ty - drone.position.y;
+        const dz = tz - drone.position.z;
         const dSq = dx * dx + dy * dy + dz * dz;
 
         if (dSq < minDistSq) {
@@ -120,7 +130,11 @@ export const BrainSystem = (clock: THREE.Clock) => {
     if (bestTarget && targetType) {
       const t = bestTarget as { x: number; y: number; z: number };
 
-      ECS.addComponent(drone, 'target', new THREE.Vector3(t.x, t.y, t.z));
+      ECS.addComponent(
+        drone,
+        'target',
+        new THREE.Vector3(t.x + orbitOffset.x, t.y + orbitOffset.y, t.z + orbitOffset.z),
+      );
       ECS.addComponent(drone, 'targetBlock', t);
 
       drone.state = targetType === 'BUILD' ? 'MOVING_TO_BUILD' : 'MOVING_TO_MINE';
@@ -128,13 +142,27 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
       reservedBlocks.add(`${t.x},${t.y},${t.z}`);
     } else {
-      // Dynamic Orbit - Only for IDLE drones
-      const time = clock.elapsedTime * 0.1 + (drone.id || Math.random() * 100) * 0.137;
-      const radius = 30 + Math.sin(time * 2.0) * 5;
-      const height = Math.sin(time * 0.5) * 15;
+      // Dynamic idle patrol around the current asteroid center for coordinate consistency.
+      const fallbackSpeed =
+        state.asteroidOrbitEnabled && state.asteroidOrbitSpeed !== 0
+          ? state.asteroidOrbitSpeed
+          : 0.1;
+      const time = clock.elapsedTime * fallbackSpeed + (drone.id || Math.random() * 100) * 0.137;
+      const baseRadius = state.asteroidOrbitEnabled ? Math.max(8, state.asteroidOrbitRadius * 0.35) : 30;
+      const radius = baseRadius + Math.sin(time * 2.0) * 5;
+      const heightAmplitude = state.asteroidOrbitEnabled
+        ? Math.max(3, state.asteroidOrbitVerticalAmplitude * 4)
+        : 15;
+      const height = Math.sin(time * 0.5) * heightAmplitude;
 
-      // Orbit around Star (0,0,0) generally
-      const orbitPos = new THREE.Vector3(Math.cos(time) * radius, height, Math.sin(time) * radius);
+      const centerX = state.asteroidOrbitEnabled ? orbitOffset.x : 0;
+      const centerY = state.asteroidOrbitEnabled ? orbitOffset.y : 0;
+      const centerZ = state.asteroidOrbitEnabled ? orbitOffset.z : 0;
+      const orbitPos = new THREE.Vector3(
+        centerX + Math.cos(time) * radius,
+        centerY + height,
+        centerZ + Math.sin(time) * radius,
+      );
 
       // Directly update target if already present (to avoid thrashing component add/remove if avoidable, though Miniplex handles add effectively as update)
       // ECS.addComponent will update the value if it exists.

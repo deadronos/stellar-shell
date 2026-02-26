@@ -4,6 +4,7 @@ import { MiningSystem } from '../../src/ecs/systems/MiningSystem';
 import { ECS } from '../../src/ecs/world';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
+import { BvxEngine } from '../../src/services/BvxEngine';
 
 describe('MiningSystem', () => {
   beforeEach(() => {
@@ -39,5 +40,36 @@ describe('MiningSystem', () => {
     // so it should deposit matter and go to IDLE.
     expect(drone.state).toBe('IDLE');
     expect(useStore.getState().matter).toBe(1);
+  });
+
+  it('mines correctly when asteroid orbit motion is enabled', () => {
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+    engine.setBlock(0, 0, 0, BlockType.ASTEROID_SURFACE);
+
+    useStore.setState({
+      prestigeLevel: 0,
+      asteroidOrbitEnabled: true,
+      asteroidOrbitRadius: 10,
+      asteroidOrbitSpeed: 1,
+      asteroidOrbitVerticalAmplitude: 0,
+    });
+
+    const drone = ECS.add({
+      isDrone: true,
+      position: new THREE.Vector3(10, 0, 0),
+      target: new THREE.Vector3(0, 0, 0),
+      targetBlock: { x: 0, y: 0, z: 0 },
+      velocity: new THREE.Vector3(0, 0, 0),
+      state: 'MOVING_TO_MINE',
+      carryingType: null,
+      miningProgress: 99,
+    });
+
+    MiningSystem(0.1, 0);
+
+    expect(drone.state).toBe('RETURNING_RESOURCE');
+    expect(drone.carryingType).toBe(BlockType.ASTEROID_SURFACE);
+    expect(engine.getBlock(0, 0, 0)).toBe(BlockType.AIR);
   });
 });

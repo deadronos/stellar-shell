@@ -6,11 +6,16 @@ describe('useStore', () => {
     beforeEach(() => {
         useStore.setState({
             matter: 0,
+            rareMatter: 0,
             energy: 0,
             droneCount: 0,
             droneCost: 10,
             selectedTool: 'LASER',
-            selectedBlueprint: BlockType.FRAME
+            selectedBlueprint: BlockType.FRAME,
+            asteroidOrbitEnabled: false,
+            asteroidOrbitRadius: 24,
+            asteroidOrbitSpeed: 0.08,
+            asteroidOrbitVerticalAmplitude: 2,
         });
     });
 
@@ -69,5 +74,24 @@ describe('useStore', () => {
         expect(state.energy).toBe(0);
         expect(state.droneCount).toBe(0);
         expect(state.prestigeLevel).toBe(1);
+    });
+
+    it('clamps orbit radius and vertical amplitude to non-negative values', () => {
+        const { setAsteroidOrbitRadius, setAsteroidOrbitVerticalAmplitude } = useStore.getState();
+
+        setAsteroidOrbitRadius(-5);
+        setAsteroidOrbitVerticalAmplitude(-3);
+
+        const state = useStore.getState();
+        expect(state.asteroidOrbitRadius).toBe(0);
+        expect(state.asteroidOrbitVerticalAmplitude).toBe(0);
+    });
+
+    it('allows negative orbit speed to support reverse direction', () => {
+        const { setAsteroidOrbitSpeed } = useStore.getState();
+
+        setAsteroidOrbitSpeed(-0.2);
+
+        expect(useStore.getState().asteroidOrbitSpeed).toBe(-0.2);
     });
 });

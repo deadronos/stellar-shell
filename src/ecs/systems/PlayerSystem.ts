@@ -5,13 +5,20 @@ import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { FRAME_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
+import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 
 const ENGINE = BvxEngine.getInstance();
 const SPEED = 15;
 
-export const PlayerSystem = (delta: number) => {
+export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
   const players = ECS.with('isPlayer', 'position', 'input', 'cameraQuaternion');
   const store = useStore.getState();
+  const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
+    enabled: store.asteroidOrbitEnabled,
+    radius: store.asteroidOrbitRadius,
+    speed: store.asteroidOrbitSpeed,
+    verticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+  });
 
   for (const player of players) {
     const { input, cameraQuaternion, position } = player;
@@ -56,9 +63,9 @@ export const PlayerSystem = (delta: number) => {
 
         for (let d = 0; d < maxDist; d += step) {
             const testPos = rayPos.clone().add(rayDir.clone().multiplyScalar(d));
-            const bx = Math.floor(testPos.x);
-            const by = Math.floor(testPos.y);
-            const bz = Math.floor(testPos.z);
+            const bx = Math.floor(testPos.x - orbitOffset.x);
+            const by = Math.floor(testPos.y - orbitOffset.y);
+            const bz = Math.floor(testPos.z - orbitOffset.z);
 
             const block = ENGINE.getBlock(bx, by, bz);
              if (block !== BlockType.AIR && !(store.selectedTool === 'BUILD' && block === BlockType.FRAME)) {
