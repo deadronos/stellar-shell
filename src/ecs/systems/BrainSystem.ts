@@ -5,6 +5,7 @@ import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
+import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 
 const ENGINE = BvxEngine.getInstance();
 const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
@@ -17,6 +18,12 @@ export const BrainSystem = (clock: THREE.Clock) => {
   const state = useStore.getState();
   const currentMatter = state.matter;
   const droneCount = state.droneCount;
+  const orbitOffset = getAsteroidOrbitOffset(clock.elapsedTime, {
+    enabled: state.asteroidOrbitEnabled,
+    radius: state.asteroidOrbitRadius,
+    speed: state.asteroidOrbitSpeed,
+    verticalAmplitude: state.asteroidOrbitVerticalAmplitude,
+  });
 
   // Refresh caches periodically (e.g. every 0.5s)
   if (clock.elapsedTime - lastCacheTime > 0.5) {
@@ -70,9 +77,12 @@ export const BrainSystem = (clock: THREE.Clock) => {
         const key = `${item.x},${item.y},${item.z}`;
         if (reservedBlocks.has(key)) continue;
 
-        const dx = item.x - drone.position.x;
-        const dy = item.y - drone.position.y;
-        const dz = item.z - drone.position.z;
+        const tx = item.x + orbitOffset.x;
+        const ty = item.y + orbitOffset.y;
+        const tz = item.z + orbitOffset.z;
+        const dx = tx - drone.position.x;
+        const dy = ty - drone.position.y;
+        const dz = tz - drone.position.z;
         const dSq = dx * dx + dy * dy + dz * dz;
 
         if (dSq < minDistSq) {
@@ -120,7 +130,11 @@ export const BrainSystem = (clock: THREE.Clock) => {
     if (bestTarget && targetType) {
       const t = bestTarget as { x: number; y: number; z: number };
 
-      ECS.addComponent(drone, 'target', new THREE.Vector3(t.x, t.y, t.z));
+      ECS.addComponent(
+        drone,
+        'target',
+        new THREE.Vector3(t.x + orbitOffset.x, t.y + orbitOffset.y, t.z + orbitOffset.z),
+      );
       ECS.addComponent(drone, 'targetBlock', t);
 
       drone.state = targetType === 'BUILD' ? 'MOVING_TO_BUILD' : 'MOVING_TO_MINE';

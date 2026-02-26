@@ -5,17 +5,30 @@ import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { ParticleEvents } from '../../services/ParticleEvents';
 import { BLOCK_COLORS } from '../../constants';
+import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 
 const ENGINE = BvxEngine.getInstance();
 const HUB_POSITION = new THREE.Vector3(0, 0, 0);
 
-export const MiningSystem = (delta: number) => {
+export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
   const store = useStore.getState();
+  const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
+    enabled: store.asteroidOrbitEnabled,
+    radius: store.asteroidOrbitRadius,
+    speed: store.asteroidOrbitSpeed,
+    verticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+  });
   const miningDrones = ECS.with('isDrone', 'position', 'targetBlock', 'state', 'target');
   const returningDrones = ECS.with('isDrone', 'position', 'state', 'target');
 
   for (const drone of miningDrones) {
     if (drone.state === 'MOVING_TO_MINE' && drone.targetBlock) {
+      const worldTarget = new THREE.Vector3(
+        drone.targetBlock.x + orbitOffset.x,
+        drone.targetBlock.y + orbitOffset.y,
+        drone.targetBlock.z + orbitOffset.z,
+      );
+      drone.target.copy(worldTarget);
       const dist = drone.position.distanceTo(drone.target);
       // Arrival Check
       if (dist < 1.5) {
@@ -38,7 +51,7 @@ export const MiningSystem = (delta: number) => {
           if (Math.random() < 0.3) {
             const colorHex = BLOCK_COLORS[block] || '#ffffff';
             ParticleEvents.emit(
-              new THREE.Vector3(x, y, z),
+              worldTarget.clone(),
               new THREE.Color(colorHex),
               1,
             );

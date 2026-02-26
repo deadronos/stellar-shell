@@ -11,6 +11,10 @@ interface StoreState {
   prestigeLevel: number;
   selectedTool: 'LASER' | 'BUILD';
   selectedBlueprint: BlockType;
+  asteroidOrbitEnabled: boolean;
+  asteroidOrbitRadius: number;
+  asteroidOrbitSpeed: number;
+  asteroidOrbitVerticalAmplitude: number;
 
   // UI State
   isSettingsOpen: boolean;
@@ -27,6 +31,10 @@ interface StoreState {
   addDrone: () => void;
   setTool: (tool: 'LASER' | 'BUILD') => void;
   setBlueprint: (type: BlockType) => void;
+  setAsteroidOrbitEnabled: (enabled: boolean) => void;
+  setAsteroidOrbitRadius: (radius: number) => void;
+  setAsteroidOrbitSpeed: (speed: number) => void;
+  setAsteroidOrbitVerticalAmplitude: (amplitude: number) => void;
   
   // UI Actions
   toggleSettings: () => void;
@@ -43,6 +51,10 @@ export const useStore = create<StoreState>((set, get) => ({
   prestigeLevel: 0,
   selectedTool: 'LASER',
   selectedBlueprint: BlockType.FRAME,
+  asteroidOrbitEnabled: false,
+  asteroidOrbitRadius: 24,
+  asteroidOrbitSpeed: 0.08,
+  asteroidOrbitVerticalAmplitude: 2,
   isSettingsOpen: false,
   showDebugPanel: false,
 
@@ -95,4 +107,9 @@ export const useStore = create<StoreState>((set, get) => ({
 
   setTool: (tool) => set({ selectedTool: tool }),
   setBlueprint: (type) => set({ selectedBlueprint: type }),
+  setAsteroidOrbitEnabled: (enabled) => set({ asteroidOrbitEnabled: enabled }),
+  setAsteroidOrbitRadius: (radius) => set({ asteroidOrbitRadius: Math.max(0, radius) }),
+  setAsteroidOrbitSpeed: (speed) => set({ asteroidOrbitSpeed: speed }),
+  setAsteroidOrbitVerticalAmplitude: (amplitude) =>
+    set({ asteroidOrbitVerticalAmplitude: Math.max(0, amplitude) }),
 }));

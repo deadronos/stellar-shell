@@ -12,6 +12,7 @@ import { MiningSystem } from './systems/MiningSystem';
 import { ConstructionSystem } from './systems/ConstructionSystem';
 import { PlayerSystem } from './systems/PlayerSystem';
 import { TrailSystem } from './systems/TrailSystem';
+import { AsteroidOrbitSystem } from './systems/AsteroidOrbitSystem';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
@@ -46,13 +47,15 @@ export const SystemRunner = () => {
       }, [droneCount]);
 
     useFrame((state, delta) => {
+        const elapsedTime = state.clock.elapsedTime;
         BrainSystem(state.clock);
-        MiningSystem(delta);
-        ConstructionSystem(delta);
+        MiningSystem(delta, elapsedTime);
+        ConstructionSystem(delta, elapsedTime);
         MovementSystem(delta);
         EnergySystem(delta);
+        AsteroidOrbitSystem(elapsedTime);
         ChunkSystem();
-        PlayerSystem(delta);
+        PlayerSystem(delta, elapsedTime);
         TrailSystem(delta);
     });
 
