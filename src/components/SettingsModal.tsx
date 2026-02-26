@@ -7,11 +7,15 @@ export const SettingsModal = () => {
   const asteroidOrbitEnabled = useStore((state) => state.asteroidOrbitEnabled);
   const asteroidOrbitRadius = useStore((state) => state.asteroidOrbitRadius);
   const asteroidOrbitSpeed = useStore((state) => state.asteroidOrbitSpeed);
+  const asteroidOrbitVerticalAmplitude = useStore((state) => state.asteroidOrbitVerticalAmplitude);
   const toggleSettings = useStore((state) => state.toggleSettings);
   const toggleDebugPanel = useStore((state) => state.toggleDebugPanel);
   const setAsteroidOrbitEnabled = useStore((state) => state.setAsteroidOrbitEnabled);
   const setAsteroidOrbitRadius = useStore((state) => state.setAsteroidOrbitRadius);
   const setAsteroidOrbitSpeed = useStore((state) => state.setAsteroidOrbitSpeed);
+  const setAsteroidOrbitVerticalAmplitude = useStore(
+    (state) => state.setAsteroidOrbitVerticalAmplitude,
+  );
 
   if (!isSettingsOpen) return null;
 
@@ -72,11 +76,29 @@ export const SettingsModal = () => {
             </div>
             <input
               type="range"
-              min={0}
+              min={-0.5}
               max={0.5}
               step={0.01}
               value={asteroidOrbitSpeed}
               onChange={(event) => setAsteroidOrbitSpeed(Number(event.target.value))}
+              className="w-full accent-cyan-400"
+            />
+          </label>
+
+          <label className="block p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300 font-mono text-sm">Orbit Vertical Amplitude</span>
+              <span className="text-cyan-300 font-mono text-xs">
+                {asteroidOrbitVerticalAmplitude.toFixed(1)}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={20}
+              step={0.1}
+              value={asteroidOrbitVerticalAmplitude}
+              onChange={(event) => setAsteroidOrbitVerticalAmplitude(Number(event.target.value))}
               className="w-full accent-cyan-400"
             />
           </label>

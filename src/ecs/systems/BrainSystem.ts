@@ -142,13 +142,27 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
       reservedBlocks.add(`${t.x},${t.y},${t.z}`);
     } else {
-      // Dynamic Orbit - Only for IDLE drones
-      const time = clock.elapsedTime * 0.1 + (drone.id || Math.random() * 100) * 0.137;
-      const radius = 30 + Math.sin(time * 2.0) * 5;
-      const height = Math.sin(time * 0.5) * 15;
+      // Dynamic idle patrol around the current asteroid center for coordinate consistency.
+      const fallbackSpeed =
+        state.asteroidOrbitEnabled && state.asteroidOrbitSpeed !== 0
+          ? state.asteroidOrbitSpeed
+          : 0.1;
+      const time = clock.elapsedTime * fallbackSpeed + (drone.id || Math.random() * 100) * 0.137;
+      const baseRadius = state.asteroidOrbitEnabled ? Math.max(8, state.asteroidOrbitRadius * 0.35) : 30;
+      const radius = baseRadius + Math.sin(time * 2.0) * 5;
+      const heightAmplitude = state.asteroidOrbitEnabled
+        ? Math.max(3, state.asteroidOrbitVerticalAmplitude * 4)
+        : 15;
+      const height = Math.sin(time * 0.5) * heightAmplitude;
 
-      // Orbit around Star (0,0,0) generally
-      const orbitPos = new THREE.Vector3(Math.cos(time) * radius, height, Math.sin(time) * radius);
+      const centerX = state.asteroidOrbitEnabled ? orbitOffset.x : 0;
+      const centerY = state.asteroidOrbitEnabled ? orbitOffset.y : 0;
+      const centerZ = state.asteroidOrbitEnabled ? orbitOffset.z : 0;
+      const orbitPos = new THREE.Vector3(
+        centerX + Math.cos(time) * radius,
+        centerY + height,
+        centerZ + Math.sin(time) * radius,
+      );
 
       // Directly update target if already present (to avoid thrashing component add/remove if avoidable, though Miniplex handles add effectively as update)
       // ECS.addComponent will update the value if it exists.
