@@ -23,43 +23,47 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
 
   for (const drone of buildingDrones) {
     if (drone.state === 'MOVING_TO_BUILD' && drone.targetBlock) {
-        const worldTarget = new THREE.Vector3(
-          drone.targetBlock.x + orbitOffset.x,
-          drone.targetBlock.y + orbitOffset.y,
-          drone.targetBlock.z + orbitOffset.z,
-        );
-        drone.target.copy(worldTarget);
-        const dist = drone.position.distanceTo(drone.target);
-        
-        if (dist < 1.5) {
-            const { x, y, z } = drone.targetBlock;
-            const currentBlock = ENGINE.getBlock(x, y, z);
-            
-            if (BlueprintManager.getInstance().hasBlueprint({ x, y, z })) {
-               if (store.consumeMatter(FRAME_COST)) {
-                 ENGINE.setBlock(x, y, z, BlockType.FRAME);
-                 BlueprintManager.getInstance().removeBlueprint({ x, y, z });
-                  ParticleEvents.emit(worldTarget.clone(), new THREE.Color(BLOCK_COLORS[BlockType.FRAME]), 5);
-               }
-             } else if (currentBlock === BlockType.FRAME) {
-              if (store.consumeMatter(FRAME_COST)) {
-                ENGINE.setBlock(x, y, z, BlockType.PANEL);
-                store.setEnergyRate(store.energyGenerationRate + 1);
-                ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
-              }
-             } else if (currentBlock === BlockType.PANEL) {
-              if (store.consumeRareMatter(SHELL_COST)) {
-                ENGINE.setBlock(x, y, z, BlockType.SHELL);
-                store.setEnergyRate(store.energyGenerationRate + 5); 
-                ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
-              }
-             }
-            
-            drone.state = 'IDLE';
-            ECS.removeComponent(drone, 'target');
-            ECS.removeComponent(drone, 'targetBlock');
-            drone.carryingType = null;
+      const worldTarget = new THREE.Vector3(
+        drone.targetBlock.x + orbitOffset.x,
+        drone.targetBlock.y + orbitOffset.y,
+        drone.targetBlock.z + orbitOffset.z,
+      );
+      drone.target.copy(worldTarget);
+      const dist = drone.position.distanceTo(drone.target);
+
+      if (dist < 1.5) {
+        const { x, y, z } = drone.targetBlock;
+        const currentBlock = ENGINE.getBlock(x, y, z);
+
+        if (BlueprintManager.getInstance().hasBlueprint({ x, y, z })) {
+          if (store.consumeMatter(FRAME_COST)) {
+            ENGINE.setBlock(x, y, z, BlockType.FRAME);
+            BlueprintManager.getInstance().removeBlueprint({ x, y, z });
+            ParticleEvents.emit(
+              worldTarget.clone(),
+              new THREE.Color(BLOCK_COLORS[BlockType.FRAME]),
+              5,
+            );
+          }
+        } else if (currentBlock === BlockType.FRAME) {
+          if (store.consumeMatter(FRAME_COST)) {
+            ENGINE.setBlock(x, y, z, BlockType.PANEL);
+            store.setEnergyRate(store.energyGenerationRate + 1);
+            ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
+          }
+        } else if (currentBlock === BlockType.PANEL) {
+          if (store.consumeRareMatter(SHELL_COST)) {
+            ENGINE.setBlock(x, y, z, BlockType.SHELL);
+            store.setEnergyRate(store.energyGenerationRate + 5);
+            ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
+          }
         }
+
+        drone.state = 'IDLE';
+        ECS.removeComponent(drone, 'target');
+        ECS.removeComponent(drone, 'targetBlock');
+        drone.carryingType = null;
+      }
     }
   }
 };

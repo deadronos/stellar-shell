@@ -1,24 +1,19 @@
 # Active Context — stellar-shell
 
-**Current focus:** Refactoring the project architecture to split logic and rendering, specifically moving the Voxel Mesher to a pure module and offloading to a worker.
+**Current focus:** Stabilized optional asteroid orbital motion while preserving mining/build logic.
 
 **Recent changes:**
 
-- **Refactored Voxel Engine:**
-  - `BvxEngine` is now a stateless data service.
-  - Chunk Management moved to Miniplex ECS (`isChunk` entities).
-  - Rendering is reactive via `ChunkSystem` and `useEntities` hook in `VoxelWorld`.
-- **Started TASK002:** Logic/Render Split Refactor.
-  - Created `memory/designs/DES002-logic-render-split.md`.
-  - Created `memory/tasks/TASK002-logic-render-split.md`.
+- Added `AsteroidOrbitSystem` and deterministic orbit helper (`src/services/AsteroidOrbit.ts`).
+- Added settings controls for orbit toggle/radius/speed.
+- Updated `BrainSystem`, `MiningSystem`, `ConstructionSystem`, and `PlayerSystem` to apply orbit offsets consistently.
+- Added focused tests for deterministic motion and mining/build compatibility while orbiting.
 
 **Next steps:**
 
-- Extract `VoxelMesher` to `src/mesher/`.
-- Create a worker for meshing.
-- Update rendering to use the worker.
+- Evaluate whether orbit defaults should be enabled by default after gameplay testing.
+- Consider exposing vertical amplitude in UI if needed for design tuning.
 
 **Notes:**
 
-- The project now strictly follows the "Best Practices" guide for BVX-Kit + R3F + Miniplex.
-- Ensure all new game logic interacts with Chunks via ECS Entities.
+- Voxel/world data remains static in `BvxEngine`; only render/world-space targets are offset for orbit.
