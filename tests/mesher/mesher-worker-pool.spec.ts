@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { MesherWorkerPool } from '../../src/mesher/MesherWorkerPool';
 import { BlockType } from '../../src/types';
+import { CHUNK_SIZE } from '../../src/constants';
 
 type WorkerGlobal = typeof globalThis & { Worker?: typeof Worker };
 
@@ -126,6 +127,71 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         // Complete third job → worker idle
         w.simulateComplete(w.received[2].taskId);
         expect(pool.getActiveWorkerCount()).toBe(0);
+        pool.dispose();
+    });
+});
+
+describe('MesherWorkerPool – neighbor halo sampling', () => {
+    it('includes 1-voxel halo from neighboring chunks in voxelData sent to worker', () => {
+        const { MockWorker, instances } = makeMockWorkerClass();
+        global.Worker = MockWorker as unknown as typeof Worker;
+
+        // Solid blocks fill chunk (0,0,0) and the first column of chunk (1,0,0).
+        // When meshing chunk (0,0,0), the halo must include x = CHUNK_SIZE so the
+        // boundary face between the two chunks can be culled.
+        const neighbor = CHUNK_SIZE; // first x of chunk (1,0,0)
+        const source = {
+            getBlock: (x: number, y: number, z: number) => {
+                if (x >= 0 && x < CHUNK_SIZE && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE) {
+                    return BlockType.ASTEROID_SURFACE;
+                }
+                if (x === neighbor && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE) {
+                    return BlockType.ASTEROID_SURFACE;
+                }
+                return BlockType.AIR;
+            }
+        };
+
+        const pool = new MesherWorkerPool(1);
+        pool.generateMesh(0, 0, 0, source);
+
+        const job = instances[0].received[0] as { voxelData: Record<string, BlockType> };
+
+        // Halo voxels one step past the positive-x face of chunk (0,0,0)
+        // must be present so the worker can cull that boundary face.
+        const haloKey = `${neighbor},0,0`;
+        expect(job.voxelData[haloKey]).toBe(BlockType.ASTEROID_SURFACE);
+
+        pool.dispose();
+    });
+
+    it('all 6 boundary halo faces are included in voxelData sent to worker', () => {
+        const { MockWorker, instances } = makeMockWorkerClass();
+        global.Worker = MockWorker as unknown as typeof Worker;
+
+        // Solid blocks fill the full halo region around chunk (0,0,0).
+        const source = {
+            getBlock: (x: number, y: number, z: number) => {
+                if (x >= -1 && x <= CHUNK_SIZE && y >= -1 && y <= CHUNK_SIZE && z >= -1 && z <= CHUNK_SIZE) {
+                    return BlockType.ASTEROID_SURFACE;
+                }
+                return BlockType.AIR;
+            }
+        };
+
+        const pool = new MesherWorkerPool(1);
+        pool.generateMesh(0, 0, 0, source);
+
+        const job = instances[0].received[0] as { voxelData: Record<string, BlockType> };
+
+        // All 6 halo faces must be populated so the worker can cull every boundary face.
+        expect(job.voxelData[`${CHUNK_SIZE},0,0`]).toBe(BlockType.ASTEROID_SURFACE);   // +x halo
+        expect(job.voxelData[`-1,0,0`]).toBe(BlockType.ASTEROID_SURFACE);               // -x halo
+        expect(job.voxelData[`0,${CHUNK_SIZE},0`]).toBe(BlockType.ASTEROID_SURFACE);   // +y halo
+        expect(job.voxelData[`0,-1,0`]).toBe(BlockType.ASTEROID_SURFACE);               // -y halo
+        expect(job.voxelData[`0,0,${CHUNK_SIZE}`]).toBe(BlockType.ASTEROID_SURFACE);   // +z halo
+        expect(job.voxelData[`0,0,-1`]).toBe(BlockType.ASTEROID_SURFACE);               // -z halo
+
         pool.dispose();
     });
 });
