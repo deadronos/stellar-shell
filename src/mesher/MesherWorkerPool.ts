@@ -1,6 +1,7 @@
 import { VoxelMesher } from './VoxelMesher';
 import { IVoxelSource } from '../services/voxel/types';
 import { BlockType } from '../types';
+import { CHUNK_SIZE } from '../constants';
 
 export interface MeshJob {
     taskId: string;
@@ -91,16 +92,17 @@ export class MesherWorkerPool {
     ): Promise<MeshResult> {
         const taskId = `mesh-${++this.taskIdCounter}-${cx}-${cy}-${cz}`;
 
-        // Extract voxel data for this chunk + neighbors
-        // For simplicity, we'll extract a 16x16x16 region around the chunk
+        // Extract voxel data for this chunk + 1-voxel neighbor halo on all sides.
+        // The halo is required so the worker can correctly cull faces at chunk boundaries
+        // (otherwise neighbor lookups outside the chunk always return AIR).
         const voxelData: Record<string, BlockType> = {};
-        const startX = cx * 16;
-        const startY = cy * 16;
-        const startZ = cz * 16;
+        const startX = cx * CHUNK_SIZE;
+        const startY = cy * CHUNK_SIZE;
+        const startZ = cz * CHUNK_SIZE;
 
-        for (let x = startX; x < startX + 16; x++) {
-            for (let y = startY; y < startY + 16; y++) {
-                for (let z = startZ; z < startZ + 16; z++) {
+        for (let x = startX - 1; x <= startX + CHUNK_SIZE; x++) {
+            for (let y = startY - 1; y <= startY + CHUNK_SIZE; y++) {
+                for (let z = startZ - 1; z <= startZ + CHUNK_SIZE; z++) {
                     const block = voxelSource.getBlock(x, y, z);
                     if (block !== BlockType.AIR) {
                         voxelData[`${x},${y},${z}`] = block;
