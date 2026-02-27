@@ -7,6 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+#pnpm lock exists, ignoring npm lock files
+package-lock.json
 node_modules
 dist
 dist-ssr
