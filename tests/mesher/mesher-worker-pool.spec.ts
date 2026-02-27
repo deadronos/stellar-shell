@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { MesherWorkerPool } from '../../src/mesher/MesherWorkerPool';
 import { BlockType } from '../../src/types';
+
+type WorkerGlobal = typeof globalThis & { Worker?: typeof Worker };
 
 /** Build a fresh MockWorker class and a list that tracks every created instance. */
 function makeMockWorkerClass() {
@@ -42,6 +44,17 @@ function makeMockWorkerClass() {
 }
 
 const mockSource = { getBlock: () => BlockType.AIR };
+const originalWorker = (global as WorkerGlobal).Worker;
+
+afterEach(() => {
+    const workerGlobal = global as WorkerGlobal;
+    if (originalWorker) {
+        workerGlobal.Worker = originalWorker;
+        return;
+    }
+
+    delete workerGlobal.Worker;
+});
 
 describe('MesherWorkerPool – worker lifecycle', () => {
     it('worker is returned to available pool after job completes', () => {
@@ -59,6 +72,7 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         w.simulateComplete(w.received[0].taskId);
 
         expect(pool.getActiveWorkerCount()).toBe(0);
+        pool.dispose();
     });
 
     it('workers are reusable across multiple sequential jobs', async () => {
@@ -84,6 +98,7 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         await p2;
 
         expect(pool.getActiveWorkerCount()).toBe(0);
+        pool.dispose();
     });
 
     it('queue depth decreases as workers complete queued jobs', () => {
@@ -111,5 +126,6 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         // Complete third job → worker idle
         w.simulateComplete(w.received[2].taskId);
         expect(pool.getActiveWorkerCount()).toBe(0);
+        pool.dispose();
     });
 });
