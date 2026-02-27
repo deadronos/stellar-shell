@@ -25,6 +25,16 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
         
         // Clear pending flag
         ECS.removeComponent(entity, 'meshPending');
+
+        // Classify the chunk: mark as completedDysonSection when applicable.
+        // Worst-case scans the whole chunk, but frontier chunks usually early-exit
+        // on the first non-completed block type.
+        const isCompleted = engine.isChunkCompletedDyson(cx, cy, cz);
+        if (isCompleted && !entity.completedDysonSection) {
+            ECS.addComponent(entity, 'completedDysonSection', true);
+        } else if (!isCompleted && entity.completedDysonSection) {
+            ECS.removeComponent(entity, 'completedDysonSection');
+        }
         
         // Clean up tracking
         pendingJobs.delete(chunkKey);

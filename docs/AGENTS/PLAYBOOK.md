@@ -33,4 +33,3 @@
 
 - **Install**: `pnpm install`
 - **Test**: `pnpm test`
-- **Env**: Set `GEMINI_API_KEY` in `.env.local` for AI features.
