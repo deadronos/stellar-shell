@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { Entity } from '../ecs/world';
 import { MeshUpdater } from '../mesher/MeshUpdater';
@@ -35,7 +35,8 @@ const completedSectionMaterial = new THREE.MeshStandardMaterial({
  */
 export const CompletedSectionRenderer: React.FC<CompletedSectionRendererProps> = ({ entity }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const geometry = useMemo(() => new THREE.BufferGeometry(), []);
+  // Keep geometry identity stable for this component's lifetime.
+  const [geometry] = useState(() => new THREE.BufferGeometry());
 
   useEffect(() => {
     if (entity.meshData) {

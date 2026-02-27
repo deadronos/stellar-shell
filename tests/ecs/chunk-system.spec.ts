@@ -70,4 +70,55 @@ describe('ChunkSystem', () => {
 
         ECS.remove(chunk);
     });
+
+    it('adds completedDysonSection when the chunk is classified as completed', async () => {
+        const mockEngine = {
+            getBlock: () => 0,
+            isChunkCompletedDyson: vi.fn().mockReturnValue(true),
+        } as unknown as BvxEngine;
+
+        vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine);
+
+        const chunk = ECS.add({
+            isChunk: true,
+            chunkKey: '1,0,0',
+            chunkPosition: { x: 1, y: 0, z: 0 },
+            needsUpdate: true,
+            position: new THREE.Vector3(16, 0, 0),
+        });
+
+        ChunkSystem();
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        expect(mockEngine.isChunkCompletedDyson).toHaveBeenCalledWith(1, 0, 0);
+        expect(chunk.completedDysonSection).toBe(true);
+
+        ECS.remove(chunk);
+    });
+
+    it('removes completedDysonSection when the chunk is no longer classified as completed', async () => {
+        const mockEngine = {
+            getBlock: () => 0,
+            isChunkCompletedDyson: vi.fn().mockReturnValue(false),
+        } as unknown as BvxEngine;
+
+        vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine);
+
+        const chunk = ECS.add({
+            isChunk: true,
+            chunkKey: '2,0,0',
+            chunkPosition: { x: 2, y: 0, z: 0 },
+            needsUpdate: true,
+            completedDysonSection: true,
+            position: new THREE.Vector3(32, 0, 0),
+        });
+
+        ChunkSystem();
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        expect(mockEngine.isChunkCompletedDyson).toHaveBeenCalledWith(2, 0, 0);
+        expect(chunk.completedDysonSection).toBeUndefined();
+
+        ECS.remove(chunk);
+    });
 });

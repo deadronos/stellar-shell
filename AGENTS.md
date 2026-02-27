@@ -8,7 +8,6 @@ A React + TypeScript voxel space engine using React Three Fiber, powered by `@as
 - **Manager**: `pnpm`
 - **Build**: Vite (React 19)
 - **Testing**: Vitest
-- **AI**: Gemini (requires `GEMINI_API_KEY`)
 
 ## Primary Directives
 
