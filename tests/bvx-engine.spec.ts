@@ -3,6 +3,7 @@ import { BvxEngine } from '../src/services/BvxEngine';
 import { BlockType } from '../src/types';
 import { ECS } from '../src/ecs/world';
 import { PANEL_ENERGY_RATE, SHELL_ENERGY_RATE } from '../src/constants';
+import { BlueprintManager } from '../src/services/BlueprintManager';
 
 describe('BvxEngine basic behaviors', () => {
   beforeEach(() => {
@@ -14,6 +15,7 @@ describe('BvxEngine basic behaviors', () => {
     for (const entity of entities) {
         ECS.remove(entity);
     }
+    BlueprintManager.getInstance().resetForTests();
   });
 
   it('setBlock/getBlock marks render chunk entity dirty', () => {
@@ -84,5 +86,18 @@ describe('BvxEngine basic behaviors', () => {
 
     engine.setBlock(1, 0, 0, BlockType.AIR);
     expect(engine.computeEnergyRate()).toBe(0);
+  });
+
+  it('generates dyson sphere blueprint nodes around origin as ghost build targets', () => {
+    const engine = new BvxEngine();
+    const blueprints = BlueprintManager.getInstance().getBlueprints();
+
+    expect(blueprints.length).toBeGreaterThan(0);
+    for (const blueprint of blueprints) {
+      const distance = Math.hypot(blueprint.x, blueprint.y, blueprint.z);
+      expect(distance).toBeGreaterThanOrEqual(22);
+      expect(distance).toBeLessThanOrEqual(26);
+      expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.BLUEPRINT_FRAME);
+    }
   });
 });

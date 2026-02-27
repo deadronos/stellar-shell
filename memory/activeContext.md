@@ -1,23 +1,19 @@
 # Active Context — stellar-shell
 
-**Current focus:** Megastructure rendering optimization — completed Dyson sections use an optimized aggregate renderer while the active frontier stays voxel-interactive.
+**Current focus:** Dyson skeleton bootstrapping — generate sphere blueprint targets around the central star and keep drone construction flow unchanged.
 
 **Recent changes:**
 
-- Added `completedDysonSection?: true` ECS component to `Entity`.
-- Added `VoxelQuery.isChunkCompletedDyson` to classify render chunks whose solid voxels are all PANEL or SHELL.
-- Exposed `BvxEngine.isChunkCompletedDyson` delegating to `VoxelQuery`.
-- Updated `ChunkSystem` to mark/unmark `completedDysonSection` after every mesh job.
-- Created `src/render/CompletedSectionRenderer.tsx` — shared metalness material, FrontSide culling, static geometry for completed chunks.
-- Updated `VoxelWorld.tsx` to route completed chunks to `CompletedSectionRenderer` and active chunks to `RenderChunk`.
-- Added 6 unit tests for `isChunkCompletedDyson` in `tests/services/voxel/voxel-query.spec.ts`.
+- Added `BvxEngine.generateDysonBlueprintSkeleton()` with deterministic spherical node placement around `(0,0,0)`.
+- Generate skeleton blueprints during engine startup and after system jump regeneration.
+- Added test coverage for blueprint-node generation (`tests/bvx-engine.spec.ts`) and drone blueprint consumption (`tests/ecs/construction-system.spec.ts`).
 
 **Next steps:**
 
-- Tune `CompletedSectionRenderer` material (emissive glow, opacity) after gameplay review.
-- Consider disabling `needsUpdate` re-propagation for completed sections to further reduce mesher pressure.
+- Add unlock/progression gating for auto-blueprint expansion.
+- Tune blueprint density/radius after gameplay balance pass.
 
 **Notes:**
 
-- Voxel/world data is unchanged; the optimization is purely at the render classification layer.
+- Blueprint targets use existing `BLUEPRINT_FRAME` + `BlueprintManager` flow, so no new drone state paths were introduced.
 - The pre-existing `any` lint warning in `tests/ecs/chunk-system.spec.ts` is unrelated and unchanged.

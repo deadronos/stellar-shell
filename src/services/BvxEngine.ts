@@ -11,6 +11,8 @@ import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx
 import { BlueprintManager } from './BlueprintManager';
 
 export class BvxEngine {
+  private static readonly DYSON_BLUEPRINT_RADIUS = 24;
+  private static readonly DYSON_BLUEPRINT_NODE_COUNT = 64;
   // Actual Voxel Data Storage (4x4x4 chunks)
   // detailed bvx data
   private bvxWorld: VoxelWorld;
@@ -44,6 +46,7 @@ export class BvxEngine {
     // But for now, regenerating the voxel data into the new BvxWorld instance is necessary anyway since that data is lost.
     // Reusing the ECS entities means we just update the existing render chunks.
     this.generateAsteroid(2, 0, 2, 20); // Generate an asteroid at chunk (2,0,2)
+    this.generateDysonBlueprintSkeleton();
   }
 
   private getChunkKey(x: number, y: number, z: number): string {
@@ -232,6 +235,36 @@ export class BvxEngine {
   // Procedural Generation
   public generateAsteroid(cx: number, cy: number, cz: number, radius: number, seed: number = 0) {
     VoxelGenerator.generateAsteroid(cx, cy, cz, radius, this, seed);
+  }
+
+  /**
+   * Generates blueprint-frame construction nodes in a spherical pattern around the star at (0,0,0).
+   */
+  public generateDysonBlueprintSkeleton(
+    radius: number = BvxEngine.DYSON_BLUEPRINT_RADIUS,
+    nodeCount: number = BvxEngine.DYSON_BLUEPRINT_NODE_COUNT,
+  ) {
+    const blueprints = BlueprintManager.getInstance();
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const seen = new Set<string>();
+
+    for (let i = 0; i < nodeCount; i++) {
+      const sphereSample = i + 0.5;
+      const normalizedY = 1 - (2 * sphereSample) / nodeCount;
+      const radial = Math.sqrt(1 - normalizedY * normalizedY);
+      const theta = goldenAngle * i;
+
+      const x = Math.round(Math.cos(theta) * radial * radius);
+      const worldY = Math.round(normalizedY * radius);
+      const z = Math.round(Math.sin(theta) * radial * radius);
+      const key = `${x},${worldY},${z}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      if (this.getBlock(x, worldY, z) !== BlockType.AIR) continue;
+      this.setBlock(x, worldY, z, BlockType.BLUEPRINT_FRAME);
+      blueprints.addBlueprint({ x, y: worldY, z });
+    }
   }
 
   // Meshing: Simple Face Culling

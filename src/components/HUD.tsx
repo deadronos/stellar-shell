@@ -134,6 +134,7 @@ export const HUD = () => {
 
               // Regenerate world with per-system variation
               engine.generateAsteroid(2, 0, 2, nextRadius, systemSeed);
+              engine.generateDysonBlueprintSkeleton();
             }}
           >
             ⚠ Initiate System Jump ⚠
