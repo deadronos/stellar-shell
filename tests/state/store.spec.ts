@@ -76,6 +76,46 @@ describe('useStore', () => {
         expect(state.prestigeLevel).toBe(1);
     });
 
+    it('resetWorld grants stellarCrystals based on rareMatter and prestige', () => {
+        useStore.setState({ rareMatter: 20, prestigeLevel: 2, stellarCrystals: 5 });
+
+        useStore.getState().resetWorld();
+
+        const state = useStore.getState();
+        // crystalsEarned = floor(20 / 2) + 2 * 5 = 10 + 10 = 20; total = 5 + 20 = 25
+        expect(state.stellarCrystals).toBe(25);
+    });
+
+    it('stellarCrystals persist and accumulate across multiple jumps', () => {
+        useStore.setState({ rareMatter: 10, prestigeLevel: 0, stellarCrystals: 0 });
+
+        useStore.getState().resetWorld(); // earns floor(10/2) + 0*5 = 5
+        expect(useStore.getState().stellarCrystals).toBe(5);
+
+        // Second jump with prestige 1 and no rareMatter
+        useStore.setState({ rareMatter: 0 });
+        useStore.getState().resetWorld(); // earns 0 + 1*5 = 5; total = 10
+        expect(useStore.getState().stellarCrystals).toBe(10);
+    });
+
+    it('systemSeed changes after each resetWorld', () => {
+        useStore.setState({ systemSeed: 0 });
+        const seed0 = useStore.getState().systemSeed;
+
+        useStore.getState().resetWorld();
+        const seed1 = useStore.getState().systemSeed;
+
+        useStore.getState().resetWorld();
+        const seed2 = useStore.getState().systemSeed;
+
+        expect(seed1).not.toBe(seed0);
+        expect(seed2).not.toBe(seed1);
+        // Same initial seed always produces the same sequence (deterministic)
+        useStore.setState({ systemSeed: 0, prestigeLevel: 0, stellarCrystals: 0, rareMatter: 0 });
+        useStore.getState().resetWorld();
+        expect(useStore.getState().systemSeed).toBe(seed1);
+    });
+
     it('clamps orbit radius and vertical amplitude to non-negative values', () => {
         const { setAsteroidOrbitRadius, setAsteroidOrbitVerticalAmplitude } = useStore.getState();
 

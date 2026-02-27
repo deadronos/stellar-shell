@@ -48,6 +48,14 @@ export class BlueprintManager {
   }
 
   /**
+   * Clear all placed blueprints and notify subscribers. Safe to call on prestige/world-reset.
+   */
+  public reset() {
+    this.blueprints.clear();
+    this.notifyListeners();
+  }
+
+  /**
    * Reset internal state for tests only. Kept intentionally small and clearly named.
    */
   public resetForTests() {

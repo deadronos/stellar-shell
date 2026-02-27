@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../state/store';
 import { BvxEngine } from '../services/BvxEngine';
-import { BlueprintManager } from '../services/BlueprintManager';
+import { VoxelGenerator } from '../services/voxel/VoxelGenerator';
 import { SettingsModal } from './SettingsModal';
 import { DroneDebugPanel } from './DroneDebugPanel';
 
@@ -12,7 +12,10 @@ export const HUD = () => {
   const addDrone = useStore((state) => state.addDrone);
   const selectedTool = useStore((state) => state.selectedTool);
   const setTool = useStore((state) => state.setTool);
+  const rareMatter = useStore((state) => state.rareMatter);
+  const energy = useStore((state) => state.energy);
   const prestigeLevel = useStore((state) => state.prestigeLevel);
+  const stellarCrystals = useStore((state) => state.stellarCrystals);
   const energyGenerationRate = useStore((state) => state.energyGenerationRate);
   const toggleSettings = useStore((state) => state.toggleSettings);
 
@@ -30,15 +33,15 @@ export const HUD = () => {
         <div>
           <div className="text-xs text-purple-400 uppercase tracking-widest">Rare</div>
           <div className="text-xl font-mono text-purple-300">
-            {useStore((state) => state.rareMatter)}
+            {rareMatter}
           </div>
         </div>
         <div>
           <div className="text-xs text-yellow-400 uppercase tracking-widest">Energy</div>
           <div className="text-xl font-mono text-yellow-300">
-            {useStore((state) => Math.floor(state.energy))}
+            {Math.floor(energy)}
             <span className="text-xs text-yellow-600 ml-1">
-              +{useStore((state) => state.energyGenerationRate)}/s
+              +{energyGenerationRate}/s
             </span>
           </div>
         </div>
@@ -54,6 +57,12 @@ export const HUD = () => {
             <div className="text-xl font-mono text-cyan-300 animate-pulse">
               Lv {prestigeLevel + 1}
             </div>
+          </div>
+        )}
+        {stellarCrystals > 0 && (
+          <div>
+            <div className="text-xs text-indigo-400 uppercase tracking-widest">Crystals</div>
+            <div className="text-xl font-mono text-indigo-300">✦ {stellarCrystals}</div>
           </div>
         )}
         <button
@@ -113,17 +122,18 @@ export const HUD = () => {
             onClick={() => {
               const engine = BvxEngine.getInstance();
 
-              // Clear blueprints first
-              BlueprintManager.getInstance().resetForTests();
-
-              // Reset engine (clears voxels and ECS chunks)
+              // Reset engine (clears voxels, ECS chunks, and blueprint overlays)
               engine.resetWorld();
 
-              // Regenerate world
-              engine.generateAsteroid(2, 0, 2, 20);
-
-              // Reset store state
+              // Advance prestige, grant stellar crystals, and update systemSeed
               useStore.getState().resetWorld();
+
+              // Derive next-system generation parameters from the new seed
+              const { systemSeed } = useStore.getState();
+              const { radius: nextRadius } = VoxelGenerator.deriveSystemParams(systemSeed);
+
+              // Regenerate world with per-system variation
+              engine.generateAsteroid(2, 0, 2, nextRadius, systemSeed);
             }}
           >
             ⚠ Initiate System Jump ⚠
