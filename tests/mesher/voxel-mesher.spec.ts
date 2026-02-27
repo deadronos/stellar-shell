@@ -103,10 +103,10 @@ describe('VoxelMesher', () => {
         it('should not render faces between two transparent blocks', () => {
             const source = {
                 getBlock: (x: number, y: number, z: number) => {
-                    // Two adjacent glass blocks
+                    // Two adjacent transparent frame blocks
                     if ((x === 0 && y === 0 && z === 0) || 
                         (x === 1 && y === 0 && z === 0)) {
-                        return BlockType.GLASS;
+                        return BlockType.FRAME;
                     }
                     return BlockType.AIR;
                 }
