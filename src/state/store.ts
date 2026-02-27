@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { BlockType } from '../types';
 
+// LCG constants from Numerical Recipes – produce a uniform pseudo-random sequence.
+const LCG_MULTIPLIER = 1664525;
+const LCG_INCREMENT = 1013904223;
+
 interface StoreState {
   matter: number;
   rareMatter: number;
@@ -9,6 +13,10 @@ interface StoreState {
   droneCount: number;
   droneCost: number;
   prestigeLevel: number;
+  /** Persistent meta-currency earned on each System Jump. Never reset. */
+  stellarCrystals: number;
+  /** Seed that drives procedural variation for the current star system. Updated on each jump. */
+  systemSeed: number;
   selectedTool: 'LASER' | 'BUILD';
   selectedBlueprint: BlockType;
   asteroidOrbitEnabled: boolean;
@@ -49,6 +57,8 @@ export const useStore = create<StoreState>((set, get) => ({
   droneCount: 0,
   droneCost: 50,
   prestigeLevel: 0,
+  stellarCrystals: 0,
+  systemSeed: 0,
   selectedTool: 'LASER',
   selectedBlueprint: BlockType.FRAME,
   asteroidOrbitEnabled: false,
@@ -66,15 +76,26 @@ export const useStore = create<StoreState>((set, get) => ({
   addEnergy: (amount) => set((state) => ({ energy: state.energy + amount })),
   setEnergyRate: (rate) => set({ energyGenerationRate: rate }),
   
-  resetWorld: () => set((state) => ({
+  resetWorld: () => set((state) => {
+    // ── PRESTIGE ECONOMY ──────────────────────────────────────────────────────
+    // Crystals earned this run: rare-matter haul + per-prestige bonus.
+    const crystalsEarned = Math.floor(state.rareMatter / 2) + state.prestigeLevel * 5;
+    // Next seed via LCG – gives deterministic per-system variation.
+    const nextSeed = ((state.systemSeed * LCG_MULTIPLIER + LCG_INCREMENT) & 0x7fffffff);
+    return {
+      // ── RESET (per-system state) ───────────────────────────────────────────
       matter: 0,
       rareMatter: 0,
       energy: 0,
       energyGenerationRate: 0,
       droneCount: 0,
       droneCost: 50,
-      prestigeLevel: state.prestigeLevel + 1
-  })),
+      // ── KEEP (persistent across jumps) ────────────────────────────────────
+      prestigeLevel: state.prestigeLevel + 1,
+      stellarCrystals: state.stellarCrystals + crystalsEarned,
+      systemSeed: nextSeed,
+    };
+  }),
 
   consumeMatter: (amount) => {
     const { matter } = get();

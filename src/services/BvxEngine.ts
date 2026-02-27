@@ -226,8 +226,8 @@ export class BvxEngine {
   }
 
   // Procedural Generation
-  public generateAsteroid(cx: number, cy: number, cz: number, radius: number) {
-    VoxelGenerator.generateAsteroid(cx, cy, cz, radius, this);
+  public generateAsteroid(cx: number, cy: number, cz: number, radius: number, seed: number = 0) {
+    VoxelGenerator.generateAsteroid(cx, cy, cz, radius, this, seed);
   }
 
   // Meshing: Simple Face Culling
