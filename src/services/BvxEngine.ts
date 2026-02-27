@@ -8,6 +8,7 @@ import { VoxelQuery } from './voxel/VoxelQuery';
 
 // bvx-kit imports
 import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
+import { BlueprintManager } from './BlueprintManager';
 
 export class BvxEngine {
   // Actual Voxel Data Storage (4x4x4 chunks)
@@ -218,6 +219,9 @@ export class BvxEngine {
 
     // Clear local cache map
     this.chunkEntities.clear();
+
+    // Clear blueprint overlays so stale markers don't persist in the new system
+    BlueprintManager.getInstance().reset();
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks

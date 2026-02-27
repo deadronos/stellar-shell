@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { BlockType } from '../types';
 
 // LCG constants from Numerical Recipes – produce a uniform pseudo-random sequence.
+// The seed is masked to 31 bits (& 0x7fffffff), so the sequence cycles after 2^31 jumps.
 const LCG_MULTIPLIER = 1664525;
 const LCG_INCREMENT = 1013904223;
 
