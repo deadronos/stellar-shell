@@ -15,6 +15,7 @@ vi.mock('../../src/services/BvxEngine', () => {
     const mockEngine = {
         getBlock: vi.fn(),
         setBlock: vi.fn(),
+        computeEnergyRate: vi.fn().mockReturnValue(0),
     };
     return {
         BvxEngine: {
@@ -218,5 +219,85 @@ describe('PlayerSystem', () => {
         expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
         expect(useStore.getState().rareMatter).toBe(1);
         expect(useStore.getState().matter).toBe(0);
+    });
+
+    it('reconciles energy rate when player laser-mines a PANEL block', () => {
+        useStore.setState({
+            selectedTool: 'LASER',
+            asteroidOrbitEnabled: false,
+            energyGenerationRate: 5,
+        });
+
+        const engine = BvxEngine.getInstance() as {
+            getBlock: ReturnType<typeof vi.fn>;
+            setBlock: ReturnType<typeof vi.fn>;
+            computeEnergyRate: ReturnType<typeof vi.fn>;
+        };
+        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+            x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
+        );
+        engine.computeEnergyRate.mockReturnValue(4);
+
+        ECS.add({
+            isPlayer: true,
+            position: new THREE.Vector3(0, 0, 8),
+            input: {
+                forward: false,
+                backward: false,
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                mine: true,
+                build: false,
+            },
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+        });
+
+        PlayerSystem(1 / 60, 0);
+
+        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+        expect(engine.computeEnergyRate).toHaveBeenCalled();
+        expect(useStore.getState().energyGenerationRate).toBe(4);
+    });
+
+    it('reconciles energy rate when player laser-mines a SHELL block', () => {
+        useStore.setState({
+            selectedTool: 'LASER',
+            asteroidOrbitEnabled: false,
+            energyGenerationRate: 6,
+        });
+
+        const engine = BvxEngine.getInstance() as {
+            getBlock: ReturnType<typeof vi.fn>;
+            setBlock: ReturnType<typeof vi.fn>;
+            computeEnergyRate: ReturnType<typeof vi.fn>;
+        };
+        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+            x === 0 && y === 0 && z === 0 ? BlockType.SHELL : BlockType.AIR,
+        );
+        engine.computeEnergyRate.mockReturnValue(0);
+
+        ECS.add({
+            isPlayer: true,
+            position: new THREE.Vector3(0, 0, 8),
+            input: {
+                forward: false,
+                backward: false,
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                mine: true,
+                build: false,
+            },
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+        });
+
+        PlayerSystem(1 / 60, 0);
+
+        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+        expect(engine.computeEnergyRate).toHaveBeenCalled();
+        expect(useStore.getState().energyGenerationRate).toBe(0);
     });
 });

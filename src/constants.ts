@@ -33,6 +33,10 @@ export const DRONE_COST = 50; // Matter
 export const FRAME_COST = 5; // Matter
 export const SHELL_COST = 2; // Rare Matter
 
+export const PANEL_ENERGY_RATE = 1; // Energy per second contributed by each PANEL block
+export const SHELL_UPGRADE_RATE = 5; // Additional energy per second when a PANEL is upgraded to SHELL
+export const SHELL_ENERGY_RATE = PANEL_ENERGY_RATE + SHELL_UPGRADE_RATE; // Total energy per second for each SHELL block (6)
+
 // ThreeJS Materials reused
 export const MATERIALS = {
   [BlockType.ASTEROID_CORE]: new THREE.MeshStandardMaterial({
