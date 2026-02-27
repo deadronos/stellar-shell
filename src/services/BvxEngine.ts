@@ -248,4 +248,9 @@ export class BvxEngine {
   } {
     return VoxelMesher.generateChunkMesh(cx, cy, cz, this);
   }
+
+  /** Returns true when every solid voxel in the chunk is PANEL or SHELL. */
+  public isChunkCompletedDyson(cx: number, cy: number, cz: number): boolean {
+    return VoxelQuery.isChunkCompletedDyson(cx, cy, cz, this);
+  }
 }

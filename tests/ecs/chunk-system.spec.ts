@@ -36,7 +36,8 @@ describe('ChunkSystem', () => {
     it('manages chunk loading based on player position', async () => {
         // Mock Engine
         const mockEngine = {
-            getBlock: () => 0
+            getBlock: () => 0,
+            isChunkCompletedDyson: () => false,
         } as unknown as BvxEngine;
 
         vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine);

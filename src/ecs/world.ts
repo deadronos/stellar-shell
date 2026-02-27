@@ -58,6 +58,12 @@ export type Entity = {
     colors: Float32Array;
     indices: number[];
   };
+  /**
+   * Present when all solid voxels in this chunk are completed Dyson blocks
+   * (PANEL or SHELL). Triggers the instanced aggregate renderer for improved
+   * late-stage performance.
+   */
+  completedDysonSection?: true;
 };
 
 // Create a typed world
