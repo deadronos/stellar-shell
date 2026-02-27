@@ -249,21 +249,21 @@ export class BvxEngine {
     const seen = new Set<string>();
 
     for (let i = 0; i < nodeCount; i++) {
-      const t = i + 0.5;
-      const y = 1 - (2 * t) / nodeCount;
-      const radial = Math.sqrt(1 - y * y);
+      const sphereSample = i + 0.5;
+      const normalizedY = 1 - (2 * sphereSample) / nodeCount;
+      const radial = Math.sqrt(1 - normalizedY * normalizedY);
       const theta = goldenAngle * i;
 
       const x = Math.round(Math.cos(theta) * radial * radius);
-      const wy = Math.round(y * radius);
+      const worldY = Math.round(normalizedY * radius);
       const z = Math.round(Math.sin(theta) * radial * radius);
-      const key = `${x},${wy},${z}`;
+      const key = `${x},${worldY},${z}`;
       if (seen.has(key)) continue;
       seen.add(key);
 
-      if (this.getBlock(x, wy, z) !== BlockType.AIR) continue;
-      this.setBlock(x, wy, z, BlockType.BLUEPRINT_FRAME);
-      blueprints.addBlueprint({ x, y: wy, z });
+      if (this.getBlock(x, worldY, z) !== BlockType.AIR) continue;
+      this.setBlock(x, worldY, z, BlockType.BLUEPRINT_FRAME);
+      blueprints.addBlueprint({ x, y: worldY, z });
     }
   }
 

@@ -94,9 +94,7 @@ describe('BvxEngine basic behaviors', () => {
 
     expect(blueprints.length).toBeGreaterThan(0);
     for (const blueprint of blueprints) {
-      const distance = Math.sqrt(
-        blueprint.x * blueprint.x + blueprint.y * blueprint.y + blueprint.z * blueprint.z,
-      );
+      const distance = Math.hypot(blueprint.x, blueprint.y, blueprint.z);
       expect(distance).toBeGreaterThanOrEqual(22);
       expect(distance).toBeLessThanOrEqual(26);
       expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.BLUEPRINT_FRAME);
