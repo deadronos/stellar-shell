@@ -180,4 +180,43 @@ describe('PlayerSystem', () => {
         );
         expect(player.input.build).toBe(false);
     });
+
+    it('grants rare matter when player laser-mines a rare ore block', () => {
+        useStore.setState({
+            selectedTool: 'LASER',
+            asteroidOrbitEnabled: false,
+            matter: 0,
+            rareMatter: 0,
+        });
+
+        const engine = BvxEngine.getInstance() as {
+            getBlock: ReturnType<typeof vi.fn>;
+            setBlock: ReturnType<typeof vi.fn>;
+        };
+        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+            x === 0 && y === 0 && z === 0 ? BlockType.RARE_ORE : BlockType.AIR,
+        );
+
+        ECS.add({
+            isPlayer: true,
+            position: new THREE.Vector3(0, 0, 8),
+            input: {
+                forward: false,
+                backward: false,
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                mine: true,
+                build: false,
+            },
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+        });
+
+        PlayerSystem(1 / 60, 0);
+
+        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+        expect(useStore.getState().rareMatter).toBe(1);
+        expect(useStore.getState().matter).toBe(0);
+    });
 });

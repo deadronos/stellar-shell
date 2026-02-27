@@ -76,7 +76,7 @@ export class VoxelQuery {
 
             const block = voxelSource.getBlock(wx, wy, wz);
 
-            if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE) {
+            if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE || block === BlockType.RARE_ORE) {
               potentialFound++;
               // Check exposure
               let isExposed = false;

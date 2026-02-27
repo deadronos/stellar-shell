@@ -35,6 +35,20 @@ describe('Mining Targets Logic', () => {
     
     const first = targets[0];
     const block = engine.getBlock(first.x, first.y, first.z);
-    expect([BlockType.ASTEROID_SURFACE, BlockType.ASTEROID_CORE]).toContain(block);
+    expect([BlockType.ASTEROID_SURFACE, BlockType.ASTEROID_CORE, BlockType.RARE_ORE]).toContain(block);
+  });
+
+  it('should include an exposed rare ore block as a mining target', () => {
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+
+    // Place a rare ore block surrounded by air so it is exposed
+    engine.setBlock(10, 10, 10, BlockType.RARE_ORE);
+
+    const targets = engine.findMiningTargets(100);
+
+    const rareTarget = targets.find((t) => t.x === 10 && t.y === 10 && t.z === 10);
+    expect(rareTarget).toBeDefined();
+    expect(engine.getBlock(10, 10, 10)).toBe(BlockType.RARE_ORE);
   });
 });
