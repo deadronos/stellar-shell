@@ -44,7 +44,7 @@ export class MesherWorkerPool {
             });
             
             worker.onmessage = (e: MessageEvent) => {
-                this.handleWorkerMessage(e.data);
+                this.handleWorkerMessage(worker, e.data);
             };
 
             worker.onerror = (error) => {
@@ -56,30 +56,26 @@ export class MesherWorkerPool {
         }
     }
 
-    private handleWorkerMessage(data: { taskId: string; mesh: MeshResult }) {
+    private handleWorkerMessage(worker: Worker, data: { taskId: string; mesh: MeshResult }) {
         const pending = this.pendingJobs.get(data.taskId);
         if (pending) {
             pending.resolve(data.mesh);
             this.pendingJobs.delete(data.taskId);
         }
 
-        // Process next job in queue
-        this.processQueue();
+        // Return worker to pool or dispatch next queued job
+        this.processQueue(worker);
     }
 
-    private processQueue() {
-        if (this.jobQueue.length === 0) {
-            // No jobs waiting, mark worker as available
+    private processQueue(worker: Worker) {
+        const job = this.jobQueue.shift();
+        if (!job) {
+            // No jobs waiting, return worker to available pool
+            this.availableWorkers.push(worker);
             return;
         }
 
-        const worker = this.availableWorkers.pop();
-        if (!worker) return;
-
-        const job = this.jobQueue.shift();
-        if (!job) return;
-
-        // Send job to worker
+        // Send next queued job to the freed worker
         worker.postMessage(job);
     }
 
