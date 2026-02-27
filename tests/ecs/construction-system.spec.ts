@@ -6,10 +6,12 @@ import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
 import { BvxEngine } from '../../src/services/BvxEngine';
 import { FRAME_COST, PANEL_ENERGY_RATE, SHELL_COST, SHELL_ENERGY_RATE } from '../../src/constants';
+import { BlueprintManager } from '../../src/services/BlueprintManager';
 
 describe('ConstructionSystem', () => {
   beforeEach(() => {
     ECS.clear();
+    BlueprintManager.getInstance().resetForTests();
     useStore.setState({
       matter: 10,
       rareMatter: 0,
@@ -151,5 +153,39 @@ describe('ConstructionSystem', () => {
     expect(useStore.getState().energyGenerationRate).toBe(PANEL_ENERGY_RATE);
     expect(useStore.getState().rareMatter).toBe(0);
     expect(useStore.getState().matter).toBe(0);
+  });
+
+  it('consumes blueprint targets to construct FRAME blocks', () => {
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+    const blueprint = { x: 3, y: 0, z: 0 };
+
+    useStore.setState({
+      matter: FRAME_COST,
+      rareMatter: 0,
+      asteroidOrbitEnabled: false,
+      asteroidOrbitRadius: 10,
+      asteroidOrbitSpeed: 1,
+      asteroidOrbitVerticalAmplitude: 0,
+    });
+
+    engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.BLUEPRINT_FRAME);
+    BlueprintManager.getInstance().addBlueprint(blueprint);
+
+    ECS.add({
+      isDrone: true,
+      position: new THREE.Vector3(blueprint.x, blueprint.y, blueprint.z),
+      target: new THREE.Vector3(blueprint.x, blueprint.y, blueprint.z),
+      targetBlock: blueprint,
+      velocity: new THREE.Vector3(0, 0, 0),
+      state: 'MOVING_TO_BUILD',
+      carryingType: BlockType.FRAME,
+      miningProgress: 0,
+    });
+
+    ConstructionSystem(1 / 60, 0);
+
+    expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.FRAME);
+    expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
   });
 });
