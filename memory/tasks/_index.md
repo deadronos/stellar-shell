@@ -6,7 +6,7 @@
 
 ## Pending
 
-- No pending tasks yet.
+- [TASK006] Auto-Blueprint Expansion Mode - Planned spec & toggled generation (starting phase 1)
 
 ## Completed
 

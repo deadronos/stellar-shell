@@ -12,6 +12,7 @@
 
 - Add unlock/progression gating for auto-blueprint expansion.
 - Tune blueprint density/radius after gameplay balance pass.
+- Document auto-blueprint expansion mode requirements and start TDD process (TASK006).
 
 **Notes:**
 
