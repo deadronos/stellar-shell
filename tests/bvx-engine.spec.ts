@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { BvxEngine } from '../src/services/BvxEngine';
 import { BlockType } from '../src/types';
 import { ECS } from '../src/ecs/world';
+import { PANEL_ENERGY_RATE, SHELL_ENERGY_RATE } from '../src/constants';
 
 describe('BvxEngine basic behaviors', () => {
   beforeEach(() => {
@@ -52,5 +53,36 @@ describe('BvxEngine basic behaviors', () => {
     expect(mesh.normals.length).toBeGreaterThan(0);
     expect(mesh.colors.length).toBeGreaterThan(0);
     expect(mesh.indices.length).toBeGreaterThan(0);
+  });
+
+  it('computeEnergyRate returns 0 for empty world', () => {
+    const engine = new BvxEngine();
+    expect(engine.computeEnergyRate()).toBe(0);
+  });
+
+  it('computeEnergyRate counts PANEL blocks correctly', () => {
+    const engine = new BvxEngine();
+    engine.setBlock(0, 0, 0, BlockType.PANEL);
+    engine.setBlock(1, 0, 0, BlockType.PANEL);
+    expect(engine.computeEnergyRate()).toBe(2 * PANEL_ENERGY_RATE);
+  });
+
+  it('computeEnergyRate counts SHELL blocks correctly', () => {
+    const engine = new BvxEngine();
+    engine.setBlock(0, 0, 0, BlockType.SHELL);
+    expect(engine.computeEnergyRate()).toBe(SHELL_ENERGY_RATE);
+  });
+
+  it('computeEnergyRate reflects world state after block removal', () => {
+    const engine = new BvxEngine();
+    engine.setBlock(0, 0, 0, BlockType.PANEL);
+    engine.setBlock(1, 0, 0, BlockType.SHELL);
+    expect(engine.computeEnergyRate()).toBe(PANEL_ENERGY_RATE + SHELL_ENERGY_RATE);
+
+    engine.setBlock(0, 0, 0, BlockType.AIR);
+    expect(engine.computeEnergyRate()).toBe(SHELL_ENERGY_RATE);
+
+    engine.setBlock(1, 0, 0, BlockType.AIR);
+    expect(engine.computeEnergyRate()).toBe(0);
   });
 });

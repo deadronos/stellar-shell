@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BlockType } from '../types';
-import { CHUNK_SIZE } from '../constants';
+import { CHUNK_SIZE, PANEL_ENERGY_RATE, SHELL_ENERGY_RATE } from '../constants';
 import { ECS, Entity } from '../ecs/world';
 import { VoxelMesher } from './voxel/VoxelMesher';
 import { VoxelGenerator } from './voxel/VoxelGenerator';
@@ -178,6 +178,31 @@ export class BvxEngine {
     limit: number = 20,
   ): { x: number; y: number; z: number }[] {
     return VoxelQuery.findBlocksByType(this.chunkEntities.values(), this, type, limit);
+  }
+
+  // Compute the energy generation rate from actual voxel world state (single source of truth).
+  // Full scan is intentional: called only on rare events (block built/removed), never per-frame.
+  // World is bounded (asteroid ~radius 20 ≈ 125 render chunks) so scan stays <1 ms.
+  public computeEnergyRate(): number {
+    let rate = 0;
+    for (const entity of this.chunkEntities.values()) {
+      if (!entity.chunkPosition) continue;
+      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+            const block = this.getBlock(
+              cx * CHUNK_SIZE + lx,
+              cy * CHUNK_SIZE + ly,
+              cz * CHUNK_SIZE + lz,
+            );
+            if (block === BlockType.PANEL) rate += PANEL_ENERGY_RATE;
+            else if (block === BlockType.SHELL) rate += SHELL_ENERGY_RATE;
+          }
+        }
+      }
+    }
+    return rate;
   }
 
   // Reset World (Prestige)

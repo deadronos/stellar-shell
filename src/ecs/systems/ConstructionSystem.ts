@@ -48,13 +48,13 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
         } else if (currentBlock === BlockType.FRAME) {
           if (store.consumeMatter(FRAME_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
-            store.setEnergyRate(store.energyGenerationRate + 1);
+            store.setEnergyRate(ENGINE.computeEnergyRate());
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
           if (store.consumeRareMatter(SHELL_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.SHELL);
-            store.setEnergyRate(store.energyGenerationRate + 5);
+            store.setEnergyRate(ENGINE.computeEnergyRate());
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
           }
         }
