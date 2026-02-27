@@ -188,4 +188,43 @@ describe('ConstructionSystem', () => {
     expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.FRAME);
     expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
   });
+
+  it('does not rebuild a mined/removed blueprint target', () => {
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+    const blueprint = { x: 4, y: 0, z: 0 };
+
+    useStore.setState({
+      matter: FRAME_COST,
+      rareMatter: 0,
+      asteroidOrbitEnabled: false,
+      asteroidOrbitRadius: 10,
+      asteroidOrbitSpeed: 1,
+      asteroidOrbitVerticalAmplitude: 0,
+    });
+
+    engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.BLUEPRINT_FRAME);
+    BlueprintManager.getInstance().addBlueprint(blueprint);
+
+    // Simulate player removing the blueprint marker and voxel before drone arrives.
+    engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.AIR);
+    BlueprintManager.getInstance().removeBlueprint(blueprint);
+
+    ECS.add({
+      isDrone: true,
+      position: new THREE.Vector3(blueprint.x, blueprint.y, blueprint.z),
+      target: new THREE.Vector3(blueprint.x, blueprint.y, blueprint.z),
+      targetBlock: blueprint,
+      velocity: new THREE.Vector3(0, 0, 0),
+      state: 'MOVING_TO_BUILD',
+      carryingType: BlockType.FRAME,
+      miningProgress: 0,
+    });
+
+    ConstructionSystem(1 / 60, 0);
+
+    expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.AIR);
+    expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
+    expect(useStore.getState().matter).toBe(FRAME_COST);
+  });
 });

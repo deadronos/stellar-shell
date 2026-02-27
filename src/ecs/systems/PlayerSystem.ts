@@ -84,6 +84,13 @@ export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
                  else if (hitBlock === BlockType.ASTEROID_SURFACE) store.addMatter(1);
                  else if (hitBlock === BlockType.RARE_ORE) store.addRareMatter(1);
                  else if (hitBlock === BlockType.FRAME) store.addMatter(FRAME_COST); // Recycle
+                 else if (hitBlock === BlockType.BLUEPRINT_FRAME) {
+                   BlueprintManager.getInstance().removeBlueprint({
+                     x: hitPos.x,
+                     y: hitPos.y,
+                     z: hitPos.z,
+                   });
+                 }
                  else if (hitBlock === BlockType.PANEL || hitBlock === BlockType.SHELL) {
                      // Reconcile energy rate from actual world state after removal
                      store.setEnergyRate(ENGINE.computeEnergyRate());

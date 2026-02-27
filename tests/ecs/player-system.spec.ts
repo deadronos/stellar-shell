@@ -8,6 +8,7 @@ import { BvxEngine } from '../../src/services/BvxEngine';
 
 const mockBlueprintManager = {
     addBlueprint: vi.fn(),
+    removeBlueprint: vi.fn(),
 };
 
 // Mock BvxEngine
@@ -299,5 +300,43 @@ describe('PlayerSystem', () => {
         expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
         expect(engine.computeEnergyRate).toHaveBeenCalled();
         expect(useStore.getState().energyGenerationRate).toBe(0);
+    });
+
+    it('removes blueprint registration when player laser-mines a BLUEPRINT_FRAME block', () => {
+        useStore.setState({
+            selectedTool: 'LASER',
+            asteroidOrbitEnabled: false,
+        });
+
+        const engine = BvxEngine.getInstance() as {
+            getBlock: ReturnType<typeof vi.fn>;
+            setBlock: ReturnType<typeof vi.fn>;
+        };
+        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+            x === 0 && y === 0 && z === 0 ? BlockType.BLUEPRINT_FRAME : BlockType.AIR,
+        );
+
+        ECS.add({
+            isPlayer: true,
+            position: new THREE.Vector3(0, 0, 8),
+            input: {
+                forward: false,
+                backward: false,
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                mine: true,
+                build: false,
+            },
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+        });
+
+        PlayerSystem(1 / 60, 0);
+
+        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+        expect(mockBlueprintManager.removeBlueprint).toHaveBeenCalledWith(
+            expect.objectContaining({ x: 0, y: 0, z: 0 }),
+        );
     });
 });
