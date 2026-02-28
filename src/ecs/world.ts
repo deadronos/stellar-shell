@@ -13,7 +13,7 @@ export type Entity = {
 
   // Drone State
   target?: THREE.Vector3; // If present, entity is moving towards this
-  state?: 'IDLE' | 'MOVING_TO_BUILD' | 'MOVING_TO_MINE' | 'RETURNING_RESOURCE';
+  state?: 'IDLE' | 'EXPLORING' | 'MOVING_TO_BUILD' | 'MOVING_TO_MINE' | 'RETURNING_RESOURCE';
   targetBlock?: { x: number; y: number; z: number };
   carryingType?: BlockType | null;
   miningProgress?: number;

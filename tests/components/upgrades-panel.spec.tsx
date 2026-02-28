@@ -12,10 +12,11 @@ const mockUseStore = useStore as unknown as ReturnType<typeof vi.fn>;
 const makeState = (overrides: Record<string, unknown> = {}) => ({
   isUpgradesOpen: true,
   toggleUpgrades: vi.fn(),
-  upgrades: { MINING_SPEED_1: false, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false },
+  upgrades: { MINING_SPEED_1: false, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false, DEEP_SCAN_1: false, ADVANCED_EXPLORER: false },
   purchaseUpgrade: vi.fn(),
   matter: 0,
   rareMatter: 0,
+  research: 0,
   ...overrides,
 });
 
@@ -30,7 +31,7 @@ describe('UpgradesPanel', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders all four upgrades when open', () => {
+  it('renders all upgrades when open', () => {
     mockUseStore.mockImplementation((selector) => {
       const state = makeState();
       return selector ? selector(state) : state;
@@ -42,14 +43,17 @@ describe('UpgradesPanel', () => {
     expect(screen.getByText('Thruster Boost')).toBeInTheDocument();
     expect(screen.getByText('Laser Capacitor')).toBeInTheDocument();
     expect(screen.getByText('Auto-Replicator')).toBeInTheDocument();
+    expect(screen.getByText('Deep Scan')).toBeInTheDocument();
+    expect(screen.getByText('Advanced Explorer')).toBeInTheDocument();
   });
 
   it('shows Owned for purchased upgrades', () => {
     mockUseStore.mockImplementation((selector) => {
       const state = makeState({
-        upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false },
+        upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false, DEEP_SCAN_1: false, ADVANCED_EXPLORER: false },
         matter: 100,
         rareMatter: 5,
+        research: 10,
       });
       return selector ? selector(state) : state;
     });
@@ -82,6 +86,18 @@ describe('UpgradesPanel', () => {
 
     const buyButtons = screen.getAllByRole('button', { name: /Buy/i });
     buyButtons.forEach((btn) => expect(btn).toBeDisabled());
+  });
+
+  it('shows research costs for research-gated upgrades', () => {
+    mockUseStore.mockImplementation((selector) => {
+      const state = makeState();
+      return selector ? selector(state) : state;
+    });
+
+    render(<UpgradesPanel />);
+
+    expect(screen.getByText('5 research')).toBeInTheDocument();
+    expect(screen.getByText('10 research')).toBeInTheDocument();
   });
 
   it('calls toggleUpgrades when close button is clicked', () => {

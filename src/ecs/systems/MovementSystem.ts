@@ -29,7 +29,9 @@ export const MovementSystem = (delta: number) => {
   for (const drone of movingDrones) {
     if (!drone.target || !drone.velocity) continue;
 
-    const isOrbiting = drone.state === 'IDLE'; 
+    // Both IDLE and EXPLORING are orbital patrol states and should not apply
+    // near-target braking intended for active task movement.
+    const isOrbiting = drone.state === 'IDLE' || drone.state === 'EXPLORING'; 
 
     // STEERING
     if (drone.target) {

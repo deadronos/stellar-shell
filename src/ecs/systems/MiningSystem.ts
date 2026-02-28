@@ -95,7 +95,10 @@ export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
       const dist = drone.position.distanceTo(drone.target);
       if (dist < 1.5) {
         if (drone.carryingType === BlockType.ASTEROID_CORE) store.addMatter(2);
-        else if (drone.carryingType === BlockType.RARE_ORE) store.addRareMatter(1);
+        else if (drone.carryingType === BlockType.RARE_ORE) {
+          const yieldAmount = store.upgrades['DEEP_SCAN_1'] ? 2 : 1;
+          store.addRareMatter(yieldAmount);
+        }
         else store.addMatter(1);
 
         drone.carryingType = null;

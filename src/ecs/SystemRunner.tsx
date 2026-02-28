@@ -14,10 +14,15 @@ import { PlayerSystem } from './systems/PlayerSystem';
 import { TrailSystem } from './systems/TrailSystem';
 import { AsteroidOrbitSystem } from './systems/AsteroidOrbitSystem';
 import { AutoBlueprintSystem } from './systems/AutoBlueprintSystem';
+import { ExplorerSystem, resetExplorerSystem } from './systems/ExplorerSystem';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
     const droneCount = useStore((state) => state.droneCount);
+
+  useEffect(() => {
+    resetExplorerSystem();
+  }, []);
 
     useEffect(() => {
         // Ensure Engine is initialized and world is generated
@@ -56,6 +61,7 @@ export const SystemRunner = () => {
         EnergySystem(delta);
         AsteroidOrbitSystem(elapsedTime);
         AutoBlueprintSystem(delta, elapsedTime);
+        ExplorerSystem(delta);
         ChunkSystem();
         PlayerSystem(delta, elapsedTime);
         TrailSystem(delta);

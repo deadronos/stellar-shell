@@ -7,6 +7,7 @@ interface FakeState { clock: { elapsedTime: number } }
 type FrameCallback = (state: FakeState, delta: number) => void;
 const frameCallbacks: FrameCallback[] = [];
 const mockAuto = vi.hoisted(() => vi.fn());
+const mockResetExplorer = vi.hoisted(() => vi.fn());
 
 vi.mock('@react-three/fiber', () => ({
   useFrame: (cb: FrameCallback) => {
@@ -28,6 +29,10 @@ vi.mock('../../src/ecs/systems/ConstructionSystem', () => ({ ConstructionSystem:
 vi.mock('../../src/ecs/systems/PlayerSystem', () => ({ PlayerSystem: vi.fn() }));
 vi.mock('../../src/ecs/systems/TrailSystem', () => ({ TrailSystem: vi.fn() }));
 vi.mock('../../src/ecs/systems/AsteroidOrbitSystem', () => ({ AsteroidOrbitSystem: vi.fn() }));
+vi.mock('../../src/ecs/systems/ExplorerSystem', () => ({
+  ExplorerSystem: vi.fn(),
+  resetExplorerSystem: mockResetExplorer,
+}));
 
 // mock store for droneCount dependency
 vi.mock('../../src/state/store', () => ({
@@ -40,11 +45,13 @@ describe('SystemRunner integration', () => {
   beforeEach(() => {
     frameCallbacks.length = 0;
     mockAuto.mockClear();
+    mockResetExplorer.mockClear();
   });
 
   it('registers a frame callback and calls AutoBlueprintSystem with delta/elapsed', () => {
     render(<SystemRunner />);
     expect(frameCallbacks.length).toBe(1);
+    expect(mockResetExplorer).toHaveBeenCalledTimes(1);
 
     const fakeState: FakeState = { clock: { elapsedTime: 2 } }; // state shape is not important for this test
     const fakeDelta = 0.123;
