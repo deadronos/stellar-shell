@@ -6,6 +6,10 @@ export const RESEARCH_RATE = 0.5;
 
 let researchAccumulator = 0;
 
+export const resetExplorerSystem = () => {
+  researchAccumulator = 0;
+};
+
 export const ExplorerSystem = (delta: number) => {
   const store = useStore.getState();
   const allDrones = ECS.with('isDrone', 'state');

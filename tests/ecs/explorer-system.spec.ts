@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import * as THREE from 'three';
 import { ECS } from '../../src/ecs/world';
 import { useStore } from '../../src/state/store';
-import { ExplorerSystem, RESEARCH_RATE } from '../../src/ecs/systems/ExplorerSystem';
+import {
+  ExplorerSystem,
+  RESEARCH_RATE,
+  resetExplorerSystem,
+} from '../../src/ecs/systems/ExplorerSystem';
 
 const defaultUpgrades = {
   MINING_SPEED_1: false,
@@ -16,6 +20,7 @@ const defaultUpgrades = {
 describe('ExplorerSystem', () => {
   beforeEach(() => {
     ECS.clear();
+    resetExplorerSystem();
     useStore.setState({ research: 0, upgrades: defaultUpgrades });
   });
 
@@ -90,6 +95,22 @@ describe('ExplorerSystem', () => {
     });
 
     ExplorerSystem(2);
+    expect(useStore.getState().research).toBe(0);
+  });
+
+  it('resets fractional accumulation when resetExplorerSystem is called', () => {
+    ECS.add({
+      isDrone: true,
+      position: new THREE.Vector3(0, 0, 0),
+      state: 'EXPLORING',
+      carryingType: null,
+    });
+
+    ExplorerSystem(0.5); // 0.25 accrued, no whole research yet
+    expect(useStore.getState().research).toBe(0);
+
+    resetExplorerSystem();
+    ExplorerSystem(0.5); // if reset worked, still 0.25 total => 0 whole
     expect(useStore.getState().research).toBe(0);
   });
 });
