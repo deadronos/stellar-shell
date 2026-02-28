@@ -17,6 +17,14 @@ vi.mock('../../src/services/BvxEngine', () => {
         getBlock: vi.fn(),
         setBlock: vi.fn(),
         computeEnergyRate: vi.fn().mockReturnValue(0),
+        computeDysonProgress: vi.fn().mockReturnValue({
+            blueprintFrames: 0,
+            frames: 0,
+            panels: 0,
+            shells: 0,
+            milestones: 0,
+            prestigeReady: false,
+        }),
     };
     return {
         BvxEngine: {

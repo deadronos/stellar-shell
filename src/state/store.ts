@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { BlockType } from '../types';
+import { BlockType, DysonProgressMetrics } from '../types';
 
 // LCG constants from Numerical Recipes – produce a uniform pseudo-random sequence.
 // The seed is masked to 31 bits (& 0x7fffffff), so the sequence cycles after 2^31 jumps.
@@ -27,6 +27,7 @@ interface StoreState {
 
   /** Automatically place blueprints over time when enabled */
   autoBlueprintEnabled: boolean;
+  dysonProgress: DysonProgressMetrics;
 
   // UI State
   isSettingsOpen: boolean;
@@ -51,6 +52,7 @@ interface StoreState {
   // auto-blueprint actions
   setAutoBlueprintEnabled: (enabled: boolean) => void;
   toggleAutoBlueprint: () => void;
+  setDysonProgress: (progress: DysonProgressMetrics) => void;
   
   // UI Actions
   toggleSettings: () => void;
@@ -74,12 +76,21 @@ export const useStore = create<StoreState>((set, get) => ({
   asteroidOrbitSpeed: 0.08,
   asteroidOrbitVerticalAmplitude: 2,
   autoBlueprintEnabled: false,
+  dysonProgress: {
+    blueprintFrames: 0,
+    frames: 0,
+    panels: 0,
+    shells: 0,
+    milestones: 0,
+    prestigeReady: false,
+  },
   isSettingsOpen: false,
   showDebugPanel: false,
 
   // auto-blueprint methods
   setAutoBlueprintEnabled: (enabled) => set({ autoBlueprintEnabled: enabled }),
   toggleAutoBlueprint: () => set((state) => ({ autoBlueprintEnabled: !state.autoBlueprintEnabled })),
+  setDysonProgress: (progress) => set({ dysonProgress: progress }),
 
   toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
   toggleDebugPanel: () => set((state) => ({ showDebugPanel: !state.showDebugPanel })),
@@ -103,6 +114,14 @@ export const useStore = create<StoreState>((set, get) => ({
       energyGenerationRate: 0,
       droneCount: 0,
       droneCost: 50,
+      dysonProgress: {
+        blueprintFrames: 0,
+        frames: 0,
+        panels: 0,
+        shells: 0,
+        milestones: 0,
+        prestigeReady: false,
+      },
       // ── KEEP (persistent across jumps) ────────────────────────────────────
       prestigeLevel: state.prestigeLevel + 1,
       stellarCrystals: state.stellarCrystals + crystalsEarned,

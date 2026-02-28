@@ -46,3 +46,12 @@ export interface GameState {
     blocks: number;
   };
 }
+
+export interface DysonProgressMetrics {
+  blueprintFrames: number;
+  frames: number;
+  panels: number;
+  shells: number;
+  milestones: number;
+  prestigeReady: boolean;
+}

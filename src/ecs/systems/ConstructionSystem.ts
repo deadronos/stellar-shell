@@ -39,6 +39,7 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
           if (store.consumeMatter(FRAME_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.FRAME);
             BlueprintManager.getInstance().removeBlueprint({ x, y, z });
+            store.setDysonProgress(ENGINE.computeDysonProgress());
             ParticleEvents.emit(
               worldTarget.clone(),
               new THREE.Color(BLOCK_COLORS[BlockType.FRAME]),
@@ -49,12 +50,14 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
           if (store.consumeMatter(FRAME_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
             store.setEnergyRate(ENGINE.computeEnergyRate());
+            store.setDysonProgress(ENGINE.computeDysonProgress());
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
           if (store.consumeRareMatter(SHELL_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.SHELL);
             store.setEnergyRate(ENGINE.computeEnergyRate());
+            store.setDysonProgress(ENGINE.computeDysonProgress());
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
           }
         }

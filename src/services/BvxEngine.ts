@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BlockType } from '../types';
+import { BlockType, DysonProgressMetrics } from '../types';
 import { CHUNK_SIZE, PANEL_ENERGY_RATE, SHELL_ENERGY_RATE } from '../constants';
 import { ECS, Entity } from '../ecs/world';
 import { VoxelMesher } from './voxel/VoxelMesher';
@@ -207,6 +207,40 @@ export class BvxEngine {
       }
     }
     return rate;
+  }
+
+  // Compute explicit Dyson progression metrics from world state.
+  public computeDysonProgress(): DysonProgressMetrics {
+    let blueprintFrames = 0;
+    let frames = 0;
+    let panels = 0;
+    let shells = 0;
+
+    for (const entity of this.chunkEntities.values()) {
+      if (!entity.chunkPosition) continue;
+      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+            const block = this.getBlock(
+              cx * CHUNK_SIZE + lx,
+              cy * CHUNK_SIZE + ly,
+              cz * CHUNK_SIZE + lz,
+            );
+            if (block === BlockType.BLUEPRINT_FRAME) blueprintFrames++;
+            else if (block === BlockType.FRAME) frames++;
+            else if (block === BlockType.PANEL) panels++;
+            else if (block === BlockType.SHELL) shells++;
+          }
+        }
+      }
+    }
+
+    const prestigeReady = shells >= 16;
+    const milestones =
+      Number(frames > 0) + Number(panels > 0) + Number(shells > 0) + Number(prestigeReady);
+
+    return { blueprintFrames, frames, panels, shells, milestones, prestigeReady };
   }
 
   // Reset World (Prestige)
