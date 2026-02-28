@@ -16,6 +16,7 @@ describe('useStore', () => {
             asteroidOrbitRadius: 24,
             asteroidOrbitSpeed: 0.08,
             asteroidOrbitVerticalAmplitude: 2,
+            autoBlueprintEnabled: false,
         });
     });
 
@@ -133,5 +134,21 @@ describe('useStore', () => {
         setAsteroidOrbitSpeed(-0.2);
 
         expect(useStore.getState().asteroidOrbitSpeed).toBe(-0.2);
+    });
+
+    // auto-blueprint tests
+    it('should initialize autoBlueprintEnabled as false', () => {
+        expect(useStore.getState().autoBlueprintEnabled).toBe(false);
+    });
+
+    it('should toggle autoBlueprintEnabled', () => {
+        const { toggleAutoBlueprint, setAutoBlueprintEnabled } = useStore.getState();
+        // start false
+        expect(useStore.getState().autoBlueprintEnabled).toBe(false);
+        toggleAutoBlueprint();
+        expect(useStore.getState().autoBlueprintEnabled).toBe(true);
+        // direct set
+        setAutoBlueprintEnabled(false);
+        expect(useStore.getState().autoBlueprintEnabled).toBe(false);
     });
 });
