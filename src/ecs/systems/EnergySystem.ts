@@ -5,8 +5,8 @@ let accumulatedTime = 0;
 export const EnergySystem = (delta: number) => {
   accumulatedTime += delta;
 
-  // Tick every second
-  if (accumulatedTime >= 1.0) {
+  // Tick every second; process catch-up ticks for large frame deltas.
+  while (accumulatedTime >= 1.0) {
     accumulatedTime -= 1.0;
 
     // Increment energy based on rate
@@ -15,7 +15,11 @@ export const EnergySystem = (delta: number) => {
       state.addEnergy(state.energyGenerationRate);
     }
     // Auto-Replicator: auto-purchase a drone once per second when matter is sufficient
-    if (state.upgrades['AUTO_REPLICATOR'] && state.matter >= state.droneCost) {
+    if (
+      state.upgrades['AUTO_REPLICATOR'] &&
+      state.autoReplicatorEnabled &&
+      state.matter >= state.droneCost
+    ) {
       state.addDrone();
     }
   }

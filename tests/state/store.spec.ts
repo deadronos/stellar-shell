@@ -18,6 +18,7 @@ describe('useStore', () => {
             asteroidOrbitSpeed: 0.08,
             asteroidOrbitVerticalAmplitude: 2,
             autoBlueprintEnabled: false,
+            autoReplicatorEnabled: false,
             upgrades: {
                 MINING_SPEED_1: false,
                 DRONE_SPEED_1: false,
@@ -201,8 +202,41 @@ describe('useStore', () => {
         expect(useStore.getState().rareMatter).toBe(5); // 10 - 5 cost
     });
 
+    it('enables runtime auto-replicator mode when AUTO_REPLICATOR is purchased', () => {
+        useStore.setState({ matter: 0, rareMatter: 20, autoReplicatorEnabled: false });
+
+        const result = useStore.getState().purchaseUpgrade('AUTO_REPLICATOR');
+
+        expect(result).toBe(true);
+        expect(useStore.getState().upgrades.AUTO_REPLICATOR).toBe(true);
+        expect(useStore.getState().autoReplicatorEnabled).toBe(true);
+    });
+
+    it('toggleAutoReplicator flips runtime mode without removing ownership', () => {
+        useStore.setState({
+            autoReplicatorEnabled: true,
+            upgrades: {
+                MINING_SPEED_1: false,
+                DRONE_SPEED_1: false,
+                LASER_EFFICIENCY_1: false,
+                AUTO_REPLICATOR: true,
+                DEEP_SCAN_1: false,
+                ADVANCED_EXPLORER: false,
+            },
+        });
+
+        const { toggleAutoReplicator } = useStore.getState();
+        toggleAutoReplicator();
+        expect(useStore.getState().autoReplicatorEnabled).toBe(false);
+        expect(useStore.getState().upgrades.AUTO_REPLICATOR).toBe(true);
+
+        toggleAutoReplicator();
+        expect(useStore.getState().autoReplicatorEnabled).toBe(true);
+        expect(useStore.getState().upgrades.AUTO_REPLICATOR).toBe(true);
+    });
+
     it('resetWorld resets upgrades', () => {
-        useStore.setState({ upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: true, LASER_EFFICIENCY_1: true, AUTO_REPLICATOR: true, DEEP_SCAN_1: true, ADVANCED_EXPLORER: true } });
+        useStore.setState({ upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: true, LASER_EFFICIENCY_1: true, AUTO_REPLICATOR: true, DEEP_SCAN_1: true, ADVANCED_EXPLORER: true }, autoReplicatorEnabled: true });
         useStore.getState().resetWorld();
         const { upgrades } = useStore.getState();
         expect(upgrades.MINING_SPEED_1).toBe(false);
@@ -211,6 +245,7 @@ describe('useStore', () => {
         expect(upgrades.AUTO_REPLICATOR).toBe(false);
         expect(upgrades.DEEP_SCAN_1).toBe(false);
         expect(upgrades.ADVANCED_EXPLORER).toBe(false);
+        expect(useStore.getState().autoReplicatorEnabled).toBe(false);
     });
 
     // Research tests

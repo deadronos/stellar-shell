@@ -9,6 +9,8 @@ export const SettingsModal = () => {
   const asteroidOrbitSpeed = useStore((state) => state.asteroidOrbitSpeed);
   const asteroidOrbitVerticalAmplitude = useStore((state) => state.asteroidOrbitVerticalAmplitude);
   const autoBlueprintEnabled = useStore((state) => state.autoBlueprintEnabled);
+  const autoReplicatorEnabled = useStore((state) => state.autoReplicatorEnabled);
+  const autoReplicatorOwned = useStore((state) => state.upgrades?.AUTO_REPLICATOR ?? false);
   const toggleSettings = useStore((state) => state.toggleSettings);
   const toggleDebugPanel = useStore((state) => state.toggleDebugPanel);
   const setAsteroidOrbitEnabled = useStore((state) => state.setAsteroidOrbitEnabled);
@@ -18,6 +20,7 @@ export const SettingsModal = () => {
     (state) => state.setAsteroidOrbitVerticalAmplitude,
   );
   const toggleAutoBlueprint = useStore((state) => state.toggleAutoBlueprint);
+  const toggleAutoReplicator = useStore((state) => state.toggleAutoReplicator);
 
   if (!isSettingsOpen) return null;
 
@@ -54,6 +57,18 @@ export const SettingsModal = () => {
               className="w-5 h-5 accent-cyan-400 rounded focus:ring-cyan-400"
             />
           </label>
+
+          {autoReplicatorOwned && (
+            <label className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-all">
+              <span className="text-gray-300 font-mono text-sm">Auto-Replicator Runtime</span>
+              <input
+                type="checkbox"
+                checked={autoReplicatorEnabled}
+                onChange={toggleAutoReplicator}
+                className="w-5 h-5 accent-cyan-400 rounded focus:ring-cyan-400"
+              />
+            </label>
+          )}
 
           <label className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-all">
             <span className="text-gray-300 font-mono text-sm">Asteroid Orbit Motion</span>

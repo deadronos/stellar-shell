@@ -17,3 +17,4 @@
 - [TASK005] Dyson Blueprint Generation - Completed 2026-02-27 - Auto-generated spherical blueprint-frame nodes around (0,0,0) and validated drone consumption via existing construction flow.
 - [TASK006] Auto-Blueprint Expansion Mode - Completed 2026-02-28 - Added optional auto‑blueprint mode with throttled deterministic placement and construction integration.
 - [TASK007] Dyson Progress Metrics and Completion Tracking - Completed 2026-02-28 - Added world-derived Dyson metrics, HUD display, and prestige gating based on milestone readiness.
+- [TASK008] Phase 2 Architecture Alignment Pass - Completed 2026-02-28 - Implemented deterministic outward auto-blueprint traversal, runtime Auto-Replicator toggle semantics, energy catch-up ticking, and rare-policy docs/test alignment.

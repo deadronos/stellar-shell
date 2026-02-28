@@ -27,6 +27,37 @@ describe('VoxelGenerator', () => {
     expect(modifierMock.setBlock).toHaveBeenCalled();
   });
 
+  it('rare ore placement is noise-driven and not strictly core-gated', () => {
+    const modifierMock: IVoxelModifier = { setBlock: vi.fn() };
+    const generatorWithInternals = VoxelGenerator as unknown as {
+      noise3D: (x: number, y: number, z: number) => number;
+    };
+    const originalNoise = generatorWithInternals.noise3D;
+
+    // Force both shape-noise and rare-noise high so rare ore appears broadly.
+    generatorWithInternals.noise3D = () => 1;
+
+    try {
+      const radius = 5;
+      VoxelGenerator.generateAsteroid(0, 0, 0, radius, modifierMock, 0);
+
+      const calls = (modifierMock.setBlock as Mock).mock.calls as [number, number, number, BlockType][];
+      const center = { x: 8, y: 8, z: 8 };
+      const hasRareOutsideCore = calls.some(([x, y, z, type]) => {
+        if (type !== BlockType.RARE_ORE) return false;
+        const dx = x - center.x;
+        const dy = y - center.y;
+        const dz = z - center.z;
+        const dist = Math.hypot(dx, dy, dz);
+        return dist >= radius * 0.5;
+      });
+
+      expect(hasRareOutsideCore).toBe(true);
+    } finally {
+      generatorWithInternals.noise3D = originalNoise;
+    }
+  });
+
   describe('deriveSystemParams', () => {
     // Seeds kept ≤ 0x7fffffff so JS signed-shift stays in-range (matches LCG mask).
     const SAFE_SEEDS = [0, 1, 256, 65535, 0x7fffffff];

@@ -46,6 +46,21 @@ describe('AutoBlueprintSystem', () => {
     expect(BlueprintManager.getInstance().getBlueprints()).toHaveLength(2);
   });
 
+  it('should expand in deterministic outward radius order from origin', () => {
+    useStore.setState({ autoBlueprintEnabled: true });
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+
+    AutoBlueprintSystem(0, 0);
+    AutoBlueprintSystem(0, 1.1);
+    AutoBlueprintSystem(0, 2.2);
+
+    const bps = BlueprintManager.getInstance().getBlueprints();
+    expect(bps).toContainEqual({ x: 0, y: 0, z: 0 });
+    expect(bps).toContainEqual({ x: -1, y: 0, z: 0 });
+    expect(bps).toContainEqual({ x: 0, y: 0, z: -1 });
+  });
+
   it('should skip non-AIR coordinates during auto expansion', () => {
     useStore.setState({ autoBlueprintEnabled: true });
     const engine = BvxEngine.getInstance();
@@ -56,7 +71,7 @@ describe('AutoBlueprintSystem', () => {
     AutoBlueprintSystem(0, 0);
     const bps = BlueprintManager.getInstance().getBlueprints();
     expect(bps).toHaveLength(1);
-    expect(bps[0]).toEqual({ x: 1, y: 0, z: 0 });
+    expect(bps[0]).toEqual({ x: -1, y: 0, z: 0 });
   });
 
   // integration: ensure blueprints placed by the auto system can be

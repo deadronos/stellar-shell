@@ -10,17 +10,19 @@
 - Mining/build/player interaction logic remains functional with moving asteroid render positions.
 - Dyson progression metrics (frames/panels/shells/milestones) are computed from world state and shown in HUD.
 - Prestige jump visibility now requires both energy threshold and Dyson milestone readiness.
+- Architecture alignment audit completed and documented in `ARCHITECTURE_ALIGNMENT.md`.
+- TASK008 completed: deterministic radius-aware auto-blueprint traversal, runtime Auto-Replicator toggle, and energy catch-up ticking are now implemented and tested.
+- Rare-resource policy is explicitly documented as noise-driven and backed by tests.
 
 **What's left / planned work:**
 
-- Flesh out Memory Bank with requirements, tasks, and designs (this task).
-- Auto‑blueprint expansion mode implemented and tested; integrates with construction flow.
-- Add deterministic unit tests for engine logic and meshing.
-- Consider adding background worker for heavy meshing or batch updates.
-- Tune orbit defaults from playtesting data (performance and feel).
+- Gameplay balance tuning after deterministic auto-blueprint expansion changes.
+- Optional cleanup of non-blocking test lint warnings.
+- Continue next feature roadmap item (TBD).
 
 **Known issues / TODOs:**
 
 - Improve documentation for code contributors (design notes, examples).
+- Pre-existing lint warnings remain in test files (`tests/components/settings-modal.spec.tsx`, `tests/ecs/chunk-system.spec.ts`) and are unrelated to gameplay logic.
 
 **Last updated:** 2026-02-28

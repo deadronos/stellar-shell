@@ -5,17 +5,41 @@ import { BvxEngine } from '../../services/BvxEngine';
 
 // how often we generate a new blueprint (seconds)
 const AUTO_INTERVAL = 1.0;
+const AUTO_RADIUS = 48;
 
 // start sufficiently in the past so the first call will succeed
 let lastAddTime = -AUTO_INTERVAL;
-let nextCandidateX = 0;
+let nextCandidateIndex = 0;
+
+interface Candidate {
+  x: number;
+  y: number;
+  z: number;
+  distSq: number;
+}
+
+const buildCandidates = (radius: number): ReadonlyArray<{ x: number; y: number; z: number }> => {
+  const candidates: Candidate[] = [];
+  for (let x = -radius; x <= radius; x++) {
+    for (let z = -radius; z <= radius; z++) {
+      const distSq = x * x + z * z;
+      if (distSq > radius * radius) continue;
+      candidates.push({ x, y: 0, z, distSq });
+    }
+  }
+
+  candidates.sort((a, b) => a.distSq - b.distSq || a.x - b.x || a.z - b.z);
+  return candidates.map(({ x, y, z }) => ({ x, y, z }));
+};
+
+const AUTO_CANDIDATES = buildCandidates(AUTO_RADIUS);
 
 /**
  * Reset internal state; only used by tests so they get deterministic behavior.
  */
 export function resetAutoBlueprintSystemForTests() {
   lastAddTime = -AUTO_INTERVAL;
-  nextCandidateX = 0;
+  nextCandidateIndex = 0;
 }
 
 export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => {
@@ -29,11 +53,12 @@ export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => 
   const engine = BvxEngine.getInstance();
   const manager = BlueprintManager.getInstance();
 
-  // Generate a candidate position sequence along +X axis for now.
-  // Skip any coordinates that are not air; only one blueprint per invocation.
+  // Deterministic radius-aware scan around origin on y=0.
+  // Skip any coordinates that are not AIR; only one blueprint per invocation.
   let attempts = 0;
-  while (attempts < 100) {
-    const coord = { x: nextCandidateX++, y: 0, z: 0 };
+  while (attempts < AUTO_CANDIDATES.length) {
+    const coord = AUTO_CANDIDATES[nextCandidateIndex];
+    nextCandidateIndex = (nextCandidateIndex + 1) % AUTO_CANDIDATES.length;
     const block = engine.getBlock(coord.x, coord.y, coord.z);
     if (block === BlockType.AIR) {
       engine.setBlock(coord.x, coord.y, coord.z, BlockType.BLUEPRINT_FRAME);

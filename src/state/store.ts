@@ -30,6 +30,8 @@ interface StoreState {
 
   /** Automatically place blueprints over time when enabled */
   autoBlueprintEnabled: boolean;
+  /** Runtime mode for Auto-Replicator behavior after upgrade purchase. */
+  autoReplicatorEnabled: boolean;
   dysonProgress: DysonProgressMetrics;
 
   /** Tech tree: record of purchased upgrade IDs */
@@ -60,6 +62,8 @@ interface StoreState {
   // auto-blueprint actions
   setAutoBlueprintEnabled: (enabled: boolean) => void;
   toggleAutoBlueprint: () => void;
+  setAutoReplicatorEnabled: (enabled: boolean) => void;
+  toggleAutoReplicator: () => void;
   setDysonProgress: (progress: DysonProgressMetrics) => void;
 
   // Upgrade actions
@@ -89,6 +93,7 @@ export const useStore = create<StoreState>((set, get) => ({
   asteroidOrbitSpeed: 0.08,
   asteroidOrbitVerticalAmplitude: 2,
   autoBlueprintEnabled: false,
+  autoReplicatorEnabled: false,
   dysonProgress: {
     blueprintFrames: 0,
     frames: 0,
@@ -112,6 +117,14 @@ export const useStore = create<StoreState>((set, get) => ({
   // auto-blueprint methods
   setAutoBlueprintEnabled: (enabled) => set({ autoBlueprintEnabled: enabled }),
   toggleAutoBlueprint: () => set((state) => ({ autoBlueprintEnabled: !state.autoBlueprintEnabled })),
+  setAutoReplicatorEnabled: (enabled) =>
+    set((state) => (state.upgrades.AUTO_REPLICATOR ? { autoReplicatorEnabled: enabled } : {})),
+  toggleAutoReplicator: () =>
+    set((state) =>
+      state.upgrades.AUTO_REPLICATOR
+        ? { autoReplicatorEnabled: !state.autoReplicatorEnabled }
+        : {}
+    ),
   setDysonProgress: (progress) => set({ dysonProgress: progress }),
 
   toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
@@ -133,6 +146,8 @@ export const useStore = create<StoreState>((set, get) => ({
       matter: s.matter - def.matterCost,
       rareMatter: s.rareMatter - def.rareMatterCost,
       research: s.research - def.researchCost,
+      autoReplicatorEnabled:
+        id === 'AUTO_REPLICATOR' ? true : s.autoReplicatorEnabled,
       upgrades: { ...s.upgrades, [id]: true },
     }));
     return true;
@@ -158,6 +173,7 @@ export const useStore = create<StoreState>((set, get) => ({
       energyGenerationRate: 0,
       droneCount: 0,
       droneCost: 50,
+      autoReplicatorEnabled: false,
       dysonProgress: {
         blueprintFrames: 0,
         frames: 0,
