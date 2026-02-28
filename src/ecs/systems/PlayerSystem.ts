@@ -97,8 +97,9 @@ export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
                   }
                   else if (hitBlock === BlockType.PANEL || hitBlock === BlockType.SHELL) {
                       // Reconcile energy rate from actual world state after removal
-                      store.setEnergyRate(ENGINE.computeEnergyRate());
-                      store.setDysonProgress(ENGINE.computeDysonProgress());
+                      const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
+                      store.setEnergyRate(energyRate);
+                      store.setDysonProgress(dysonProgress);
                   }
               }
         }else if (input.build && store.selectedTool === 'BUILD') {

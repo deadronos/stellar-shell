@@ -38,6 +38,7 @@ export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => 
     if (block === BlockType.AIR) {
       engine.setBlock(coord.x, coord.y, coord.z, BlockType.BLUEPRINT_FRAME);
       manager.addBlueprint(coord);
+      state.setDysonProgress(engine.computeDysonProgress());
       lastAddTime = elapsedTime;
       break;
     }

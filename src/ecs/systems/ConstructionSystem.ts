@@ -49,15 +49,17 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
         } else if (currentBlock === BlockType.FRAME) {
           if (store.consumeMatter(FRAME_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
-            store.setEnergyRate(ENGINE.computeEnergyRate());
-            store.setDysonProgress(ENGINE.computeDysonProgress());
+            const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
+            store.setEnergyRate(energyRate);
+            store.setDysonProgress(dysonProgress);
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
           if (store.consumeRareMatter(SHELL_COST)) {
             ENGINE.setBlock(x, y, z, BlockType.SHELL);
-            store.setEnergyRate(ENGINE.computeEnergyRate());
-            store.setDysonProgress(ENGINE.computeDysonProgress());
+            const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
+            store.setEnergyRate(energyRate);
+            store.setDysonProgress(dysonProgress);
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
           }
         }
