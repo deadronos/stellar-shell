@@ -8,6 +8,8 @@
 - Basic tests for `BvxEngine` and ECS Integration (`pnpm test`).
 - Optional deterministic asteroid orbital motion with runtime tuning/toggle in settings.
 - Mining/build/player interaction logic remains functional with moving asteroid render positions.
+- Dyson progression metrics (frames/panels/shells/milestones) are computed from world state and shown in HUD.
+- Prestige jump visibility now requires both energy threshold and Dyson milestone readiness.
 
 **What's left / planned work:**
 

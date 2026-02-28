@@ -17,6 +17,25 @@ vi.mock('../../src/services/BvxEngine', () => {
         getBlock: vi.fn(),
         setBlock: vi.fn(),
         computeEnergyRate: vi.fn().mockReturnValue(0),
+        computeWorldDerivedMetrics: vi.fn().mockReturnValue({
+            energyRate: 0,
+            dysonProgress: {
+                blueprintFrames: 0,
+                frames: 0,
+                panels: 0,
+                shells: 0,
+                milestones: 0,
+                prestigeReady: false,
+            },
+        }),
+        computeDysonProgress: vi.fn().mockReturnValue({
+            blueprintFrames: 0,
+            frames: 0,
+            panels: 0,
+            shells: 0,
+            milestones: 0,
+            prestigeReady: false,
+        }),
     };
     return {
         BvxEngine: {
@@ -232,12 +251,22 @@ describe('PlayerSystem', () => {
         const engine = BvxEngine.getInstance() as {
             getBlock: ReturnType<typeof vi.fn>;
             setBlock: ReturnType<typeof vi.fn>;
-            computeEnergyRate: ReturnType<typeof vi.fn>;
+            computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
         };
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
         );
-        engine.computeEnergyRate.mockReturnValue(4);
+        engine.computeWorldDerivedMetrics.mockReturnValue({
+            energyRate: 4,
+            dysonProgress: {
+                blueprintFrames: 0,
+                frames: 0,
+                panels: 0,
+                shells: 0,
+                milestones: 0,
+                prestigeReady: false,
+            },
+        });
 
         ECS.add({
             isPlayer: true,
@@ -258,7 +287,7 @@ describe('PlayerSystem', () => {
         PlayerSystem(1 / 60, 0);
 
         expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(engine.computeEnergyRate).toHaveBeenCalled();
+        expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
         expect(useStore.getState().energyGenerationRate).toBe(4);
     });
 
@@ -272,12 +301,22 @@ describe('PlayerSystem', () => {
         const engine = BvxEngine.getInstance() as {
             getBlock: ReturnType<typeof vi.fn>;
             setBlock: ReturnType<typeof vi.fn>;
-            computeEnergyRate: ReturnType<typeof vi.fn>;
+            computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
         };
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.SHELL : BlockType.AIR,
         );
-        engine.computeEnergyRate.mockReturnValue(0);
+        engine.computeWorldDerivedMetrics.mockReturnValue({
+            energyRate: 0,
+            dysonProgress: {
+                blueprintFrames: 0,
+                frames: 0,
+                panels: 0,
+                shells: 0,
+                milestones: 0,
+                prestigeReady: false,
+            },
+        });
 
         ECS.add({
             isPlayer: true,
@@ -298,7 +337,7 @@ describe('PlayerSystem', () => {
         PlayerSystem(1 / 60, 0);
 
         expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(engine.computeEnergyRate).toHaveBeenCalled();
+        expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
         expect(useStore.getState().energyGenerationRate).toBe(0);
     });
 

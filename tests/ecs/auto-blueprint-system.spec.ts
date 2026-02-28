@@ -35,6 +35,7 @@ describe('AutoBlueprintSystem', () => {
 
     AutoBlueprintSystem(0, 0);
     expect(BlueprintManager.getInstance().getBlueprints()).toHaveLength(1);
+    expect(useStore.getState().dysonProgress.blueprintFrames).toBe(1);
 
     // still within interval, no new addition
     AutoBlueprintSystem(0, 0.5);

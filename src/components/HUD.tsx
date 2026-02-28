@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from '../state/store';
 import { BvxEngine } from '../services/BvxEngine';
 import { VoxelGenerator } from '../services/voxel/VoxelGenerator';
@@ -18,6 +18,12 @@ export const HUD = () => {
   const stellarCrystals = useStore((state) => state.stellarCrystals);
   const energyGenerationRate = useStore((state) => state.energyGenerationRate);
   const toggleSettings = useStore((state) => state.toggleSettings);
+  const dysonProgress = useStore((state) => state.dysonProgress);
+  const setDysonProgress = useStore((state) => state.setDysonProgress);
+
+  useEffect(() => {
+    setDysonProgress(BvxEngine.getInstance().computeDysonProgress());
+  }, [setDysonProgress]);
 
   return (
     <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-6">
@@ -65,6 +71,15 @@ export const HUD = () => {
             <div className="text-xl font-mono text-indigo-300">✦ {stellarCrystals}</div>
           </div>
         )}
+        <div>
+          <div className="text-xs text-emerald-400 uppercase tracking-widest">Dyson</div>
+          <div className="text-xs font-mono text-emerald-300">
+            F {dysonProgress.frames} · P {dysonProgress.panels} · S {dysonProgress.shells}
+          </div>
+          <div className="text-[10px] font-mono text-emerald-500">
+            Milestones {dysonProgress.milestones}/4
+          </div>
+        </div>
         <button
           onClick={addDrone}
           disabled={matter < droneCost}
@@ -115,7 +130,7 @@ export const HUD = () => {
       </div>
 
       {/* Center: System Jump (Prestige) */}
-      {energyGenerationRate > 100 && (
+      {energyGenerationRate > 100 && dysonProgress.prestigeReady && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
           <button
             className="bg-red-900/90 hover:bg-red-600 text-white border-2 border-red-500 px-8 py-3 rounded shadow-[0_0_30px_rgba(255,0,0,0.6)] font-bold tracking-[0.2em] uppercase transition-all hover:scale-105 z-50 pointer-events-auto"
@@ -135,6 +150,7 @@ export const HUD = () => {
               // Regenerate world with per-system variation
               engine.generateAsteroid(2, 0, 2, nextRadius, systemSeed);
               engine.generateDysonBlueprintSkeleton();
+              useStore.getState().setDysonProgress(engine.computeDysonProgress());
             }}
           >
             ⚠ Initiate System Jump ⚠

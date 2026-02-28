@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BlockType } from '../types';
+import { BlockType, DysonProgressMetrics } from '../types';
 import { CHUNK_SIZE, PANEL_ENERGY_RATE, SHELL_ENERGY_RATE } from '../constants';
 import { ECS, Entity } from '../ecs/world';
 import { VoxelMesher } from './voxel/VoxelMesher';
@@ -188,7 +188,21 @@ export class BvxEngine {
   // Full scan is intentional: called only on rare events (block built/removed), never per-frame.
   // World is bounded (asteroid ~radius 20 ≈ 125 render chunks) so scan stays <1 ms.
   public computeEnergyRate(): number {
-    let rate = 0;
+    const counts = this.scanDysonCounts();
+    return this.computeEnergyRateFromCounts(counts);
+  }
+
+  private scanDysonCounts(): {
+    blueprintFrames: number;
+    frames: number;
+    panels: number;
+    shells: number;
+  } {
+    let blueprintFrames = 0;
+    let frames = 0;
+    let panels = 0;
+    let shells = 0;
+
     for (const entity of this.chunkEntities.values()) {
       if (!entity.chunkPosition) continue;
       const { x: cx, y: cy, z: cz } = entity.chunkPosition;
@@ -200,13 +214,60 @@ export class BvxEngine {
               cy * CHUNK_SIZE + ly,
               cz * CHUNK_SIZE + lz,
             );
-            if (block === BlockType.PANEL) rate += PANEL_ENERGY_RATE;
-            else if (block === BlockType.SHELL) rate += SHELL_ENERGY_RATE;
+            if (block === BlockType.BLUEPRINT_FRAME) blueprintFrames++;
+            else if (block === BlockType.FRAME) frames++;
+            else if (block === BlockType.PANEL) panels++;
+            else if (block === BlockType.SHELL) shells++;
           }
         }
       }
     }
-    return rate;
+
+    return { blueprintFrames, frames, panels, shells };
+  }
+
+  private computeEnergyRateFromCounts(counts: { panels: number; shells: number }): number {
+    return counts.panels * PANEL_ENERGY_RATE + counts.shells * SHELL_ENERGY_RATE;
+  }
+
+  private toDysonProgressMetrics(counts: {
+    blueprintFrames: number;
+    frames: number;
+    panels: number;
+    shells: number;
+  }): DysonProgressMetrics {
+    const prestigeReady = counts.shells >= 16;
+    const milestones =
+      Number(counts.frames > 0) +
+      Number(counts.panels > 0) +
+      Number(counts.shells > 0) +
+      Number(prestigeReady);
+
+    return {
+      blueprintFrames: counts.blueprintFrames,
+      frames: counts.frames,
+      panels: counts.panels,
+      shells: counts.shells,
+      milestones,
+      prestigeReady,
+    };
+  }
+
+  // Compute explicit Dyson progression metrics from world state.
+  public computeDysonProgress(): DysonProgressMetrics {
+    return this.toDysonProgressMetrics(this.scanDysonCounts());
+  }
+
+  // Single-pass world scan for events that need both energy and Dyson progression updates.
+  public computeWorldDerivedMetrics(): {
+    energyRate: number;
+    dysonProgress: DysonProgressMetrics;
+  } {
+    const counts = this.scanDysonCounts();
+    return {
+      energyRate: this.computeEnergyRateFromCounts(counts),
+      dysonProgress: this.toDysonProgressMetrics(counts),
+    };
   }
 
   // Reset World (Prestige)

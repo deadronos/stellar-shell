@@ -100,4 +100,41 @@ describe('BvxEngine basic behaviors', () => {
       expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.BLUEPRINT_FRAME);
     }
   });
+
+  it('computeDysonProgress counts dyson construction states and milestones from world state', () => {
+    const engine = new BvxEngine();
+    engine.resetWorld();
+
+    engine.setBlock(0, 0, 0, BlockType.BLUEPRINT_FRAME);
+    engine.setBlock(1, 0, 0, BlockType.FRAME);
+    engine.setBlock(2, 0, 0, BlockType.PANEL);
+    engine.setBlock(3, 0, 0, BlockType.SHELL);
+
+    const progress = engine.computeDysonProgress();
+    expect(progress.blueprintFrames).toBe(1);
+    expect(progress.frames).toBe(1);
+    expect(progress.panels).toBe(1);
+    expect(progress.shells).toBe(1);
+    expect(progress.milestones).toBe(3);
+    expect(progress.prestigeReady).toBe(false);
+  });
+
+  it('computeWorldDerivedMetrics returns energy and dyson progress from one world snapshot', () => {
+    const engine = new BvxEngine();
+    engine.resetWorld();
+
+    engine.setBlock(0, 0, 0, BlockType.BLUEPRINT_FRAME);
+    engine.setBlock(1, 0, 0, BlockType.FRAME);
+    engine.setBlock(2, 0, 0, BlockType.PANEL);
+    engine.setBlock(3, 0, 0, BlockType.SHELL);
+
+    const metrics = engine.computeWorldDerivedMetrics();
+    expect(metrics.energyRate).toBe(PANEL_ENERGY_RATE + SHELL_ENERGY_RATE);
+    expect(metrics.dysonProgress.blueprintFrames).toBe(1);
+    expect(metrics.dysonProgress.frames).toBe(1);
+    expect(metrics.dysonProgress.panels).toBe(1);
+    expect(metrics.dysonProgress.shells).toBe(1);
+    expect(metrics.dysonProgress.milestones).toBe(3);
+    expect(metrics.dysonProgress.prestigeReady).toBe(false);
+  });
 });

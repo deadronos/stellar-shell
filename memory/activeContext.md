@@ -1,17 +1,17 @@
 # Active Context — stellar-shell
 
-**Current focus:** Gameplay feature backlog — all currently planned blueprint-generation modes are implemented (skeleton and auto‑expansion).
+**Current focus:** Dyson progression telemetry in HUD is now implemented and prestige gating is tied to progression milestones.
 
 **Recent changes:**
 
-- Added `BvxEngine.generateDysonBlueprintSkeleton()` with deterministic spherical node placement around `(0,0,0)`.
-- Generate skeleton blueprints during engine startup and after system jump regeneration.
-- Added test coverage for blueprint-node generation (`tests/bvx-engine.spec.ts`) and drone blueprint consumption (`tests/ecs/construction-system.spec.ts`).
+- Added `BvxEngine.computeDysonProgress()` to derive blueprint/frame/panel/shell counts and milestone readiness directly from world voxels.
+- Wired `dysonProgress` into Zustand store and updated build/mining systems to refresh metrics after voxel mutations.
+- Added HUD Dyson metrics row and gated System Jump visibility by both energy rate and Dyson prestige readiness milestone.
 
 **Next steps:**
 
-- Add unlock/progression gating for auto-blueprint expansion.
-- Tune blueprint density/radius after gameplay balance pass.
+- Tune milestone thresholds from gameplay balance pass.
+- Consider surfacing blueprint-frame count in dedicated progression panel if top-bar density becomes an issue.
 - Begin new task for performance profiling or user telemetry (TBD).
 
 **Notes:**
