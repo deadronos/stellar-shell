@@ -17,6 +17,12 @@ describe('useStore', () => {
             asteroidOrbitSpeed: 0.08,
             asteroidOrbitVerticalAmplitude: 2,
             autoBlueprintEnabled: false,
+            upgrades: {
+                MINING_SPEED_1: false,
+                DRONE_SPEED_1: false,
+                LASER_EFFICIENCY_1: false,
+                AUTO_REPLICATOR: false,
+            },
         });
     });
 
@@ -150,5 +156,55 @@ describe('useStore', () => {
         // direct set
         setAutoBlueprintEnabled(false);
         expect(useStore.getState().autoBlueprintEnabled).toBe(false);
+    });
+
+    // Upgrade tests
+    it('initializes all upgrades as false', () => {
+        const { upgrades } = useStore.getState();
+        expect(upgrades.MINING_SPEED_1).toBe(false);
+        expect(upgrades.DRONE_SPEED_1).toBe(false);
+        expect(upgrades.LASER_EFFICIENCY_1).toBe(false);
+        expect(upgrades.AUTO_REPLICATOR).toBe(false);
+    });
+
+    it('purchaseUpgrade succeeds when resources are sufficient', () => {
+        useStore.setState({ matter: 100, rareMatter: 0 });
+        const result = useStore.getState().purchaseUpgrade('MINING_SPEED_1');
+        expect(result).toBe(true);
+        expect(useStore.getState().upgrades.MINING_SPEED_1).toBe(true);
+        expect(useStore.getState().matter).toBe(50); // 100 - 50 cost
+    });
+
+    it('purchaseUpgrade fails when matter is insufficient', () => {
+        useStore.setState({ matter: 10, rareMatter: 0 });
+        const result = useStore.getState().purchaseUpgrade('MINING_SPEED_1');
+        expect(result).toBe(false);
+        expect(useStore.getState().upgrades.MINING_SPEED_1).toBe(false);
+        expect(useStore.getState().matter).toBe(10);
+    });
+
+    it('purchaseUpgrade fails when already purchased', () => {
+        useStore.setState({ matter: 200, upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false } });
+        const result = useStore.getState().purchaseUpgrade('MINING_SPEED_1');
+        expect(result).toBe(false);
+        expect(useStore.getState().matter).toBe(200); // unchanged
+    });
+
+    it('purchaseUpgrade deducts rareMatter for rare-cost upgrades', () => {
+        useStore.setState({ matter: 0, rareMatter: 10 });
+        const result = useStore.getState().purchaseUpgrade('LASER_EFFICIENCY_1');
+        expect(result).toBe(true);
+        expect(useStore.getState().upgrades.LASER_EFFICIENCY_1).toBe(true);
+        expect(useStore.getState().rareMatter).toBe(5); // 10 - 5 cost
+    });
+
+    it('resetWorld resets upgrades', () => {
+        useStore.setState({ upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: true, LASER_EFFICIENCY_1: true, AUTO_REPLICATOR: true } });
+        useStore.getState().resetWorld();
+        const { upgrades } = useStore.getState();
+        expect(upgrades.MINING_SPEED_1).toBe(false);
+        expect(upgrades.DRONE_SPEED_1).toBe(false);
+        expect(upgrades.LASER_EFFICIENCY_1).toBe(false);
+        expect(upgrades.AUTO_REPLICATOR).toBe(false);
     });
 });

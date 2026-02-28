@@ -79,10 +79,12 @@ export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
         if (input.mine && store.selectedTool === 'LASER') {
              if (hitBlock) {
                  ENGINE.setBlock(hitPos.x, hitPos.y, hitPos.z, BlockType.AIR);
+                 // Laser Capacitor upgrade: 2× resource yield
+                 const laserMult = store.upgrades['LASER_EFFICIENCY_1'] ? 2 : 1;
                  // Determine resource
-                 if (hitBlock === BlockType.ASTEROID_CORE) store.addMatter(2);
-                 else if (hitBlock === BlockType.ASTEROID_SURFACE) store.addMatter(1);
-                 else if (hitBlock === BlockType.RARE_ORE) store.addRareMatter(1);
+                 if (hitBlock === BlockType.ASTEROID_CORE) store.addMatter(2 * laserMult);
+                 else if (hitBlock === BlockType.ASTEROID_SURFACE) store.addMatter(1 * laserMult);
+                 else if (hitBlock === BlockType.RARE_ORE) store.addRareMatter(1 * laserMult);
                  else if (hitBlock === BlockType.FRAME) {
                     store.addMatter(FRAME_COST); // Recycle
                     store.setDysonProgress(ENGINE.computeDysonProgress());

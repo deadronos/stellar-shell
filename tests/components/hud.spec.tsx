@@ -25,6 +25,7 @@ describe('HUD', () => {
                 stellarCrystals: 2,
                 energyGenerationRate: 120,
                 toggleSettings: vi.fn(),
+                toggleUpgrades: vi.fn(),
                 setDysonProgress: vi.fn(),
                 dysonProgress: {
                     blueprintFrames: 4,
@@ -68,6 +69,7 @@ describe('HUD', () => {
                 stellarCrystals: 2,
                 energyGenerationRate: 120,
                 toggleSettings: vi.fn(),
+                toggleUpgrades: vi.fn(),
                 setDysonProgress: vi.fn(),
                 dysonProgress: {
                     blueprintFrames: 4,

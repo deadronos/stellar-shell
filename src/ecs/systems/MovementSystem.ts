@@ -36,7 +36,9 @@ export const MovementSystem = (delta: number) => {
 
         // Prestige Modifier: +50% Speed per level
         const speedMult = 1 + (store.prestigeLevel * 0.5);
-        const currentDataSpeed = DRONE_SPEED * speedMult;
+        // Upgrade Modifier: Thruster Boost +50%
+        const thrusterMult = store.upgrades['DRONE_SPEED_1'] ? 1.5 : 1;
+        const currentDataSpeed = DRONE_SPEED * speedMult * thrusterMult;
 
         if (!isOrbiting && dist < 5) {
           desired.multiplyScalar(currentDataSpeed * (dist / 5));

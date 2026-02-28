@@ -4,6 +4,7 @@ import { BvxEngine } from '../services/BvxEngine';
 import { VoxelGenerator } from '../services/voxel/VoxelGenerator';
 import { SettingsModal } from './SettingsModal';
 import { DroneDebugPanel } from './DroneDebugPanel';
+import { UpgradesPanel } from './UpgradesPanel';
 
 export const HUD = () => {
   const matter = useStore((state) => state.matter);
@@ -18,6 +19,7 @@ export const HUD = () => {
   const stellarCrystals = useStore((state) => state.stellarCrystals);
   const energyGenerationRate = useStore((state) => state.energyGenerationRate);
   const toggleSettings = useStore((state) => state.toggleSettings);
+  const toggleUpgrades = useStore((state) => state.toggleUpgrades);
   const dysonProgress = useStore((state) => state.dysonProgress);
   const setDysonProgress = useStore((state) => state.setDysonProgress);
 
@@ -29,6 +31,7 @@ export const HUD = () => {
     <div className="absolute inset-0 pointer-events-none select-none flex flex-col justify-between p-6">
       <SettingsModal />
       <DroneDebugPanel />
+      <UpgradesPanel />
 
       {/* Top Bar: Resources */}
       <div className="flex gap-8 items-center bg-black/60 backdrop-blur border border-white/10 p-4 rounded-lg self-start pointer-events-auto">
@@ -94,6 +97,27 @@ export const HUD = () => {
         </button>
 
         <div className="h-8 w-px bg-white/20 mx-2"></div>
+
+        <button
+          onClick={toggleUpgrades}
+          className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
+          title="Upgrades"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
+          </svg>
+        </button>
 
         <button
           onClick={toggleSettings}
