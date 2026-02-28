@@ -9,6 +9,7 @@ export const UpgradesPanel = () => {
   const purchaseUpgrade = useStore((state) => state.purchaseUpgrade);
   const matter = useStore((state) => state.matter);
   const rareMatter = useStore((state) => state.rareMatter);
+  const research = useStore((state) => state.research);
 
   if (!isUpgradesOpen) return null;
 
@@ -35,7 +36,9 @@ export const UpgradesPanel = () => {
           {UPGRADES.map((def) => {
             const purchased = upgrades[def.id];
             const canAfford =
-              matter >= def.matterCost && rareMatter >= def.rareMatterCost;
+              matter >= def.matterCost &&
+              rareMatter >= def.rareMatterCost &&
+              research >= def.researchCost;
 
             return (
               <div
@@ -60,6 +63,11 @@ export const UpgradesPanel = () => {
                         {def.rareMatterCost > 0 && (
                           <span className={rareMatter >= def.rareMatterCost ? 'text-purple-400' : 'text-red-400'}>
                             {def.rareMatterCost} rare
+                          </span>
+                        )}
+                        {def.researchCost > 0 && (
+                          <span className={research >= def.researchCost ? 'text-teal-400' : 'text-red-400'}>
+                            {def.researchCost} research
                           </span>
                         )}
                       </div>

@@ -15,6 +15,7 @@ export const HUD = () => {
   const setTool = useStore((state) => state.setTool);
   const rareMatter = useStore((state) => state.rareMatter);
   const energy = useStore((state) => state.energy);
+  const research = useStore((state) => state.research);
   const prestigeLevel = useStore((state) => state.prestigeLevel);
   const stellarCrystals = useStore((state) => state.stellarCrystals);
   const energyGenerationRate = useStore((state) => state.energyGenerationRate);
@@ -58,6 +59,12 @@ export const HUD = () => {
           <div className="text-xs text-gray-400 uppercase tracking-widest">Drones</div>
           <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
         </div>
+        {research > 0 && (
+          <div aria-label={`Research: ${research}`}>
+            <div className="text-xs text-teal-400 uppercase tracking-widest">Research</div>
+            <div className="text-xl font-mono text-teal-300">⬡ {research}</div>
+          </div>
+        )}
         <div className="h-8 w-px bg-white/20 mx-2"></div>
         {/* Prestige Section */}
         {prestigeLevel > 0 && (

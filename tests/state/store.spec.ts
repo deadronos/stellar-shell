@@ -8,6 +8,7 @@ describe('useStore', () => {
             matter: 0,
             rareMatter: 0,
             energy: 0,
+            research: 0,
             droneCount: 0,
             droneCost: 10,
             selectedTool: 'LASER',
@@ -22,6 +23,8 @@ describe('useStore', () => {
                 DRONE_SPEED_1: false,
                 LASER_EFFICIENCY_1: false,
                 AUTO_REPLICATOR: false,
+                DEEP_SCAN_1: false,
+                ADVANCED_EXPLORER: false,
             },
         });
     });
@@ -184,7 +187,7 @@ describe('useStore', () => {
     });
 
     it('purchaseUpgrade fails when already purchased', () => {
-        useStore.setState({ matter: 200, upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false } });
+        useStore.setState({ matter: 200, upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false, DEEP_SCAN_1: false, ADVANCED_EXPLORER: false } });
         const result = useStore.getState().purchaseUpgrade('MINING_SPEED_1');
         expect(result).toBe(false);
         expect(useStore.getState().matter).toBe(200); // unchanged
@@ -199,12 +202,48 @@ describe('useStore', () => {
     });
 
     it('resetWorld resets upgrades', () => {
-        useStore.setState({ upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: true, LASER_EFFICIENCY_1: true, AUTO_REPLICATOR: true } });
+        useStore.setState({ upgrades: { MINING_SPEED_1: true, DRONE_SPEED_1: true, LASER_EFFICIENCY_1: true, AUTO_REPLICATOR: true, DEEP_SCAN_1: true, ADVANCED_EXPLORER: true } });
         useStore.getState().resetWorld();
         const { upgrades } = useStore.getState();
         expect(upgrades.MINING_SPEED_1).toBe(false);
         expect(upgrades.DRONE_SPEED_1).toBe(false);
         expect(upgrades.LASER_EFFICIENCY_1).toBe(false);
         expect(upgrades.AUTO_REPLICATOR).toBe(false);
+        expect(upgrades.DEEP_SCAN_1).toBe(false);
+        expect(upgrades.ADVANCED_EXPLORER).toBe(false);
+    });
+
+    // Research tests
+    it('research initializes at 0', () => {
+        expect(useStore.getState().research).toBe(0);
+    });
+
+    it('addResearch increments research', () => {
+        useStore.getState().addResearch(5);
+        expect(useStore.getState().research).toBe(5);
+        useStore.getState().addResearch(3);
+        expect(useStore.getState().research).toBe(8);
+    });
+
+    it('research persists across resetWorld', () => {
+        useStore.setState({ research: 20 });
+        useStore.getState().resetWorld();
+        expect(useStore.getState().research).toBe(20);
+    });
+
+    it('purchaseUpgrade deducts research for research-gated upgrades', () => {
+        useStore.setState({ matter: 0, rareMatter: 0, research: 10 });
+        const result = useStore.getState().purchaseUpgrade('DEEP_SCAN_1');
+        expect(result).toBe(true);
+        expect(useStore.getState().upgrades.DEEP_SCAN_1).toBe(true);
+        expect(useStore.getState().research).toBe(5); // 10 - 5 cost
+    });
+
+    it('purchaseUpgrade fails when research is insufficient', () => {
+        useStore.setState({ matter: 0, rareMatter: 0, research: 3 });
+        const result = useStore.getState().purchaseUpgrade('DEEP_SCAN_1');
+        expect(result).toBe(false);
+        expect(useStore.getState().upgrades.DEEP_SCAN_1).toBe(false);
+        expect(useStore.getState().research).toBe(3); // unchanged
     });
 });

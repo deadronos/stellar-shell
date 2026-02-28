@@ -28,6 +28,7 @@ vi.mock('../../src/ecs/systems/ConstructionSystem', () => ({ ConstructionSystem:
 vi.mock('../../src/ecs/systems/PlayerSystem', () => ({ PlayerSystem: vi.fn() }));
 vi.mock('../../src/ecs/systems/TrailSystem', () => ({ TrailSystem: vi.fn() }));
 vi.mock('../../src/ecs/systems/AsteroidOrbitSystem', () => ({ AsteroidOrbitSystem: vi.fn() }));
+vi.mock('../../src/ecs/systems/ExplorerSystem', () => ({ ExplorerSystem: vi.fn() }));
 
 // mock store for droneCount dependency
 vi.mock('../../src/state/store', () => ({

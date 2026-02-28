@@ -55,10 +55,11 @@ export const BrainSystem = (clock: THREE.Clock) => {
   }
 
   for (const drone of allDrones) {
-    if (drone.state !== 'IDLE') continue;
+    if (drone.state !== 'IDLE' && drone.state !== 'EXPLORING') continue;
 
-    // SELF-HEALING: Clear stale components if IDLE
-    // If a drone is IDLE, it shouldn't have a targetBlock or carryingType
+    // SELF-HEALING: Clear stale components if IDLE or EXPLORING.
+    // An IDLE/EXPLORING drone should have no targetBlock and no carryingType
+    // (though it may have a 'target' orbit position set during idle patrol).
     if (drone.targetBlock || drone.carryingType) {
       console.warn(`[Brain] Drone ${drone.id} is IDLE but has stale components. Cleaning up.`);
       ECS.removeComponent(drone, 'targetBlock');
@@ -164,9 +165,8 @@ export const BrainSystem = (clock: THREE.Clock) => {
         centerZ + Math.sin(time) * radius,
       );
 
-      // Directly update target if already present (to avoid thrashing component add/remove if avoidable, though Miniplex handles add effectively as update)
-      // ECS.addComponent will update the value if it exists.
       ECS.addComponent(drone, 'target', orbitPos);
+      drone.state = 'EXPLORING';
     }
   }
 };

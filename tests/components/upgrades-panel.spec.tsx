@@ -12,10 +12,11 @@ const mockUseStore = useStore as unknown as ReturnType<typeof vi.fn>;
 const makeState = (overrides: Record<string, unknown> = {}) => ({
   isUpgradesOpen: true,
   toggleUpgrades: vi.fn(),
-  upgrades: { MINING_SPEED_1: false, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false },
+  upgrades: { MINING_SPEED_1: false, DRONE_SPEED_1: false, LASER_EFFICIENCY_1: false, AUTO_REPLICATOR: false, DEEP_SCAN_1: false, ADVANCED_EXPLORER: false },
   purchaseUpgrade: vi.fn(),
   matter: 0,
   rareMatter: 0,
+  research: 0,
   ...overrides,
 });
 
