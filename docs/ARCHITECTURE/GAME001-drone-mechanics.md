@@ -11,4 +11,4 @@ Describe high-level drone behaviour, state machine and constraints.
 **Balance:**
 - `DRONE_SPEED`, `FRAME_COST`, and `DRONE_COST` are in `src/constants.ts` and should be tuned in design changes.
 
-**References:** `src/components/Drones.tsx`, `src/ecs/world.ts`
+**References:** `src/scenes/Drones.tsx`, `src/ecs/world.ts`

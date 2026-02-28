@@ -7,7 +7,7 @@
 1. Update `BlockType` enum in `src/types.ts`.
 2. Add material/color to `BLOCK_COLORS` in `src/constants.ts`.
 3. Set `IS_TRANSPARENT` if applicable.
-4. Adjust meshing logic if custom geometry is needed.
+4. Adjust meshing logic in `src/mesher/VoxelMesher.ts` if custom geometry is needed.
 
 ### Adding Gameplay Logic
 
@@ -25,7 +25,7 @@
 
 - **Game Core**: `src/services/BvxEngine.ts`
 - **ECS World**: `src/ecs/world.ts`
-- **Voxel Rendering**: `src/scenes/VoxelWorld.tsx`
+- **Voxel Rendering**: `src/scenes/VoxelWorld.tsx` → `src/render/RenderChunk.tsx` / `src/render/CompletedSectionRenderer.tsx`
 - **State**: `src/state/store.ts` (Zustand)
 - **Constants**: `src/constants.ts`
 

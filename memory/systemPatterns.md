@@ -11,26 +11,31 @@
 
 **Key patterns & conventions:**
 
-- **ECS-Driven Chunks**: Chunks are represented as entities with `chunkPosition`, `needsUpdate`, and `geometry` components.
-    - `ChunkSystem`: Watches for `needsUpdate: true`, calls `BvxEngine.generateChunkMesh`, and updates the `geometry`.
-    - `VoxelWorld`: Renders chunk entities using `useEntities` hook. **Crucial:** Must query for `geometry` to trigger re-render when mesh is ready.
+- **ECS-Driven Chunks**: Chunks are represented as entities with `chunkKey`, `chunkPosition`, `needsUpdate`, `meshPending`, `meshData`, and optionally `completedDysonSection` components.
+    - `ChunkSystem`: Watches for `needsUpdate: true`, dispatches mesh jobs to `MesherWorkerPool` (marks `meshPending: true`), and writes `meshData` back to the entity when the worker resolves.
+    - `VoxelWorld`: Renders chunk entities using `useEntities` hook. **Crucial:** Must query for `meshData` to trigger re-render when mesh is ready. Active chunks render via `RenderChunk`; completed Dyson sections render via `CompletedSectionRenderer`.
 - **Data/Logic Separation**:
     - `BvxEngine`: Handles raw block data (`setBlock`, `getBlock`) and mesh generation algorithms.
     - ECS: Handles lifecycle, updates, and interactions (e.g. mining triggers `setBlock` which updates ECS Entity).
 - **Singleton access**: `BvxEngine.getInstance()` for data operations, `ECS` for entity operations.
 - **Performance**:
-    - Chunk meshes are generated only when dirty.
-    - Geometry is cached in the ECS entity.
-    - Use `instancedMesh` for standard blocks if possible (future optimization), currently using merged meshes.
+    - Chunk meshes are generated only when dirty (`needsUpdate: true`).
+    - Meshing runs off the main thread via `MesherWorkerPool`; mesh data is transferred back as `meshData` on the entity.
+    - `RenderChunk` and `CompletedSectionRenderer` reuse a stable `THREE.BufferGeometry` per chunk, updated via `MeshUpdater`.
 
 **Files of interest:**
 
-- `src/services/BvxEngine.ts` (Voxel Data & Mesh Gen Service)
-- `src/ecs/systems/ChunkSystem.ts` (Mesh generation logic)
+- `src/services/BvxEngine.ts` (Voxel Data Service)
+- `src/mesher/VoxelMesher.ts` (Mesh generation algorithm)
+- `src/mesher/MesherWorkerPool.ts` (Off-thread meshing pool)
+- `src/ecs/systems/ChunkSystem.ts` (Mesh dispatch & ECS integration)
 - `src/ecs/world.ts` (Entity definitions)
-- `src/scenes/VoxelWorld.tsx` (Reactive rendering)
+- `src/scenes/VoxelWorld.tsx` (Reactive rendering scene)
+- `src/render/RenderChunk.tsx` (Active chunk renderer)
+- `src/render/CompletedSectionRenderer.tsx` (Completed Dyson section renderer)
 
 **Decision notes:**
 
 - **Moves Chunks to ECS**: To align with R3F/Miniplex best practices and decouple rendering from the engine service.
-- **Keep the data->render separation**: `BvxEngine` doesn't know about `THREE.Mesh`, only `BufferGeometry` data.
+- **Keep the data->render separation**: `BvxEngine` doesn't know about `THREE.Mesh`; mesh geometry is managed in `RenderChunk` / `CompletedSectionRenderer` components.
+- **Off-thread meshing**: Mesh generation runs in `MesherWorkerPool` workers; only `meshData` (plain typed arrays) crosses the thread boundary.

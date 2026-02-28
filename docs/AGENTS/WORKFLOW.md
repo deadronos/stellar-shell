@@ -28,6 +28,7 @@ See [docs/instructions/spec-driven-workflow-v1.instructions.md](.github/instruct
 
 - [ ] Goal clearly stated.
 - [ ] Logic/Render separation respected.
-- [ ] Geometry updates are incremental (BufferAttributes).
+- [ ] Worker-based meshing flow respected: `needsUpdate` → `ChunkSystem` → `MesherWorkerPool` → `meshData`.
 - [ ] Tests cover new behaviors.
 - [ ] Architecture docs (TEC/DEC/GAME) updated.
+- [ ] **Doc sync verified**: `/docs/AGENTS/` and `/docs/ARCHITECTURE/` file paths and component names match current implementation.

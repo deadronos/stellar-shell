@@ -8,4 +8,4 @@
 - Pros: Low memory overhead, simpler runtime updates, easy to mark partial updates via `dirty` flags.
 - Cons: Edge-case handling for neighbor faces requires careful dirty neighbor marking; larger meshes could still be expensive.
 
-**References:** `src/services/BvxEngine.generateChunkMesh`, `src/components/VoxelWorld.tsx`
+**References:** `src/mesher/VoxelMesher.ts` (`VoxelMesher.generateChunkMesh`), `src/scenes/VoxelWorld.tsx`
