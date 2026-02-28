@@ -1,47 +1,29 @@
-# DES002 — Logic/Render Split Refactor
+# DES002 — Logic/Render Split Refactor (Archived)
 
-**Status:** Draft
+**Status:** Archived (superseded)
 **Owner:** Jules
 **Created:** 2024-10-18
+**Last updated:** 2026-02-28
 
-## Overview
+## Notes
 
-Refactor the codebase to split game logic (engine, voxel data, systems, meshing) from rendering (three/react-three-fiber React components, buffer updates) into smaller, testable submodules with clear contracts.
+This design originally laid out a plan to separate game logic (engine, mesher, systems) from
+React/Three rendering and to introduce a worker-based meshing architecture. The implementation
+has since been completed and documented in several other places:
 
-## Goals
+* **Active patterns:** see `memory/systemPatterns.md` for current ECS‑driven chunk
+  architecture and `docs/AGENTS/ARCHITECTURE.md` / `docs/ARCHITECTURE/TEC001-rendering-architecture.md`
+  for up‑to‑date descriptions.
+* **Code locations:**
+  * Engine: `src/services/BvxEngine.ts`
+  * ECS world and systems: `src/ecs/*`
+  * Mesher: `src/mesher/VoxelMesher.ts`, `src/mesher/MesherWorkerPool.ts`, `src/mesher/worker.ts`
+  * Render components: `src/render/RenderChunk.tsx` and
+    `src/render/CompletedSectionRenderer.tsx` plus the `VoxelWorld` scene in
+    `src/scenes/VoxelWorld.tsx`.
 
-- Improve testability.
-- Enable off-main-thread meshing.
-- Reduce coupling between logic and UI.
+Because the architecture is now established and the original file content is no longer
+accurate, this document is retained only for historical record and may be referenced
+when tracing the evolution of the design.
 
-## Architecture
-
-### 1. Engine / Data Layer
-- **`src/engine/BvxEngine.ts`**: Pure game logic state, voxel data, and event emission.
-- **Responsibilities**: Store voxel data, manage blueprints, emit events.
-
-### 2. Mesher / Worker Layer (Pure Compute)
-- **`src/mesher/VoxelMesher.ts`**: Pure function `(cx, cy, cz, source) -> Buffers`.
-- **`src/mesher/worker.ts`**: Web Worker entry point handling mesh generation requests.
-- **Responsibilities**: Deterministic mesh generation, transfer buffers.
-
-### 3. Rendering Layer (React + R3F)
-- **`src/render/RenderChunk.tsx`**: Component that receives buffer updates and renders a chunk.
-- **`src/render/ChunkManager.tsx`**: Manages chunk lifecycle and worker communication.
-- **Responsibilities**: Visualize the game state using Three.js, consume worker outputs.
-
-### 4. Systems / Game Logic (ECS)
-- **`src/systems/*`**: Pure logic systems (Physics, AI, etc.).
-- **Responsibilities**: Mutate state, emit events, do not touch DOM/WebGL directly.
-
-## Migration Plan
-
-1. **Extract Pure Mesher**: Move `VoxelMesher` to `src/mesher/` and ensure it is pure.
-2. **Worker Implementation**: Create a worker wrapper for the mesher.
-3. **Render Refactor**: Update `VoxelWorld` to use the worker/mesher via a `ChunkManager` or direct worker communication.
-4. **System Cleanup**: Ensure systems do not touch renderer directly.
-
-## Decision Records
-
-- **DEC003**: Use Web Workers for meshing to offload main thread.
-- **DEC004**: Split Engine and Renderer into distinct directories (`src/engine` and `src/render`).
+(If future architectural changes are planned, create a new DES### file rather than editing this one.)

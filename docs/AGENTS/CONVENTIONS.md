@@ -3,8 +3,8 @@
 ## Voxel World Conventions
 
 - **Chunking Math**: Always use `worldToChunk()` for coordinate mapping.
-- **Dirty Rendering**: Call `setBlock()` (or equivalent) to trigger the `dirty` flag for mesh updates and neighbor re-meshing.
-- **Mesh Efficiency**: Modify `BufferAttributes` in `useLayoutEffect` instead of re-allocating heavy geometry objects.
+- **Dirty Rendering**: Call `setBlock()` (or equivalent) to trigger the `needsUpdate` flag on the chunk ECS entity; `ChunkSystem` dispatches a mesh job to the worker pool on the next frame.
+- **Mesh Efficiency**: `RenderChunk` and `CompletedSectionRenderer` apply incoming `meshData` via `MeshUpdater.updateGeometry()` inside `useEffect`, reusing the same `THREE.BufferGeometry` instance.
 - **Materials**: Use `BLOCK_COLORS` and `MATERIALS` from `src/constants.ts`.
 
 ## ECS Patterns (Miniplex)
@@ -15,5 +15,5 @@
 
 ## Performance
 
-- **Throttling**: Poll `chunk.dirty` in `useFrame` with intervals if necessary.
-- **Culling**: Meshing must implement face culling (see `generateChunkMesh`).
+- **Throttling**: `ChunkSystem` runs every frame in `useFrame`; only chunks with `needsUpdate: true` are dispatched to the worker pool.
+- **Culling**: Meshing implements face culling in `src/mesher/VoxelMesher.ts` (`VoxelMesher.generateChunkMesh`).

@@ -8,8 +8,8 @@ This approach violated the separation of concerns and the "Best Practices" for i
 ## Decision
 **Move Chunk Management to the Entity Component System (Miniplex).**
 
-- **Chunks are Entities**: Each 16x16x16 render chunk is now an ECS entity with components: `isChunk`, `chunkPosition`, `needsUpdate`, `geometry`.
-- **System-Driven Updates**: A `ChunkSystem` is responsible for reacting to `needsUpdate` flags and generating geometry.
+- **Chunks are Entities**: Each 16×16×16 render chunk is now an ECS entity with components: `isChunk`, `chunkKey`, `chunkPosition`, `needsUpdate`, `meshPending`, `meshData`, and optionally `completedDysonSection`.
+- **System-Driven Updates**: A `ChunkSystem` is responsible for reacting to `needsUpdate` flags, dispatching mesh jobs to `MesherWorkerPool`, and writing `meshData` back to the entity on completion.
 - **Reactive Rendering**: The `VoxelWorld` component subscribes to ECS queries (`useEntities`) rather than polling the engine.
 
 ## Consequences
@@ -24,4 +24,4 @@ This approach violated the separation of concerns and the "Best Practices" for i
 - **Entity Overhead**: Creates more entities in the world, but Miniplex is optimized for thousands of entities, so this is negligible for typical chunk counts.
 
 ## Lessons Learned
-- **Reactive Dependencies**: When using `useEntities`, remember that the hook only updates when the *set* of entities changes. If you rely on a component (like `geometry`) that is added asynchronously, you *must* include it in the query keys (e.g., `ECS.with('isChunk', 'geometry')`) or the Component won't re-render to reflect the new data.
+- **Reactive Dependencies**: When using `useEntities`, remember that the hook only updates when the *set* of entities changes. If you rely on a component (like `meshData`) that is added asynchronously, you *must* include it in the query keys (e.g., `ECS.with('isChunk', 'meshData')`) or the component won't re-render to reflect the new data.
