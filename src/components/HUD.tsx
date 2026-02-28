@@ -100,6 +100,7 @@ export const HUD = () => {
 
         <button
           onClick={toggleUpgrades}
+          aria-label="Open upgrades panel"
           className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
           title="Upgrades"
         >
