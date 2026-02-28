@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as THREE from 'three';
 import { MiningSystem } from '../../src/ecs/systems/MiningSystem';
 import { ECS } from '../../src/ecs/world';
@@ -10,10 +10,12 @@ describe('MiningSystem', () => {
   beforeEach(() => {
     ECS.clear();
     useStore.setState({ matter: 0, rareMatter: 0 });
+    vi.spyOn(Math, 'random').mockReturnValue(1);
   });
 
   afterEach(() => {
     ECS.clear();
+    vi.restoreAllMocks();
   });
 
   it('should process returning drones even if they do not have a targetBlock', () => {
@@ -119,5 +121,47 @@ describe('MiningSystem', () => {
     expect(drone.state).toBe('RETURNING_RESOURCE');
     expect(drone.carryingType).toBe(BlockType.RARE_ORE);
     expect(engine.getBlock(0, 0, 0)).toBe(BlockType.AIR);
+  });
+
+  it('applies MINING_SPEED_1 to increase mining progress rate', () => {
+    const engine = BvxEngine.getInstance();
+
+    const runWithDrillUpgrade = (enabled: boolean) => {
+      ECS.clear();
+      engine.resetWorld();
+      engine.setBlock(0, 0, 0, BlockType.ASTEROID_SURFACE);
+
+      useStore.setState({
+        prestigeLevel: 0,
+        asteroidOrbitEnabled: false,
+        upgrades: {
+          MINING_SPEED_1: enabled,
+          DRONE_SPEED_1: false,
+          LASER_EFFICIENCY_1: false,
+          AUTO_REPLICATOR: false,
+        },
+      });
+
+      const drone = ECS.add({
+        isDrone: true,
+        position: new THREE.Vector3(0.5, 0, 0),
+        target: new THREE.Vector3(0, 0, 0),
+        targetBlock: { x: 0, y: 0, z: 0 },
+        velocity: new THREE.Vector3(0, 0, 0),
+        state: 'MOVING_TO_MINE',
+        carryingType: null,
+        miningProgress: 0,
+      });
+
+      MiningSystem(1, 0);
+      return drone.miningProgress;
+    };
+
+    const baseProgress = runWithDrillUpgrade(false);
+    const boostedProgress = runWithDrillUpgrade(true);
+
+    expect(baseProgress).toBeCloseTo(50, 5);
+    expect(boostedProgress).toBeGreaterThan(baseProgress);
+    expect(boostedProgress).toBeCloseTo(75, 5);
   });
 });

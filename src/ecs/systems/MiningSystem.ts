@@ -45,7 +45,9 @@ export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
 
           // Prestige Multiplier: +50% Mining Speed per level
           const miningMult = 1 + store.prestigeLevel * 0.5;
-          drone.miningProgress += delta * 50 * miningMult;
+          // Upgrade Multiplier: Fast Drill +50%
+          const drillMult = store.upgrades['MINING_SPEED_1'] ? 1.5 : 1;
+          drone.miningProgress += delta * 50 * miningMult * drillMult;
 
           // Emit spark occasionally
           if (Math.random() < 0.3) {

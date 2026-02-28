@@ -21,6 +21,9 @@ const DRONE_SPEED = 20;
 
 export const MovementSystem = (delta: number) => {
   const store = useStore.getState();
+  const speedMult = 1 + (store.prestigeLevel * 0.5);
+  const thrusterMult = store.upgrades['DRONE_SPEED_1'] ? 1.5 : 1;
+  const maxDroneSpeed = DRONE_SPEED * speedMult * thrusterMult;
   const movingDrones = ECS.with('isDrone', 'position', 'velocity', 'target');
 
   for (const drone of movingDrones) {
@@ -34,9 +37,8 @@ export const MovementSystem = (delta: number) => {
         const dist = desired.length();
         desired.normalize();
 
-        // Prestige Modifier: +50% Speed per level
-        const speedMult = 1 + (store.prestigeLevel * 0.5);
-        const currentDataSpeed = DRONE_SPEED * speedMult;
+        // Prestige + upgrade modifiers
+        const currentDataSpeed = maxDroneSpeed;
 
         if (!isOrbiting && dist < 5) {
           desired.multiplyScalar(currentDataSpeed * (dist / 5));
@@ -80,7 +82,7 @@ export const MovementSystem = (delta: number) => {
       d1.velocity.add(separation);
     }
 
-    d1.velocity.clampLength(0, DRONE_SPEED);
+    d1.velocity.clampLength(0, maxDroneSpeed);
     d1.position.add(d1.velocity.clone().multiplyScalar(delta));
   }
 };

@@ -56,11 +56,18 @@ describe('PlayerSystem', () => {
         vi.clearAllMocks();
         useStore.setState({
             matter: 0,
+            rareMatter: 0,
             selectedTool: 'LASER',
             asteroidOrbitEnabled: false,
             asteroidOrbitRadius: 24,
             asteroidOrbitSpeed: 0.08,
             asteroidOrbitVerticalAmplitude: 2,
+            upgrades: {
+                MINING_SPEED_1: false,
+                DRONE_SPEED_1: false,
+                LASER_EFFICIENCY_1: false,
+                AUTO_REPLICATOR: false,
+            },
         });
 
         const engine = BvxEngine.getInstance() as { getBlock: ReturnType<typeof vi.fn> };
@@ -239,6 +246,50 @@ describe('PlayerSystem', () => {
         expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
         expect(useStore.getState().rareMatter).toBe(1);
         expect(useStore.getState().matter).toBe(0);
+    });
+
+    it('applies LASER_EFFICIENCY_1 to double laser matter yield', () => {
+        useStore.setState({
+            selectedTool: 'LASER',
+            asteroidOrbitEnabled: false,
+            matter: 0,
+            rareMatter: 0,
+            upgrades: {
+                MINING_SPEED_1: false,
+                DRONE_SPEED_1: false,
+                LASER_EFFICIENCY_1: true,
+                AUTO_REPLICATOR: false,
+            },
+        });
+
+        const engine = BvxEngine.getInstance() as {
+            getBlock: ReturnType<typeof vi.fn>;
+            setBlock: ReturnType<typeof vi.fn>;
+        };
+        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+            x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
+        );
+
+        ECS.add({
+            isPlayer: true,
+            position: new THREE.Vector3(0, 0, 8),
+            input: {
+                forward: false,
+                backward: false,
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                mine: true,
+                build: false,
+            },
+            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+        });
+
+        PlayerSystem(1 / 60, 0);
+
+        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+        expect(useStore.getState().matter).toBe(2);
     });
 
     it('reconciles energy rate when player laser-mines a PANEL block', () => {

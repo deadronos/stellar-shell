@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { BlockType, DysonProgressMetrics } from '../types';
+import { UPGRADES, UpgradeId } from '../data/upgrades';
 
 // LCG constants from Numerical Recipes – produce a uniform pseudo-random sequence.
 // The seed is masked to 31 bits (& 0x7fffffff), so the sequence cycles after 2^31 jumps.
@@ -29,8 +30,12 @@ interface StoreState {
   autoBlueprintEnabled: boolean;
   dysonProgress: DysonProgressMetrics;
 
+  /** Tech tree: record of purchased upgrade IDs */
+  upgrades: Record<UpgradeId, boolean>;
+
   // UI State
   isSettingsOpen: boolean;
+  isUpgradesOpen: boolean;
   showDebugPanel: boolean;
 
   // Actions
@@ -53,9 +58,13 @@ interface StoreState {
   setAutoBlueprintEnabled: (enabled: boolean) => void;
   toggleAutoBlueprint: () => void;
   setDysonProgress: (progress: DysonProgressMetrics) => void;
-  
+
+  // Upgrade actions
+  purchaseUpgrade: (id: UpgradeId) => boolean;
+
   // UI Actions
   toggleSettings: () => void;
+  toggleUpgrades: () => void;
   toggleDebugPanel: () => void;
 }
 
@@ -84,7 +93,14 @@ export const useStore = create<StoreState>((set, get) => ({
     milestones: 0,
     prestigeReady: false,
   },
+  upgrades: {
+    MINING_SPEED_1: false,
+    DRONE_SPEED_1: false,
+    LASER_EFFICIENCY_1: false,
+    AUTO_REPLICATOR: false,
+  },
   isSettingsOpen: false,
+  isUpgradesOpen: false,
   showDebugPanel: false,
 
   // auto-blueprint methods
@@ -93,7 +109,22 @@ export const useStore = create<StoreState>((set, get) => ({
   setDysonProgress: (progress) => set({ dysonProgress: progress }),
 
   toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
+  toggleUpgrades: () => set((state) => ({ isUpgradesOpen: !state.isUpgradesOpen })),
   toggleDebugPanel: () => set((state) => ({ showDebugPanel: !state.showDebugPanel })),
+
+  purchaseUpgrade: (id) => {
+    const state = get();
+    if (state.upgrades[id]) return false; // already purchased
+    const def = UPGRADES.find((u) => u.id === id);
+    if (!def) return false;
+    if (state.matter < def.matterCost || state.rareMatter < def.rareMatterCost) return false;
+    set((s) => ({
+      matter: s.matter - def.matterCost,
+      rareMatter: s.rareMatter - def.rareMatterCost,
+      upgrades: { ...s.upgrades, [id]: true },
+    }));
+    return true;
+  },
 
   addMatter: (amount) => set((state) => ({ matter: state.matter + amount })),
   addRareMatter: (amount) => set((state) => ({ rareMatter: state.rareMatter + amount })),
@@ -121,6 +152,12 @@ export const useStore = create<StoreState>((set, get) => ({
         shells: 0,
         milestones: 0,
         prestigeReady: false,
+      },
+      upgrades: {
+        MINING_SPEED_1: false,
+        DRONE_SPEED_1: false,
+        LASER_EFFICIENCY_1: false,
+        AUTO_REPLICATOR: false,
       },
       // ── KEEP (persistent across jumps) ────────────────────────────────────
       prestigeLevel: state.prestigeLevel + 1,

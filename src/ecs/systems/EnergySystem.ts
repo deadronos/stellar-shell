@@ -14,5 +14,9 @@ export const EnergySystem = (delta: number) => {
     if (state.energyGenerationRate > 0) {
       state.addEnergy(state.energyGenerationRate);
     }
+    // Auto-Replicator: auto-purchase a drone once per second when matter is sufficient
+    if (state.upgrades['AUTO_REPLICATOR'] && state.matter >= state.droneCost) {
+      state.addDrone();
+    }
   }
 };
