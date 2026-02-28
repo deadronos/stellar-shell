@@ -8,6 +8,7 @@ export const SettingsModal = () => {
   const asteroidOrbitRadius = useStore((state) => state.asteroidOrbitRadius);
   const asteroidOrbitSpeed = useStore((state) => state.asteroidOrbitSpeed);
   const asteroidOrbitVerticalAmplitude = useStore((state) => state.asteroidOrbitVerticalAmplitude);
+  const autoBlueprintEnabled = useStore((state) => state.autoBlueprintEnabled);
   const toggleSettings = useStore((state) => state.toggleSettings);
   const toggleDebugPanel = useStore((state) => state.toggleDebugPanel);
   const setAsteroidOrbitEnabled = useStore((state) => state.setAsteroidOrbitEnabled);
@@ -16,6 +17,7 @@ export const SettingsModal = () => {
   const setAsteroidOrbitVerticalAmplitude = useStore(
     (state) => state.setAsteroidOrbitVerticalAmplitude,
   );
+  const toggleAutoBlueprint = useStore((state) => state.toggleAutoBlueprint);
 
   if (!isSettingsOpen) return null;
 
@@ -39,6 +41,16 @@ export const SettingsModal = () => {
               type="checkbox"
               checked={showDebugPanel}
               onChange={toggleDebugPanel}
+              className="w-5 h-5 accent-cyan-400 rounded focus:ring-cyan-400"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-all">
+            <span className="text-gray-300 font-mono text-sm">Auto Blueprint</span>
+            <input
+              type="checkbox"
+              checked={autoBlueprintEnabled}
+              onChange={toggleAutoBlueprint}
               className="w-5 h-5 accent-cyan-400 rounded focus:ring-cyan-400"
             />
           </label>

@@ -1,6 +1,6 @@
 # Active Context — stellar-shell
 
-**Current focus:** Dyson skeleton bootstrapping — generate sphere blueprint targets around the central star and keep drone construction flow unchanged.
+**Current focus:** Gameplay feature backlog — all currently planned blueprint-generation modes are implemented (skeleton and auto‑expansion).
 
 **Recent changes:**
 
@@ -12,6 +12,7 @@
 
 - Add unlock/progression gating for auto-blueprint expansion.
 - Tune blueprint density/radius after gameplay balance pass.
+- Begin new task for performance profiling or user telemetry (TBD).
 
 **Notes:**
 

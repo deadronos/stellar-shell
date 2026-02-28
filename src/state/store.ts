@@ -25,6 +25,9 @@ interface StoreState {
   asteroidOrbitSpeed: number;
   asteroidOrbitVerticalAmplitude: number;
 
+  /** Automatically place blueprints over time when enabled */
+  autoBlueprintEnabled: boolean;
+
   // UI State
   isSettingsOpen: boolean;
   showDebugPanel: boolean;
@@ -44,6 +47,10 @@ interface StoreState {
   setAsteroidOrbitRadius: (radius: number) => void;
   setAsteroidOrbitSpeed: (speed: number) => void;
   setAsteroidOrbitVerticalAmplitude: (amplitude: number) => void;
+
+  // auto-blueprint actions
+  setAutoBlueprintEnabled: (enabled: boolean) => void;
+  toggleAutoBlueprint: () => void;
   
   // UI Actions
   toggleSettings: () => void;
@@ -66,8 +73,13 @@ export const useStore = create<StoreState>((set, get) => ({
   asteroidOrbitRadius: 24,
   asteroidOrbitSpeed: 0.08,
   asteroidOrbitVerticalAmplitude: 2,
+  autoBlueprintEnabled: false,
   isSettingsOpen: false,
   showDebugPanel: false,
+
+  // auto-blueprint methods
+  setAutoBlueprintEnabled: (enabled) => set({ autoBlueprintEnabled: enabled }),
+  toggleAutoBlueprint: () => set((state) => ({ autoBlueprintEnabled: !state.autoBlueprintEnabled })),
 
   toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
   toggleDebugPanel: () => set((state) => ({ showDebugPanel: !state.showDebugPanel })),

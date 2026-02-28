@@ -13,6 +13,7 @@ import { ConstructionSystem } from './systems/ConstructionSystem';
 import { PlayerSystem } from './systems/PlayerSystem';
 import { TrailSystem } from './systems/TrailSystem';
 import { AsteroidOrbitSystem } from './systems/AsteroidOrbitSystem';
+import { AutoBlueprintSystem } from './systems/AutoBlueprintSystem';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
@@ -54,6 +55,7 @@ export const SystemRunner = () => {
         MovementSystem(delta);
         EnergySystem(delta);
         AsteroidOrbitSystem(elapsedTime);
+        AutoBlueprintSystem(delta, elapsedTime);
         ChunkSystem();
         PlayerSystem(delta, elapsedTime);
         TrailSystem(delta);

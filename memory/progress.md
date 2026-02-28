@@ -12,6 +12,7 @@
 **What's left / planned work:**
 
 - Flesh out Memory Bank with requirements, tasks, and designs (this task).
+- Auto‑blueprint expansion mode implemented and tested; integrates with construction flow.
 - Add deterministic unit tests for engine logic and meshing.
 - Consider adding background worker for heavy meshing or batch updates.
 - Tune orbit defaults from playtesting data (performance and feel).
@@ -20,4 +21,4 @@
 
 - Improve documentation for code contributors (design notes, examples).
 
-**Last updated:** 2026-02-26
+**Last updated:** 2026-02-28
