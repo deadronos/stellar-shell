@@ -1,6 +1,6 @@
 # TASK007 — Dyson Progress Metrics and Completion Tracking
 
-**Status:** In Progress  
+**Status:** Completed  
 **Added:** 2026-02-28  
 **Updated:** 2026-02-28  
 **Linked Design:** [DES006](../designs/DES006-dyson-progress-metrics.md)
@@ -17,7 +17,7 @@ Add explicit Dyson progress tracking (frames/panels/shells/milestones), show it 
 
 ## Progress Tracking
 
-**Overall Status:** In Progress - 80%
+**Overall Status:** Completed - 100%
 
 ### Subtasks
 
@@ -25,7 +25,7 @@ Add explicit Dyson progress tracking (frames/panels/shells/milestones), show it 
 | --- | --- | --- | --- | --- |
 | 7.1 | Add failing tests for world metrics and HUD gating | Complete | 2026-02-28 | Added engine and HUD expectations first |
 | 7.2 | Implement engine/store/system/HUD updates | Complete | 2026-02-28 | Minimal additions only |
-| 7.3 | Validate targeted + full suite and finalize docs | In Progress | 2026-02-28 | Targeted tests passing |
+| 7.3 | Validate targeted + full suite and finalize docs | Complete | 2026-02-28 | Lint/build/tests passing after change |
 
 ## Progress Log
 
@@ -35,3 +35,4 @@ Add explicit Dyson progress tracking (frames/panels/shells/milestones), show it 
 - Implemented Dyson metric computation in `BvxEngine` and exposed it via store state.
 - Updated construction/player mutation paths to refresh progress metrics after voxel changes.
 - Added HUD Dyson metric display and prestige gate (`energy && prestigeReady`).
+- Validated with `npm run lint && npm run build && npm test` (pass; only pre-existing lint warnings in test files).
