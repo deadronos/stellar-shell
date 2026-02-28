@@ -8,14 +8,14 @@ const AUTO_INTERVAL = 1.0;
 
 // start sufficiently in the past so the first call will succeed
 let lastAddTime = -AUTO_INTERVAL;
-let nextX = 0;
+let nextCandidateX = 0;
 
 /**
  * Reset internal state; only used by tests so they get deterministic behavior.
  */
 export function resetAutoBlueprintSystemForTests() {
   lastAddTime = -AUTO_INTERVAL;
-  nextX = 0;
+  nextCandidateX = 0;
 }
 
 export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => {
@@ -33,7 +33,7 @@ export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => 
   // Skip any coordinates that are not air; only one blueprint per invocation.
   let attempts = 0;
   while (attempts < 100) {
-    const coord = { x: nextX++, y: 0, z: 0 };
+    const coord = { x: nextCandidateX++, y: 0, z: 0 };
     const block = engine.getBlock(coord.x, coord.y, coord.z);
     if (block === BlockType.AIR) {
       engine.setBlock(coord.x, coord.y, coord.z, BlockType.BLUEPRINT_FRAME);
