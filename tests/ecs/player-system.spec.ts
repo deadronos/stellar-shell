@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
 import { BvxEngine } from '../../src/services/BvxEngine';
+import { createTestUpgrades } from '../helpers/upgrades';
 
 const mockBlueprintManager = {
     addBlueprint: vi.fn(),
@@ -51,6 +52,16 @@ vi.mock('../../src/services/BlueprintManager', () => ({
 }));
 
 describe('PlayerSystem', () => {
+    type MockEngine = {
+        getBlock: ReturnType<typeof vi.fn>;
+        setBlock: ReturnType<typeof vi.fn>;
+        computeEnergyRate: ReturnType<typeof vi.fn>;
+        computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
+        computeDysonProgress: ReturnType<typeof vi.fn>;
+    };
+
+    const getMockEngine = (): MockEngine => BvxEngine.getInstance() as unknown as MockEngine;
+
     beforeEach(() => {
         ECS.clear();
         vi.clearAllMocks();
@@ -62,15 +73,10 @@ describe('PlayerSystem', () => {
             asteroidOrbitRadius: 24,
             asteroidOrbitSpeed: 0.08,
             asteroidOrbitVerticalAmplitude: 2,
-            upgrades: {
-                MINING_SPEED_1: false,
-                DRONE_SPEED_1: false,
-                LASER_EFFICIENCY_1: false,
-                AUTO_REPLICATOR: false,
-            },
+            upgrades: createTestUpgrades(),
         });
 
-        const engine = BvxEngine.getInstance() as { getBlock: ReturnType<typeof vi.fn> };
+        const engine = getMockEngine();
         engine.getBlock.mockReturnValue(BlockType.AIR);
     });
 
@@ -136,10 +142,7 @@ describe('PlayerSystem', () => {
             matter: 0,
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
         );
@@ -176,10 +179,7 @@ describe('PlayerSystem', () => {
             asteroidOrbitVerticalAmplitude: 0,
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
         );
@@ -217,10 +217,7 @@ describe('PlayerSystem', () => {
             rareMatter: 0,
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.RARE_ORE : BlockType.AIR,
         );
@@ -254,18 +251,10 @@ describe('PlayerSystem', () => {
             asteroidOrbitEnabled: false,
             matter: 0,
             rareMatter: 0,
-            upgrades: {
-                MINING_SPEED_1: false,
-                DRONE_SPEED_1: false,
-                LASER_EFFICIENCY_1: true,
-                AUTO_REPLICATOR: false,
-            },
+            upgrades: createTestUpgrades({ LASER_EFFICIENCY_1: true }),
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
         );
@@ -299,11 +288,7 @@ describe('PlayerSystem', () => {
             energyGenerationRate: 5,
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-            computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
         );
@@ -349,11 +334,7 @@ describe('PlayerSystem', () => {
             energyGenerationRate: 6,
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-            computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.SHELL : BlockType.AIR,
         );
@@ -398,10 +379,7 @@ describe('PlayerSystem', () => {
             asteroidOrbitEnabled: false,
         });
 
-        const engine = BvxEngine.getInstance() as {
-            getBlock: ReturnType<typeof vi.fn>;
-            setBlock: ReturnType<typeof vi.fn>;
-        };
+        const engine = getMockEngine();
         engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
             x === 0 && y === 0 && z === 0 ? BlockType.BLUEPRINT_FRAME : BlockType.AIR,
         );

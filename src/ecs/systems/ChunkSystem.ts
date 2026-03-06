@@ -1,9 +1,9 @@
 import { ECS, Entity } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
-import { getMesherPool, MeshResult } from '../../mesher/MesherWorkerPool';
+import { getMesherPool } from '../../mesher/MesherWorkerPool';
 
-// Track pending mesh jobs by chunk key
-const pendingJobs: Map<string, { entity: Entity; resolve: (mesh: MeshResult) => void }> = new Map();
+// Track the currently in-flight revision for each chunk key.
+const pendingJobs: Map<string, number> = new Map();
 
 /**
  * Dispatch a mesh generation job to the worker pool.
@@ -12,19 +12,31 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
     const engine = BvxEngine.getInstance();
     const pool = getMesherPool();
     const chunkKey = entity.chunkKey as string;
+    const revision = entity.meshRevision ?? 0;
 
-    // Mark as pending (to avoid re-dispatching)
+    // Mark as pending so the system never overlaps jobs for the same chunk.
     ECS.removeComponent(entity, 'needsUpdate');
     ECS.addComponent(entity, 'meshPending', true);
+    entity.pendingMeshRevision = revision;
 
     // Dispatch to worker pool
     pool.generateMesh(cx, cy, cz, engine).then((meshResult) => {
-        // Update entity with mesh data
+        // Clear pending state first so a newer dirty revision can be re-dispatched next frame.
+        ECS.removeComponent(entity, 'meshPending');
+        entity.pendingMeshRevision = undefined;
+
+        const latestRevision = entity.meshRevision ?? 0;
+        if (latestRevision !== revision) {
+            if (!entity.needsUpdate) {
+                ECS.addComponent(entity, 'needsUpdate', true);
+            }
+            pendingJobs.delete(chunkKey);
+            return;
+        }
+
+        // Only the newest revision is allowed to update render state.
         if (entity.meshData) ECS.removeComponent(entity, 'meshData');
         ECS.addComponent(entity, 'meshData', meshResult);
-        
-        // Clear pending flag
-        ECS.removeComponent(entity, 'meshPending');
 
         // Classify the chunk: mark as completedDysonSection when applicable.
         // Worst-case scans the whole chunk, but frontier chunks usually early-exit
@@ -40,7 +52,7 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
         pendingJobs.delete(chunkKey);
     });
 
-    pendingJobs.set(chunkKey, { entity, resolve: () => {} });
+    pendingJobs.set(chunkKey, revision);
 }
 
 /**
@@ -50,14 +62,14 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
  * 1. Find chunks marked as 'needsUpdate'
  * 2. Dispatch mesh job to worker pool
  * 3. Mark entity as 'meshPending'
- * 4. When worker returns, update 'meshData' component
+ * 4. When worker returns, only apply the result if it still matches the latest revision
  */
 export const ChunkSystem = () => {
     // 1. Dispatch new mesh jobs for dirty chunks
     const dirtyChunks = ECS.with('isChunk', 'chunkPosition', 'needsUpdate');
 
     for (const entity of [...dirtyChunks.entities]) {
-        if (entity.needsUpdate) {
+        if (entity.needsUpdate && !entity.meshPending) {
             const { x, y, z } = entity.chunkPosition;
             dispatchMeshJob(entity, x, y, z);
         }

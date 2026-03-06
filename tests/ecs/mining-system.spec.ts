@@ -5,6 +5,7 @@ import { ECS } from '../../src/ecs/world';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
 import { BvxEngine } from '../../src/services/BvxEngine';
+import { createTestUpgrades } from '../helpers/upgrades';
 
 describe('MiningSystem', () => {
   beforeEach(() => {
@@ -134,12 +135,7 @@ describe('MiningSystem', () => {
       useStore.setState({
         prestigeLevel: 0,
         asteroidOrbitEnabled: false,
-        upgrades: {
-          MINING_SPEED_1: enabled,
-          DRONE_SPEED_1: false,
-          LASER_EFFICIENCY_1: false,
-          AUTO_REPLICATOR: false,
-        },
+        upgrades: createTestUpgrades({ MINING_SPEED_1: enabled }),
       });
 
       const drone = ECS.add({

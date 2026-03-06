@@ -1,15 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../src/state/store';
 import { EnergySystem } from '../../src/ecs/systems/EnergySystem';
+import { createTestUpgrades } from '../helpers/upgrades';
 
-const defaultUpgrades = {
-  MINING_SPEED_1: false,
-  DRONE_SPEED_1: false,
-  LASER_EFFICIENCY_1: false,
-  AUTO_REPLICATOR: false,
-  DEEP_SCAN_1: false,
-  ADVANCED_EXPLORER: false,
-};
+const defaultUpgrades = createTestUpgrades();
 
 describe('EnergySystem', () => {
   beforeEach(() => {

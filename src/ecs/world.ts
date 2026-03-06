@@ -51,6 +51,8 @@ export type Entity = {
   chunkPosition?: { x: number; y: number; z: number };
   needsUpdate?: boolean;
   meshPending?: boolean; // True when mesh job is dispatched to worker
+  meshRevision?: number; // Monotonic revision used to drop stale worker results
+  pendingMeshRevision?: number; // Revision currently being meshed by a worker
   geometry?: THREE.BufferGeometry;
   meshData?: {
     positions: Float32Array;

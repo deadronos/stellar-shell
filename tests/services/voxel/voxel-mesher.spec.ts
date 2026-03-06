@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { VoxelMesher } from '../../../src/services/voxel/VoxelMesher';
+import { VoxelMesher } from '../../../src/mesher/VoxelMesher';
 import { BlockType } from '../../../src/types';
 import { IVoxelSource } from '../../../src/services/voxel/types';
 

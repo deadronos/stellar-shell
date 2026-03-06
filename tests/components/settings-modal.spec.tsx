@@ -2,18 +2,42 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsModal } from '../../src/components/SettingsModal';
 import { useStore } from '../../src/state/store';
+import { UpgradeId } from '../../src/data/upgrades';
+import { createTestUpgrades } from '../helpers/upgrades';
 
 // Mock the zustand hook so we can control the state/actions
 vi.mock('../../src/state/store', () => ({
   useStore: vi.fn(),
 }));
 
+type MockSettingsState = {
+  isSettingsOpen: boolean;
+  showDebugPanel: boolean;
+  asteroidOrbitEnabled: boolean;
+  asteroidOrbitRadius: number;
+  asteroidOrbitSpeed: number;
+  asteroidOrbitVerticalAmplitude: number;
+  autoBlueprintEnabled: boolean;
+  autoReplicatorEnabled: boolean;
+  upgrades: Record<UpgradeId, boolean>;
+  toggleSettings: () => void;
+  toggleDebugPanel: () => void;
+  setAsteroidOrbitEnabled: (enabled: boolean) => void;
+  setAsteroidOrbitRadius: (radius: number) => void;
+  setAsteroidOrbitSpeed: (speed: number) => void;
+  setAsteroidOrbitVerticalAmplitude: (amplitude: number) => void;
+  toggleAutoBlueprint: () => void;
+  toggleAutoReplicator: () => void;
+};
+
+const mockUseStore = useStore as unknown as ReturnType<typeof vi.fn>;
+
 describe('SettingsModal', () => {
   it('renders auto-blueprint toggle and calls store action when clicked', () => {
     const mockToggle = vi.fn();
     // Provide initial state with settings open and auto disabled
-    (useStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector) => {
-      const state = {
+    mockUseStore.mockImplementation((selector?: (state: MockSettingsState) => unknown) => {
+      const state: MockSettingsState = {
         isSettingsOpen: true,
         showDebugPanel: false,
         asteroidOrbitEnabled: false,
@@ -22,14 +46,7 @@ describe('SettingsModal', () => {
         asteroidOrbitVerticalAmplitude: 0,
         autoBlueprintEnabled: false,
         autoReplicatorEnabled: false,
-        upgrades: {
-          MINING_SPEED_1: false,
-          DRONE_SPEED_1: false,
-          LASER_EFFICIENCY_1: false,
-          AUTO_REPLICATOR: false,
-          DEEP_SCAN_1: false,
-          ADVANCED_EXPLORER: false,
-        },
+        upgrades: createTestUpgrades(),
         toggleSettings: vi.fn(),
         toggleDebugPanel: vi.fn(),
         setAsteroidOrbitEnabled: vi.fn(),
@@ -38,7 +55,7 @@ describe('SettingsModal', () => {
         setAsteroidOrbitVerticalAmplitude: vi.fn(),
         toggleAutoBlueprint: mockToggle,
         toggleAutoReplicator: vi.fn(),
-      } as any;
+      };
 
       return selector ? selector(state) : state;
     });
@@ -55,8 +72,8 @@ describe('SettingsModal', () => {
 
   it('renders auto-replicator runtime toggle when upgrade is owned', () => {
     const mockToggleReplicator = vi.fn();
-    (useStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector) => {
-      const state = {
+    mockUseStore.mockImplementation((selector?: (state: MockSettingsState) => unknown) => {
+      const state: MockSettingsState = {
         isSettingsOpen: true,
         showDebugPanel: false,
         asteroidOrbitEnabled: false,
@@ -65,14 +82,7 @@ describe('SettingsModal', () => {
         asteroidOrbitVerticalAmplitude: 0,
         autoBlueprintEnabled: false,
         autoReplicatorEnabled: true,
-        upgrades: {
-          MINING_SPEED_1: false,
-          DRONE_SPEED_1: false,
-          LASER_EFFICIENCY_1: false,
-          AUTO_REPLICATOR: true,
-          DEEP_SCAN_1: false,
-          ADVANCED_EXPLORER: false,
-        },
+        upgrades: createTestUpgrades({ AUTO_REPLICATOR: true }),
         toggleSettings: vi.fn(),
         toggleDebugPanel: vi.fn(),
         setAsteroidOrbitEnabled: vi.fn(),
@@ -81,7 +91,7 @@ describe('SettingsModal', () => {
         setAsteroidOrbitVerticalAmplitude: vi.fn(),
         toggleAutoBlueprint: vi.fn(),
         toggleAutoReplicator: mockToggleReplicator,
-      } as any;
+      };
 
       return selector ? selector(state) : state;
     });

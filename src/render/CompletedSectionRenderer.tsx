@@ -19,19 +19,17 @@ const completedSectionMaterial = new THREE.MeshStandardMaterial({
 });
 
 /**
- * Renders a completed Dyson-sphere chunk using a static geometry and a
+ * Renders a completed Dyson-sphere chunk using a stable per-instance geometry and a
  * shared module-level material.
  *
- * Completed sections never change after construction, so we render them
- * with a static geometry that is only rebuilt on the one-time transition
- * from active → completed.  All instances share `completedSectionMaterial`,
- * reducing draw calls compared to the per-chunk `RenderChunk` path.
+ * Completed chunks still use the same reactive `meshData` update path as
+ * frontier chunks. The optimization here is material sharing and front-face
+ * culling, not immutability. All instances share `completedSectionMaterial`,
+ * reducing state changes compared to the per-chunk `RenderChunk` path.
  *
  * Performance vs. `RenderChunk`:
  *  - Shared material → fewer state changes per frame.
  *  - `FrontSide` culling → GPU skips back faces of dense shell geometry.
- *  - `needsUpdate` propagation is suppressed once classified, so the
- *    mesher worker pool is idle for completed regions during late-game.
  */
 export const CompletedSectionRenderer: React.FC<CompletedSectionRendererProps> = ({ entity }) => {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -42,10 +40,13 @@ export const CompletedSectionRenderer: React.FC<CompletedSectionRendererProps> =
     if (entity.meshData) {
       MeshUpdater.updateGeometry(geometry, entity.meshData);
     }
+  }, [entity.meshData, geometry]);
+
+  useEffect(() => {
     return () => {
       geometry.dispose();
     };
-  }, [entity.meshData, geometry]);
+  }, [geometry]);
 
   return (
     <mesh
