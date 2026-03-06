@@ -20,6 +20,7 @@ export interface MeshResult {
 }
 
 export type MeshResultCallback = (result: MeshResult) => void;
+export type MeshErrorCallback = (error: Error) => void;
 
 /**
  * Worker pool for generating voxel meshes off the main thread.
@@ -29,7 +30,8 @@ export class MesherWorkerPool {
     private workers: Worker[] = [];
     private availableWorkers: Worker[] = [];
     private jobQueue: MeshJob[] = [];
-    private pendingJobs: Map<string, { job: MeshJob; resolve: MeshResultCallback }> = new Map();
+    private pendingJobs: Map<string, { job: MeshJob; resolve: MeshResultCallback; reject: MeshErrorCallback }> = new Map();
+    private activeTasks: Map<Worker, string> = new Map();
     private workerCount: number;
     private taskIdCounter = 0;
 
@@ -40,24 +42,32 @@ export class MesherWorkerPool {
 
     private initWorkers() {
         for (let i = 0; i < this.workerCount; i++) {
-            const worker = new Worker(new URL('./worker.ts', import.meta.url), {
-                type: 'module'
-            });
-            
-            worker.onmessage = (e: MessageEvent) => {
-                this.handleWorkerMessage(worker, e.data);
-            };
-
-            worker.onerror = (error) => {
-                console.error('MesherWorker error:', error);
-            };
-
-            this.workers.push(worker);
-            this.availableWorkers.push(worker);
+            this.createWorker();
         }
     }
 
+    private createWorker(addToAvailable: boolean = true): Worker {
+        const worker = new Worker(new URL('./worker.ts', import.meta.url), {
+            type: 'module'
+        });
+
+        worker.onmessage = (e: MessageEvent) => {
+            this.handleWorkerMessage(worker, e.data);
+        };
+
+        worker.onerror = (error) => {
+            this.handleWorkerError(worker, error);
+        };
+
+        this.workers.push(worker);
+        if (addToAvailable) {
+            this.availableWorkers.push(worker);
+        }
+        return worker;
+    }
+
     private handleWorkerMessage(worker: Worker, data: { taskId: string; mesh: MeshResult }) {
+        this.activeTasks.delete(worker);
         const pending = this.pendingJobs.get(data.taskId);
         if (pending) {
             pending.resolve(data.mesh);
@@ -66,6 +76,55 @@ export class MesherWorkerPool {
 
         // Return worker to pool or dispatch next queued job
         this.processQueue(worker);
+    }
+
+    private normalizeWorkerError(error: ErrorEvent | Error): Error {
+        if (error instanceof Error) {
+            return error;
+        }
+
+        const underlyingError = error.error;
+        if (underlyingError instanceof Error) {
+            return underlyingError;
+        }
+
+        const parts: string[] = [];
+        if (error.message) {
+            parts.push(error.message);
+        }
+
+        if (error.filename) {
+            const location = [error.filename, error.lineno || 0, error.colno || 0].join(':');
+            parts.push(`at ${location}`);
+        }
+
+        return new Error(parts.length > 0 ? parts.join(' ') : 'Mesher worker failed');
+    }
+
+    private handleWorkerError(worker: Worker, error: ErrorEvent | Error) {
+        console.error('MesherWorker error:', error);
+        const normalizedError = this.normalizeWorkerError(error);
+
+        const taskId = this.activeTasks.get(worker);
+        if (taskId) {
+            const pending = this.pendingJobs.get(taskId);
+            if (pending) {
+                pending.reject(normalizedError);
+                this.pendingJobs.delete(taskId);
+            }
+            this.activeTasks.delete(worker);
+        }
+
+        this.replaceWorker(worker);
+    }
+
+    private replaceWorker(worker: Worker) {
+        this.availableWorkers = this.availableWorkers.filter((candidate) => candidate !== worker);
+        this.workers = this.workers.filter((candidate) => candidate !== worker);
+        worker.terminate();
+
+        const replacement = this.createWorker(false);
+        this.processQueue(replacement);
     }
 
     private processQueue(worker: Worker) {
@@ -77,7 +136,15 @@ export class MesherWorkerPool {
         }
 
         // Send next queued job to the freed worker
-        worker.postMessage(job);
+        this.activeTasks.set(worker, job.taskId);
+        try {
+            worker.postMessage(job);
+        } catch (error) {
+            this.handleWorkerError(
+                worker,
+                error instanceof Error ? error : new Error('Failed to post mesh job to worker'),
+            );
+        }
     }
 
     /**
@@ -119,20 +186,27 @@ export class MesherWorkerPool {
             voxelData
         };
 
-        // Check if we have an available worker
-        const worker = this.availableWorkers.pop();
-        
-        if (worker) {
-            // Send directly to worker
-            worker.postMessage(job);
-        } else {
-            // Queue the job (backpressure)
-            this.jobQueue.push(job);
-        }
-
         // Return promise that resolves when worker responds
-        return new Promise((resolve) => {
-            this.pendingJobs.set(taskId, { job, resolve });
+        return new Promise((resolve, reject) => {
+            this.pendingJobs.set(taskId, { job, resolve, reject });
+
+            // Check if we have an available worker
+            const worker = this.availableWorkers.pop();
+
+            if (worker) {
+                this.activeTasks.set(worker, job.taskId);
+                try {
+                    worker.postMessage(job);
+                } catch (error) {
+                    this.handleWorkerError(
+                        worker,
+                        error instanceof Error ? error : new Error('Failed to post mesh job to worker'),
+                    );
+                }
+            } else {
+                // Queue the job (backpressure)
+                this.jobQueue.push(job);
+            }
         });
     }
 
@@ -177,6 +251,7 @@ export class MesherWorkerPool {
         this.availableWorkers = [];
         this.jobQueue = [];
         this.pendingJobs.clear();
+        this.activeTasks.clear();
     }
 }
 

@@ -1,6 +1,6 @@
 # Active Context — stellar-shell
 
-**Current focus:** TASK009 chunk meshing correctness and architecture re-alignment is implemented and validated.
+**Current focus:** TASK010 async meshing recovery, auto-blueprint reset semantics, and seeded asteroid determinism is implemented and validated.
 
 **Recent changes:**
 
@@ -20,14 +20,23 @@
   - canonical `VoxelMesher` ownership in `src/mesher`,
   - restored `pnpm typecheck` and synced architecture docs,
   - filed GitHub issue `#44` for traceability.
+- Started `DES009` + `TASK010` implementation:
+  - recover from worker mesh failures without wedging chunks,
+  - reset auto-blueprint traversal on re-enable and System Jump,
+  - make `systemSeed` fully determine asteroid topology.
+- Completed `DES009` + `TASK010` implementation:
+  - worker mesh-job failures now reject, replace the failed worker, and retry chunks on later passes,
+  - auto-blueprint traversal now rewinds on re-enable and world reset,
+  - asteroid topology is now fully seeded from `systemSeed`,
+  - full validation (`pnpm test`, `pnpm build`, `pnpm typecheck`, `pnpm lint`) is green again.
 
 **Next steps:**
 
 - Tune pacing/balance after the deterministic auto-blueprint ordering changes in live playtesting.
-- Optionally reduce remaining non-blocking test-only mock warnings/casts if stricter linting is desired.
 - Continue roadmap work (next feature/task TBD).
 
 **Notes:**
 
 - Blueprint targets use existing `BLUEPRINT_FRAME` + `BlueprintManager` flow, so no new drone state paths were introduced.
 - Chunk meshing now treats ECS chunk entities as the source of truth for mesh revision state; workers are pure snapshot processors only.
+- The next pass keeps the current architecture boundaries intact; all fixes are correctness-focused rather than gameplay-facing.

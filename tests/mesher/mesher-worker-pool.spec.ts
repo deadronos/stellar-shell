@@ -40,6 +40,18 @@ function makeMockWorkerClass() {
             };
             this.onmessage?.({ data: { taskId, mesh } } as MessageEvent);
         }
+
+        simulateError(
+            error: Pick<ErrorEvent, 'message' | 'filename' | 'lineno' | 'colno' | 'error'> = {
+                message: 'worker failure',
+                filename: 'worker.ts',
+                lineno: 1,
+                colno: 1,
+                error: null,
+            },
+        ) {
+            this.onerror?.(error as ErrorEvent);
+        }
     }
 
     return { MockWorker, instances };
@@ -128,6 +140,72 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         // Complete third job → worker idle
         w.simulateComplete(w.received[2].taskId);
         expect(pool.getActiveWorkerCount()).toBe(0);
+        pool.dispose();
+    });
+
+    it('rejects the active job when a worker errors', async () => {
+        const { MockWorker, instances } = makeMockWorkerClass();
+        global.Worker = MockWorker as unknown as typeof Worker;
+
+        const pool = new MesherWorkerPool(1);
+        const w = instances[0];
+        let settled: 'pending' | 'resolved' | 'rejected' = 'pending';
+        let rejectionMessage = '';
+
+        pool.generateMesh(0, 0, 0, mockSource).then(
+            () => {
+                settled = 'resolved';
+            },
+            (error: Error) => {
+                settled = 'rejected';
+                rejectionMessage = error.message;
+            },
+        );
+
+        w.simulateError({
+            message: 'worker failure',
+            filename: 'worker.ts',
+            lineno: 12,
+            colno: 4,
+            error: null,
+        });
+        await Promise.resolve();
+
+        expect(settled).toBe('rejected');
+        expect(rejectionMessage).toContain('worker failure');
+        expect(rejectionMessage).toContain('worker.ts:12:4');
+        pool.dispose();
+    });
+
+    it('replaces a failed worker and continues processing later jobs', async () => {
+        const { MockWorker, instances } = makeMockWorkerClass();
+        global.Worker = MockWorker as unknown as typeof Worker;
+
+        const pool = new MesherWorkerPool(1);
+        const failedWorker = instances[0];
+        let firstSettled: 'pending' | 'resolved' | 'rejected' = 'pending';
+
+        pool.generateMesh(0, 0, 0, mockSource).then(
+            () => {
+                firstSettled = 'resolved';
+            },
+            () => {
+                firstSettled = 'rejected';
+            },
+        );
+
+        failedWorker.simulateError();
+        await Promise.resolve();
+
+        expect(firstSettled).toBe('rejected');
+        expect(instances).toHaveLength(2);
+
+        const replacementWorker = instances[1];
+        const secondJob = pool.generateMesh(1, 0, 0, mockSource);
+        expect(replacementWorker.received).toHaveLength(1);
+
+        replacementWorker.simulateComplete(replacementWorker.received[0].taskId);
+        await expect(secondJob).resolves.toMatchObject({ taskId: replacementWorker.received[0].taskId });
         pool.dispose();
     });
 });

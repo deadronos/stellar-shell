@@ -14,6 +14,7 @@
 - TASK008 completed: deterministic radius-aware auto-blueprint traversal, runtime Auto-Replicator toggle, and energy catch-up ticking are now implemented and tested.
 - Rare-resource policy is explicitly documented as noise-driven and backed by tests.
 - TASK009 completed: chunk meshing is now revision-safe, renderer geometries are disposed on unmount, duplicate mesher ownership was removed, and repository validation is green again.
+- TASK010 completed: worker-failure recovery now requeues chunks instead of wedging them, auto-blueprint traversal resets on re-enable/System Jump, and `systemSeed` now fully determines asteroid topology.
 
 **What's left / planned work:**
 
@@ -25,5 +26,6 @@
 
 - Improve documentation for code contributors (design notes, examples).
 - Monitor the chunk meshing path during future rendering changes so revision bookkeeping remains aligned with ECS dirtying.
+- Monitor the new worker-recovery path during future meshing changes so retry semantics remain aligned with ECS dirtying.
 
 **Last updated:** 2026-03-06

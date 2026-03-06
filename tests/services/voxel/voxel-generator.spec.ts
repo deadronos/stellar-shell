@@ -3,6 +3,20 @@ import { VoxelGenerator } from '../../../src/services/voxel/VoxelGenerator';
 import { BlockType } from '../../../src/types';
 import { IVoxelModifier } from '../../../src/services/voxel/types';
 
+const collectGeneratedBlocks = async (seed: number) => {
+  vi.resetModules();
+  const { VoxelGenerator: FreshVoxelGenerator } = await import('../../../src/services/voxel/VoxelGenerator');
+  const placements: [number, number, number, BlockType][] = [];
+  const modifierMock: IVoxelModifier = {
+    setBlock: (x, y, z, type) => {
+      placements.push([x, y, z, type]);
+    },
+  };
+
+  FreshVoxelGenerator.generateAsteroid(0, 0, 0, 5, modifierMock, seed);
+  return placements;
+};
+
 describe('VoxelGenerator', () => {
   it('generateAsteroid calls setBlock with correct block types', () => {
     const modifierMock: IVoxelModifier = {
@@ -27,19 +41,17 @@ describe('VoxelGenerator', () => {
     expect(modifierMock.setBlock).toHaveBeenCalled();
   });
 
-  it('rare ore placement is noise-driven and not strictly core-gated', () => {
-    const modifierMock: IVoxelModifier = { setBlock: vi.fn() };
-    const generatorWithInternals = VoxelGenerator as unknown as {
-      noise3D: (x: number, y: number, z: number) => number;
-    };
-    const originalNoise = generatorWithInternals.noise3D;
-
-    // Force both shape-noise and rare-noise high so rare ore appears broadly.
-    generatorWithInternals.noise3D = () => 1;
+  it('rare ore placement is noise-driven and not strictly core-gated', async () => {
+    vi.resetModules();
+    vi.doMock('simplex-noise', () => ({
+      createNoise3D: () => () => 1,
+    }));
 
     try {
+      const { VoxelGenerator: MockedVoxelGenerator } = await import('../../../src/services/voxel/VoxelGenerator');
+      const modifierMock: IVoxelModifier = { setBlock: vi.fn() };
       const radius = 5;
-      VoxelGenerator.generateAsteroid(0, 0, 0, radius, modifierMock, 0);
+      MockedVoxelGenerator.generateAsteroid(0, 0, 0, radius, modifierMock, 0);
 
       const calls = (modifierMock.setBlock as Mock).mock.calls as [number, number, number, BlockType][];
       const center = { x: 8, y: 8, z: 8 };
@@ -54,7 +66,8 @@ describe('VoxelGenerator', () => {
 
       expect(hasRareOutsideCore).toBe(true);
     } finally {
-      generatorWithInternals.noise3D = originalNoise;
+      vi.doUnmock('simplex-noise');
+      vi.resetModules();
     }
   });
 
@@ -88,6 +101,22 @@ describe('VoxelGenerator', () => {
       const results = [0, 256, 65535, 0x7fffffff].map((s) => VoxelGenerator.deriveSystemParams(s));
       const radii = results.map((r) => r.radius);
       expect(new Set(radii).size).toBeGreaterThan(1);
+    });
+  });
+
+  describe('seeded topology determinism', () => {
+    it('produces identical block placements for the same seed across fresh module loads', async () => {
+      const first = await collectGeneratedBlocks(42);
+      const second = await collectGeneratedBlocks(42);
+
+      expect(first).toEqual(second);
+    });
+
+    it('produces different block placements for at least one different seed', async () => {
+      const first = await collectGeneratedBlocks(42);
+      const second = await collectGeneratedBlocks(43);
+
+      expect(first).not.toEqual(second);
     });
   });
 });
