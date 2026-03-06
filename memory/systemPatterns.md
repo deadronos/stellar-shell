@@ -12,8 +12,10 @@
 **Key patterns & conventions:**
 
 - **ECS-Driven Chunks**: Chunks are represented as entities with `chunkKey`, `chunkPosition`, `needsUpdate`, `meshPending`, `meshData`, and optionally `completedDysonSection` components.
-    - `ChunkSystem`: Watches for `needsUpdate: true`, dispatches mesh jobs to `MesherWorkerPool` (marks `meshPending: true`), and writes `meshData` back to the entity when the worker resolves.
+    - `ChunkSystem`: Watches for `needsUpdate: true`, dispatches mesh jobs to `MesherWorkerPool` (marks `meshPending: true`), writes `meshData` back to the entity when the worker resolves, and re-marks the chunk dirty if the worker job fails so it can retry.
     - `VoxelWorld`: Renders chunk entities using `useEntities` hook. **Crucial:** Must query for `meshData` to trigger re-render when mesh is ready. Active chunks render via `RenderChunk`; completed Dyson sections render via `CompletedSectionRenderer`.
+- **Auto-blueprint traversal reset**:
+    - `AutoBlueprintSystem` keeps its cursor internal, but rewinds it on `false -> true` enable edges and on `BvxEngine.resetWorld()` so deterministic outward placement always restarts with a new system.
 - **Data/Logic Separation**:
     - `BvxEngine`: Handles raw block data (`setBlock`, `getBlock`) and mesh generation algorithms.
     - ECS: Handles lifecycle, updates, and interactions (e.g. mining triggers `setBlock` which updates ECS Entity).
@@ -22,6 +24,8 @@
     - Chunk meshes are generated only when dirty (`needsUpdate: true`).
     - Meshing runs off the main thread via `MesherWorkerPool`; mesh data is transferred back as `meshData` on the entity.
     - `RenderChunk` and `CompletedSectionRenderer` reuse a stable `THREE.BufferGeometry` per chunk, updated via `MeshUpdater`.
+- **Procedural determinism**:
+    - `VoxelGenerator` derives asteroid parameters from `systemSeed` and seeds the simplex permutation from the same value, so repeated fresh runs of the same seed reproduce the same topology.
 
 **Files of interest:**
 

@@ -18,10 +18,12 @@ This spec describes the split between voxel data (bvx-kit `VoxelWorld`), the ECS
 1.  **Data Layer (`BvxEngine`)**:
     - Stores raw voxel data in `bvxWorld` (4×4×4 bvx-kit chunks).
     - `setBlock`: Updates data, then finds/creates the **ECS Entity** for the corresponding 16×16×16 render chunk, increments its `meshRevision`, and marks it `needsUpdate: true`.
+    - `resetWorld`: Clears voxel/chunk/blueprint state and rewinds auto-blueprint traversal so the next system starts from the beginning of the deterministic outward scan.
 
 2.  **Logic Layer (ECS)**:
     - **Chunk Entity**: Defined in `src/ecs/world.ts`. Has `isChunk`, `chunkKey`, `chunkPosition`, `needsUpdate`, `meshPending`, `meshRevision`, `pendingMeshRevision`, `meshData`, and optionally `completedDysonSection` components.
-    - **ChunkSystem** (`src/ecs/systems/ChunkSystem.ts`): Iterates over dirty chunks (`needsUpdate: true`), dispatches at most one worker job per chunk, and records the current revision on dispatch. When the worker resolves, stale results are discarded if a newer `meshRevision` exists; otherwise `meshData` is written back and `meshPending` is cleared.
+    - **ChunkSystem** (`src/ecs/systems/ChunkSystem.ts`): Iterates over dirty chunks (`needsUpdate: true`), dispatches at most one worker job per chunk, and records the current revision on dispatch. When the worker resolves, stale results are discarded if a newer `meshRevision` exists; otherwise `meshData` is written back and `meshPending` is cleared. When the worker rejects, `meshPending` is cleared, `meshData` is left unchanged, and `needsUpdate` is restored so the chunk can retry on a later pass.
+    - **AutoBlueprintSystem** (`src/ecs/systems/AutoBlueprintSystem.ts`): Uses a deterministic radius-ordered candidate stream and rewinds traversal when auto mode is re-enabled or the world is reset.
 
 3.  **Presentation Layer (R3F)**:
     - `VoxelWorld` (`src/scenes/VoxelWorld.tsx`): Uses two `useEntities` queries — one for active chunks (without `completedDysonSection`) and one for completed Dyson sections — and maps each entity to its renderer.
@@ -31,4 +33,4 @@ This spec describes the split between voxel data (bvx-kit `VoxelWorld`), the ECS
 **Acceptance:**
 - **Decoupled**: Engine does not hold `THREE.Mesh` references.
 - **Reactive**: Rendering updates happen automatically when ECS `meshData` changes.
-- **Performant**: Only dirty chunks are re-meshed. Meshing is off-thread via `MesherWorkerPool`, stale worker results are dropped instead of applied, and `BufferGeometry` instances are reused per chunk for their mounted lifetime.
+- **Performant**: Only dirty chunks are re-meshed. Meshing is off-thread via `MesherWorkerPool`, stale worker results are dropped instead of applied, failed worker jobs are retried instead of wedging the chunk, and `BufferGeometry` instances are reused per chunk for their mounted lifetime.

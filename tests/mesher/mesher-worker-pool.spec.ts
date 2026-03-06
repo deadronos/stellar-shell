@@ -40,6 +40,10 @@ function makeMockWorkerClass() {
             };
             this.onmessage?.({ data: { taskId, mesh } } as MessageEvent);
         }
+
+        simulateError(error: Error = new Error('worker failure')) {
+            this.onerror?.(error as unknown as ErrorEvent);
+        }
     }
 
     return { MockWorker, instances };
@@ -128,6 +132,62 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         // Complete third job → worker idle
         w.simulateComplete(w.received[2].taskId);
         expect(pool.getActiveWorkerCount()).toBe(0);
+        pool.dispose();
+    });
+
+    it('rejects the active job when a worker errors', async () => {
+        const { MockWorker, instances } = makeMockWorkerClass();
+        global.Worker = MockWorker as unknown as typeof Worker;
+
+        const pool = new MesherWorkerPool(1);
+        const w = instances[0];
+        let settled: 'pending' | 'resolved' | 'rejected' = 'pending';
+
+        pool.generateMesh(0, 0, 0, mockSource).then(
+            () => {
+                settled = 'resolved';
+            },
+            () => {
+                settled = 'rejected';
+            },
+        );
+
+        w.simulateError();
+        await Promise.resolve();
+
+        expect(settled).toBe('rejected');
+        pool.dispose();
+    });
+
+    it('replaces a failed worker and continues processing later jobs', async () => {
+        const { MockWorker, instances } = makeMockWorkerClass();
+        global.Worker = MockWorker as unknown as typeof Worker;
+
+        const pool = new MesherWorkerPool(1);
+        const failedWorker = instances[0];
+        let firstSettled: 'pending' | 'resolved' | 'rejected' = 'pending';
+
+        pool.generateMesh(0, 0, 0, mockSource).then(
+            () => {
+                firstSettled = 'resolved';
+            },
+            () => {
+                firstSettled = 'rejected';
+            },
+        );
+
+        failedWorker.simulateError();
+        await Promise.resolve();
+
+        expect(firstSettled).toBe('rejected');
+        expect(instances).toHaveLength(2);
+
+        const replacementWorker = instances[1];
+        const secondJob = pool.generateMesh(1, 0, 0, mockSource);
+        expect(replacementWorker.received).toHaveLength(1);
+
+        replacementWorker.simulateComplete(replacementWorker.received[0].taskId);
+        await expect(secondJob).resolves.toMatchObject({ taskId: replacementWorker.received[0].taskId });
         pool.dispose();
     });
 });

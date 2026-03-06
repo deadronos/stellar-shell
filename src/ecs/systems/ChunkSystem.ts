@@ -20,17 +20,21 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
     entity.pendingMeshRevision = revision;
 
     // Dispatch to worker pool
-    pool.generateMesh(cx, cy, cz, engine).then((meshResult) => {
-        // Clear pending state first so a newer dirty revision can be re-dispatched next frame.
+    const clearPendingState = () => {
         ECS.removeComponent(entity, 'meshPending');
         entity.pendingMeshRevision = undefined;
+        pendingJobs.delete(chunkKey);
+    };
+
+    pool.generateMesh(cx, cy, cz, engine).then((meshResult) => {
+        // Clear pending state first so a newer dirty revision can be re-dispatched next frame.
+        clearPendingState();
 
         const latestRevision = entity.meshRevision ?? 0;
         if (latestRevision !== revision) {
             if (!entity.needsUpdate) {
                 ECS.addComponent(entity, 'needsUpdate', true);
             }
-            pendingJobs.delete(chunkKey);
             return;
         }
 
@@ -47,9 +51,11 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
         } else if (!isCompleted && entity.completedDysonSection) {
             ECS.removeComponent(entity, 'completedDysonSection');
         }
-        
-        // Clean up tracking
-        pendingJobs.delete(chunkKey);
+    }).catch(() => {
+        clearPendingState();
+        if (!entity.needsUpdate) {
+            ECS.addComponent(entity, 'needsUpdate', true);
+        }
     });
 
     pendingJobs.set(chunkKey, revision);

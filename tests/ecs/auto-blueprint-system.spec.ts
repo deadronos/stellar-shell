@@ -74,6 +74,41 @@ describe('AutoBlueprintSystem', () => {
     expect(bps[0]).toEqual({ x: -1, y: 0, z: 0 });
   });
 
+  it('resets traversal when auto mode is re-enabled', () => {
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+
+    useStore.setState({ autoBlueprintEnabled: true });
+    AutoBlueprintSystem(0, 0);
+    AutoBlueprintSystem(0, 1.1);
+
+    engine.setBlock(0, 0, 0, BlockType.AIR);
+    BlueprintManager.getInstance().removeBlueprint({ x: 0, y: 0, z: 0 });
+
+    useStore.setState({ autoBlueprintEnabled: false });
+    AutoBlueprintSystem(0, 2.2);
+
+    useStore.setState({ autoBlueprintEnabled: true });
+    AutoBlueprintSystem(0, 0);
+
+    expect(BlueprintManager.getInstance().hasBlueprint({ x: 0, y: 0, z: 0 })).toBe(true);
+  });
+
+  it('resets traversal after world reset', () => {
+    const engine = BvxEngine.getInstance();
+    useStore.setState({ autoBlueprintEnabled: true });
+
+    AutoBlueprintSystem(0, 0);
+    AutoBlueprintSystem(0, 1.1);
+    expect(BlueprintManager.getInstance().getBlueprints()).toHaveLength(2);
+
+    engine.resetWorld();
+    AutoBlueprintSystem(0, 0);
+
+    const bps = BlueprintManager.getInstance().getBlueprints();
+    expect(bps).toEqual([{ x: 0, y: 0, z: 0 }]);
+  });
+
   // integration: ensure blueprints placed by the auto system can be
   // consumed by the construction pipeline
   it('auto-generated blueprints are consumable by construction', () => {

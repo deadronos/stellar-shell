@@ -14,7 +14,13 @@ export interface SystemParams {
 }
 
 export class VoxelGenerator {
-  private static noise3D = createNoise3D();
+  private static createSeededRandom(seed: number): () => number {
+    let state = seed >>> 0;
+    return () => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      return state / 0x100000000;
+    };
+  }
 
   /** Deterministically derive per-system generation parameters from a seed. */
   public static deriveSystemParams(seed: number): SystemParams {
@@ -36,6 +42,8 @@ export class VoxelGenerator {
   ) {
     // Derive per-system generation parameters from seed.
     const { noiseScale, rareThreshold } = VoxelGenerator.deriveSystemParams(seed);
+    const seededRandom = VoxelGenerator.createSeededRandom(seed);
+    const noise3D = createNoise3D(seededRandom);
     const center = new THREE.Vector3(
       cx * CHUNK_SIZE + CHUNK_SIZE / 2,
       cy * CHUNK_SIZE + CHUNK_SIZE / 2,
@@ -57,7 +65,7 @@ export class VoxelGenerator {
                 const wz = z * CHUNK_SIZE + lz;
 
                 const dist = center.distanceTo(new THREE.Vector3(wx, wy, wz));
-                const noise = this.noise3D(wx * noiseScale, wy * noiseScale, wz * noiseScale);
+                const noise = noise3D(wx * noiseScale, wy * noiseScale, wz * noiseScale);
 
                 if (dist < radius + noise * 5) {
                   let blockType = BlockType.ASTEROID_SURFACE;
@@ -68,7 +76,11 @@ export class VoxelGenerator {
                   }
                   
                   // Rare Ore Veins (High frequency noise)
-                  const rareNoise = this.noise3D(wx * noiseScale * 3, wy * noiseScale * 3, wz * noiseScale * 3);
+                  const rareNoise = noise3D(
+                    wx * noiseScale * 3,
+                    wy * noiseScale * 3,
+                    wz * noiseScale * 3,
+                  );
                   if (rareNoise > rareThreshold) {
                       blockType = BlockType.RARE_ORE;
                   }

@@ -216,4 +216,44 @@ describe('ChunkSystem', () => {
     expect(chunk.meshPending).toBeUndefined();
     expect(Array.from(chunk.meshData?.positions ?? [])).toEqual([4, 4, 4, 5, 5, 5, 6, 6, 6]);
   });
+
+  it('clears pending state and requeues when mesh generation rejects', async () => {
+    const meshFailure = new Error('worker failed');
+    mockPool.generateMesh = vi
+      .fn()
+      .mockRejectedValueOnce(meshFailure)
+      .mockResolvedValueOnce(meshResult('retry', [7, 7, 7, 8, 8, 8, 9, 9, 9]));
+
+    const mockEngine: MockEngine = {
+      getBlock: vi.fn().mockReturnValue(0),
+      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
+    };
+
+    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
+
+    const chunk = ECS.add({
+      isChunk: true,
+      chunkKey: '5,0,0',
+      chunkPosition: { x: 5, y: 0, z: 0 },
+      needsUpdate: true,
+      meshRevision: 1,
+      meshData: meshResult('existing', [1, 1, 1, 2, 2, 2, 3, 3, 3]),
+      position: new THREE.Vector3(80, 0, 0),
+    });
+
+    ChunkSystem();
+    expect(chunk.meshPending).toBe(true);
+
+    await flushAsyncWork();
+
+    expect(chunk.meshPending).toBeUndefined();
+    expect(chunk.needsUpdate).toBe(true);
+    expect(Array.from(chunk.meshData?.positions ?? [])).toEqual([1, 1, 1, 2, 2, 2, 3, 3, 3]);
+
+    ChunkSystem();
+    await flushAsyncWork();
+
+    expect(mockPool.generateMesh).toHaveBeenCalledTimes(2);
+    expect(Array.from(chunk.meshData?.positions ?? [])).toEqual([7, 7, 7, 8, 8, 8, 9, 9, 9]);
+  });
 });

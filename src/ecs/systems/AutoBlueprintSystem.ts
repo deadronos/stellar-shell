@@ -10,6 +10,7 @@ const AUTO_RADIUS = 48;
 // start sufficiently in the past so the first call will succeed
 let lastAddTime = -AUTO_INTERVAL;
 let nextCandidateIndex = 0;
+let wasEnabled = false;
 
 interface Candidate {
   x: number;
@@ -35,16 +36,29 @@ const buildCandidates = (radius: number): ReadonlyArray<{ x: number; y: number; 
 const AUTO_CANDIDATES = buildCandidates(AUTO_RADIUS);
 
 /**
- * Reset internal state; only used by tests so they get deterministic behavior.
+ * Reset traversal/timing state so runtime world resets and tests both restart from
+ * the beginning of the deterministic outward scan.
  */
-export function resetAutoBlueprintSystemForTests() {
+export function resetAutoBlueprintTraversal() {
   lastAddTime = -AUTO_INTERVAL;
   nextCandidateIndex = 0;
+  wasEnabled = false;
 }
+
+export const resetAutoBlueprintSystemForTests = resetAutoBlueprintTraversal;
 
 export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => {
   const state = useStore.getState();
-  if (!state.autoBlueprintEnabled) return;
+  if (!state.autoBlueprintEnabled) {
+    wasEnabled = false;
+    return;
+  }
+
+  if (!wasEnabled) {
+    lastAddTime = -AUTO_INTERVAL;
+    nextCandidateIndex = 0;
+    wasEnabled = true;
+  }
 
   // throttle generation; lastAddTime is initialized negative so the very first
   // call will pass regardless of elapsedTime.

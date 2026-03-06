@@ -5,6 +5,7 @@ import { ECS, Entity } from '../ecs/world';
 import { VoxelMesher } from '../mesher/VoxelMesher';
 import { VoxelGenerator } from './voxel/VoxelGenerator';
 import { VoxelQuery } from './voxel/VoxelQuery';
+import { resetAutoBlueprintTraversal } from '../ecs/systems/AutoBlueprintSystem';
 
 // bvx-kit imports
 import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
@@ -294,6 +295,7 @@ export class BvxEngine {
 
     // Clear blueprint overlays so stale markers don't persist in the new system
     BlueprintManager.getInstance().reset();
+    resetAutoBlueprintTraversal();
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
