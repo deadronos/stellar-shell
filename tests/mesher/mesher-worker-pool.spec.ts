@@ -4,6 +4,7 @@ import { BlockType } from '../../src/types';
 import { CHUNK_SIZE } from '../../src/constants';
 
 type WorkerGlobal = typeof globalThis & { Worker?: typeof Worker };
+type WorkerMessage = { taskId: string; voxelData?: Record<string, BlockType> };
 
 /** Build a fresh MockWorker class and a list that tracks every created instance. */
 function makeMockWorkerClass() {
@@ -13,13 +14,13 @@ function makeMockWorkerClass() {
         onmessage: ((e: MessageEvent) => void) | null = null;
         onerror: ((e: ErrorEvent) => void) | null = null;
         onmessageerror = null;
-        received: { taskId: string }[] = [];
+        received: WorkerMessage[] = [];
 
         constructor(_url: unknown, _opts?: unknown) {
             instances.push(this);
         }
 
-        postMessage(data: { taskId: string }) {
+        postMessage(data: WorkerMessage) {
             this.received.push(data);
         }
 
@@ -155,12 +156,12 @@ describe('MesherWorkerPool – neighbor halo sampling', () => {
         const pool = new MesherWorkerPool(1);
         pool.generateMesh(0, 0, 0, source);
 
-        const job = instances[0].received[0] as { voxelData: Record<string, BlockType> };
+        const job = instances[0].received[0];
 
         // Halo voxels one step past the positive-x face of chunk (0,0,0)
         // must be present so the worker can cull that boundary face.
         const haloKey = `${neighbor},0,0`;
-        expect(job.voxelData[haloKey]).toBe(BlockType.ASTEROID_SURFACE);
+        expect(job.voxelData?.[haloKey]).toBe(BlockType.ASTEROID_SURFACE);
 
         pool.dispose();
     });
@@ -182,15 +183,15 @@ describe('MesherWorkerPool – neighbor halo sampling', () => {
         const pool = new MesherWorkerPool(1);
         pool.generateMesh(0, 0, 0, source);
 
-        const job = instances[0].received[0] as { voxelData: Record<string, BlockType> };
+        const job = instances[0].received[0];
 
         // All 6 halo faces must be populated so the worker can cull every boundary face.
-        expect(job.voxelData[`${CHUNK_SIZE},0,0`]).toBe(BlockType.ASTEROID_SURFACE);   // +x halo
-        expect(job.voxelData[`-1,0,0`]).toBe(BlockType.ASTEROID_SURFACE);               // -x halo
-        expect(job.voxelData[`0,${CHUNK_SIZE},0`]).toBe(BlockType.ASTEROID_SURFACE);   // +y halo
-        expect(job.voxelData[`0,-1,0`]).toBe(BlockType.ASTEROID_SURFACE);               // -y halo
-        expect(job.voxelData[`0,0,${CHUNK_SIZE}`]).toBe(BlockType.ASTEROID_SURFACE);   // +z halo
-        expect(job.voxelData[`0,0,-1`]).toBe(BlockType.ASTEROID_SURFACE);               // -z halo
+        expect(job.voxelData?.[`${CHUNK_SIZE},0,0`]).toBe(BlockType.ASTEROID_SURFACE); // +x halo
+        expect(job.voxelData?.[`-1,0,0`]).toBe(BlockType.ASTEROID_SURFACE); // -x halo
+        expect(job.voxelData?.[`0,${CHUNK_SIZE},0`]).toBe(BlockType.ASTEROID_SURFACE); // +y halo
+        expect(job.voxelData?.[`0,-1,0`]).toBe(BlockType.ASTEROID_SURFACE); // -y halo
+        expect(job.voxelData?.[`0,0,${CHUNK_SIZE}`]).toBe(BlockType.ASTEROID_SURFACE); // +z halo
+        expect(job.voxelData?.[`0,0,-1`]).toBe(BlockType.ASTEROID_SURFACE); // -z halo
 
         pool.dispose();
     });

@@ -19,6 +19,12 @@ export const RenderChunk: React.FC<RenderChunkProps> = ({ entity }) => {
     }
   }, [entity.meshData, geometry]);
 
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+    };
+  }, [geometry]);
+
   return (
     <mesh ref={meshRef} position={entity.position} geometry={geometry}>
       <meshStandardMaterial vertexColors roughness={0.7} metalness={0.1} side={THREE.DoubleSide} />

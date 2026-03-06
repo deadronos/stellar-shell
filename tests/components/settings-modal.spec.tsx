@@ -8,12 +8,41 @@ vi.mock('../../src/state/store', () => ({
   useStore: vi.fn(),
 }));
 
+type MockSettingsState = {
+  isSettingsOpen: boolean;
+  showDebugPanel: boolean;
+  asteroidOrbitEnabled: boolean;
+  asteroidOrbitRadius: number;
+  asteroidOrbitSpeed: number;
+  asteroidOrbitVerticalAmplitude: number;
+  autoBlueprintEnabled: boolean;
+  autoReplicatorEnabled: boolean;
+  upgrades: {
+    MINING_SPEED_1: boolean;
+    DRONE_SPEED_1: boolean;
+    LASER_EFFICIENCY_1: boolean;
+    AUTO_REPLICATOR: boolean;
+    DEEP_SCAN_1: boolean;
+    ADVANCED_EXPLORER: boolean;
+  };
+  toggleSettings: () => void;
+  toggleDebugPanel: () => void;
+  setAsteroidOrbitEnabled: (enabled: boolean) => void;
+  setAsteroidOrbitRadius: (radius: number) => void;
+  setAsteroidOrbitSpeed: (speed: number) => void;
+  setAsteroidOrbitVerticalAmplitude: (amplitude: number) => void;
+  toggleAutoBlueprint: () => void;
+  toggleAutoReplicator: () => void;
+};
+
+const mockUseStore = useStore as unknown as ReturnType<typeof vi.fn>;
+
 describe('SettingsModal', () => {
   it('renders auto-blueprint toggle and calls store action when clicked', () => {
     const mockToggle = vi.fn();
     // Provide initial state with settings open and auto disabled
-    (useStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector) => {
-      const state = {
+    mockUseStore.mockImplementation((selector?: (state: MockSettingsState) => unknown) => {
+      const state: MockSettingsState = {
         isSettingsOpen: true,
         showDebugPanel: false,
         asteroidOrbitEnabled: false,
@@ -38,7 +67,7 @@ describe('SettingsModal', () => {
         setAsteroidOrbitVerticalAmplitude: vi.fn(),
         toggleAutoBlueprint: mockToggle,
         toggleAutoReplicator: vi.fn(),
-      } as any;
+      };
 
       return selector ? selector(state) : state;
     });
@@ -55,8 +84,8 @@ describe('SettingsModal', () => {
 
   it('renders auto-replicator runtime toggle when upgrade is owned', () => {
     const mockToggleReplicator = vi.fn();
-    (useStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector) => {
-      const state = {
+    mockUseStore.mockImplementation((selector?: (state: MockSettingsState) => unknown) => {
+      const state: MockSettingsState = {
         isSettingsOpen: true,
         showDebugPanel: false,
         asteroidOrbitEnabled: false,
@@ -81,7 +110,7 @@ describe('SettingsModal', () => {
         setAsteroidOrbitVerticalAmplitude: vi.fn(),
         toggleAutoBlueprint: vi.fn(),
         toggleAutoReplicator: mockToggleReplicator,
-      } as any;
+      };
 
       return selector ? selector(state) : state;
     });

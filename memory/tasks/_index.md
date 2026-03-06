@@ -18,3 +18,4 @@
 - [TASK006] Auto-Blueprint Expansion Mode - Completed 2026-02-28 - Added optional auto‑blueprint mode with throttled deterministic placement and construction integration.
 - [TASK007] Dyson Progress Metrics and Completion Tracking - Completed 2026-02-28 - Added world-derived Dyson metrics, HUD display, and prestige gating based on milestone readiness.
 - [TASK008] Phase 2 Architecture Alignment Pass - Completed 2026-02-28 - Implemented deterministic outward auto-blueprint traversal, runtime Auto-Replicator toggle semantics, energy catch-up ticking, and rare-policy docs/test alignment.
+- [TASK009] Correctness and Meshing Alignment - Completed 2026-03-06 - Added revision-safe chunk meshing, renderer geometry cleanup, typecheck fixes, canonical mesher ownership, and synced docs/spec artifacts.

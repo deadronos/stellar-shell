@@ -10,7 +10,7 @@
 
 - **BvxEngine**: The canonical singleton (`BvxEngine.getInstance()`) for voxel metadata and world state.
 - **ECS (Miniplex)**: Entities live in `src/ecs/world.ts`. Simulation systems run in `useFrame` or via `SystemRunner`.
-- **Meshing**: Offloaded to a pool of Web Workers (`MesherWorkerPool.ts` / `worker.ts`) to keep the main thread fluid. `ChunkSystem` dispatches jobs to the pool; results are written back as `meshData` on the ECS entity.
+- **Meshing**: Offloaded to a pool of Web Workers (`MesherWorkerPool.ts` / `worker.ts`) to keep the main thread fluid. `ChunkSystem` dispatches at most one job per chunk, tags it with the current chunk revision, and only writes `meshData` back if the worker result still matches the latest revision.
 - **Chunking**: World is divided into chunks of `CHUNK_SIZE` (see `src/constants.ts`).
 
 ## Technical Specs

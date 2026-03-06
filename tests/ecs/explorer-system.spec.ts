@@ -7,15 +7,9 @@ import {
   RESEARCH_RATE,
   resetExplorerSystem,
 } from '../../src/ecs/systems/ExplorerSystem';
+import { createTestUpgrades } from '../helpers/upgrades';
 
-const defaultUpgrades = {
-  MINING_SPEED_1: false,
-  DRONE_SPEED_1: false,
-  LASER_EFFICIENCY_1: false,
-  AUTO_REPLICATOR: false,
-  DEEP_SCAN_1: false,
-  ADVANCED_EXPLORER: false,
-};
+const defaultUpgrades = createTestUpgrades();
 
 describe('ExplorerSystem', () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { BlockType, DysonProgressMetrics } from '../types';
 import { CHUNK_SIZE, PANEL_ENERGY_RATE, SHELL_ENERGY_RATE } from '../constants';
 import { ECS, Entity } from '../ecs/world';
-import { VoxelMesher } from './voxel/VoxelMesher';
+import { VoxelMesher } from '../mesher/VoxelMesher';
 import { VoxelGenerator } from './voxel/VoxelGenerator';
 import { VoxelQuery } from './voxel/VoxelQuery';
 
@@ -115,14 +115,12 @@ export class BvxEngine {
         chunkKey: renderKey,
         chunkPosition: { x: cx, y: cy, z: cz },
         needsUpdate: true,
+        meshRevision: 1,
         position: new THREE.Vector3(cx * CHUNK_SIZE, cy * CHUNK_SIZE, cz * CHUNK_SIZE), // World position for convenient access
       });
       this.chunkEntities.set(renderKey, entity);
     } else {
-      // Mark existing entity as dirty using addComponent to notify Miniplex
-      // Force toggle to ensure change detection triggers query updates
-      ECS.removeComponent(entity, 'needsUpdate');
-      ECS.addComponent(entity, 'needsUpdate', true);
+      this.markChunkDirty(entity);
     }
 
     // Mark neighbors dirty if on boundary
@@ -153,8 +151,18 @@ export class BvxEngine {
     const key = this.getChunkKey(cx, cy, cz);
     const entity = this.chunkEntities.get(key);
     if (entity) {
-      ECS.addComponent(entity, 'needsUpdate', true);
+      this.markChunkDirty(entity);
     }
+  }
+
+  private markChunkDirty(entity: Entity) {
+    entity.meshRevision = (entity.meshRevision ?? 0) + 1;
+
+    // Toggle the component to ensure Miniplex query subscriptions observe the dirty state.
+    if (entity.needsUpdate) {
+      ECS.removeComponent(entity, 'needsUpdate');
+    }
+    ECS.addComponent(entity, 'needsUpdate', true);
   }
 
   public getBlock(wx: number, wy: number, wz: number): BlockType {
