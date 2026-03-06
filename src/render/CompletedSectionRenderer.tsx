@@ -19,7 +19,7 @@ const completedSectionMaterial = new THREE.MeshStandardMaterial({
 });
 
 /**
- * Renders a completed Dyson-sphere chunk using a static geometry and a
+ * Renders a completed Dyson-sphere chunk using a stable per-instance geometry and a
  * shared module-level material.
  *
  * Completed chunks still use the same reactive `meshData` update path as

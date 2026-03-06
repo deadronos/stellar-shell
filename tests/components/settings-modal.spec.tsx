@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsModal } from '../../src/components/SettingsModal';
 import { useStore } from '../../src/state/store';
+import { UpgradeId } from '../../src/data/upgrades';
+import { createTestUpgrades } from '../helpers/upgrades';
 
 // Mock the zustand hook so we can control the state/actions
 vi.mock('../../src/state/store', () => ({
@@ -17,14 +19,7 @@ type MockSettingsState = {
   asteroidOrbitVerticalAmplitude: number;
   autoBlueprintEnabled: boolean;
   autoReplicatorEnabled: boolean;
-  upgrades: {
-    MINING_SPEED_1: boolean;
-    DRONE_SPEED_1: boolean;
-    LASER_EFFICIENCY_1: boolean;
-    AUTO_REPLICATOR: boolean;
-    DEEP_SCAN_1: boolean;
-    ADVANCED_EXPLORER: boolean;
-  };
+  upgrades: Record<UpgradeId, boolean>;
   toggleSettings: () => void;
   toggleDebugPanel: () => void;
   setAsteroidOrbitEnabled: (enabled: boolean) => void;
@@ -51,14 +46,7 @@ describe('SettingsModal', () => {
         asteroidOrbitVerticalAmplitude: 0,
         autoBlueprintEnabled: false,
         autoReplicatorEnabled: false,
-        upgrades: {
-          MINING_SPEED_1: false,
-          DRONE_SPEED_1: false,
-          LASER_EFFICIENCY_1: false,
-          AUTO_REPLICATOR: false,
-          DEEP_SCAN_1: false,
-          ADVANCED_EXPLORER: false,
-        },
+        upgrades: createTestUpgrades(),
         toggleSettings: vi.fn(),
         toggleDebugPanel: vi.fn(),
         setAsteroidOrbitEnabled: vi.fn(),
@@ -94,14 +82,7 @@ describe('SettingsModal', () => {
         asteroidOrbitVerticalAmplitude: 0,
         autoBlueprintEnabled: false,
         autoReplicatorEnabled: true,
-        upgrades: {
-          MINING_SPEED_1: false,
-          DRONE_SPEED_1: false,
-          LASER_EFFICIENCY_1: false,
-          AUTO_REPLICATOR: true,
-          DEEP_SCAN_1: false,
-          ADVANCED_EXPLORER: false,
-        },
+        upgrades: createTestUpgrades({ AUTO_REPLICATOR: true }),
         toggleSettings: vi.fn(),
         toggleDebugPanel: vi.fn(),
         setAsteroidOrbitEnabled: vi.fn(),

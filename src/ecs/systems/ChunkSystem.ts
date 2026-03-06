@@ -3,7 +3,7 @@ import { BvxEngine } from '../../services/BvxEngine';
 import { getMesherPool } from '../../mesher/MesherWorkerPool';
 
 // Track the currently in-flight revision for each chunk key.
-const pendingJobs: Map<string, { entity: Entity; revision: number }> = new Map();
+const pendingJobs: Map<string, number> = new Map();
 
 /**
  * Dispatch a mesh generation job to the worker pool.
@@ -52,7 +52,7 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
         pendingJobs.delete(chunkKey);
     });
 
-    pendingJobs.set(chunkKey, { entity, revision });
+    pendingJobs.set(chunkKey, revision);
 }
 
 /**
