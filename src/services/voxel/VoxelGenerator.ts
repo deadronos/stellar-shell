@@ -3,6 +3,7 @@ import { createNoise3D } from 'simplex-noise';
 import { BlockType } from '../../types';
 import { CHUNK_SIZE } from '../../constants';
 import { IVoxelModifier } from './types';
+import { createLcgRandom } from '../../utils/lcg';
 
 export interface SystemParams {
   /** Asteroid radius in voxels [16–24]. */
@@ -14,14 +15,6 @@ export interface SystemParams {
 }
 
 export class VoxelGenerator {
-  private static createSeededRandom(seed: number): () => number {
-    let state = seed >>> 0;
-    return () => {
-      state = (state * 1664525 + 1013904223) >>> 0;
-      return state / 0x100000000;
-    };
-  }
-
   /** Deterministically derive per-system generation parameters from a seed. */
   public static deriveSystemParams(seed: number): SystemParams {
     const s = seed >>> 0; // treat as unsigned 32-bit
@@ -42,7 +35,7 @@ export class VoxelGenerator {
   ) {
     // Derive per-system generation parameters from seed.
     const { noiseScale, rareThreshold } = VoxelGenerator.deriveSystemParams(seed);
-    const seededRandom = VoxelGenerator.createSeededRandom(seed);
+    const seededRandom = createLcgRandom(seed);
     const noise3D = createNoise3D(seededRandom);
     const center = new THREE.Vector3(
       cx * CHUNK_SIZE + CHUNK_SIZE / 2,

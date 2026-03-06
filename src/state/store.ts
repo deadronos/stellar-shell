@@ -1,11 +1,7 @@
 import { create } from 'zustand';
 import { BlockType, DysonProgressMetrics } from '../types';
 import { UPGRADES, UpgradeId } from '../data/upgrades';
-
-// LCG constants from Numerical Recipes – produce a uniform pseudo-random sequence.
-// The seed is masked to 31 bits (& 0x7fffffff), so the sequence cycles after 2^31 jumps.
-const LCG_MULTIPLIER = 1664525;
-const LCG_INCREMENT = 1013904223;
+import { nextSystemSeed } from '../utils/lcg';
 
 interface StoreState {
   matter: number;
@@ -164,7 +160,7 @@ export const useStore = create<StoreState>((set, get) => ({
     // Crystals earned this run: rare-matter haul + per-prestige bonus.
     const crystalsEarned = Math.floor(state.rareMatter / 2) + state.prestigeLevel * 5;
     // Next seed via LCG – gives deterministic per-system variation.
-    const nextSeed = ((state.systemSeed * LCG_MULTIPLIER + LCG_INCREMENT) & 0x7fffffff);
+    const nextSeed = nextSystemSeed(state.systemSeed);
     return {
       // ── RESET (per-system state) ───────────────────────────────────────────
       matter: 0,

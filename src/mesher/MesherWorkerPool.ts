@@ -78,14 +78,38 @@ export class MesherWorkerPool {
         this.processQueue(worker);
     }
 
+    private normalizeWorkerError(error: ErrorEvent | Error): Error {
+        if (error instanceof Error) {
+            return error;
+        }
+
+        const underlyingError = error.error;
+        if (underlyingError instanceof Error) {
+            return underlyingError;
+        }
+
+        const parts: string[] = [];
+        if (error.message) {
+            parts.push(error.message);
+        }
+
+        if (error.filename) {
+            const location = [error.filename, error.lineno || 0, error.colno || 0].join(':');
+            parts.push(`at ${location}`);
+        }
+
+        return new Error(parts.length > 0 ? parts.join(' ') : 'Mesher worker failed');
+    }
+
     private handleWorkerError(worker: Worker, error: ErrorEvent | Error) {
         console.error('MesherWorker error:', error);
+        const normalizedError = this.normalizeWorkerError(error);
 
         const taskId = this.activeTasks.get(worker);
         if (taskId) {
             const pending = this.pendingJobs.get(taskId);
             if (pending) {
-                pending.reject(error instanceof Error ? error : new Error('Mesher worker failed'));
+                pending.reject(normalizedError);
                 this.pendingJobs.delete(taskId);
             }
             this.activeTasks.delete(worker);

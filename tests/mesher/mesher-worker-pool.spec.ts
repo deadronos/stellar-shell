@@ -41,8 +41,16 @@ function makeMockWorkerClass() {
             this.onmessage?.({ data: { taskId, mesh } } as MessageEvent);
         }
 
-        simulateError(error: Error = new Error('worker failure')) {
-            this.onerror?.(error as unknown as ErrorEvent);
+        simulateError(
+            error: Pick<ErrorEvent, 'message' | 'filename' | 'lineno' | 'colno' | 'error'> = {
+                message: 'worker failure',
+                filename: 'worker.ts',
+                lineno: 1,
+                colno: 1,
+                error: null,
+            },
+        ) {
+            this.onerror?.(error as ErrorEvent);
         }
     }
 
@@ -142,20 +150,30 @@ describe('MesherWorkerPool – worker lifecycle', () => {
         const pool = new MesherWorkerPool(1);
         const w = instances[0];
         let settled: 'pending' | 'resolved' | 'rejected' = 'pending';
+        let rejectionMessage = '';
 
         pool.generateMesh(0, 0, 0, mockSource).then(
             () => {
                 settled = 'resolved';
             },
-            () => {
+            (error: Error) => {
                 settled = 'rejected';
+                rejectionMessage = error.message;
             },
         );
 
-        w.simulateError();
+        w.simulateError({
+            message: 'worker failure',
+            filename: 'worker.ts',
+            lineno: 12,
+            colno: 4,
+            error: null,
+        });
         await Promise.resolve();
 
         expect(settled).toBe('rejected');
+        expect(rejectionMessage).toContain('worker failure');
+        expect(rejectionMessage).toContain('worker.ts:12:4');
         pool.dispose();
     });
 
