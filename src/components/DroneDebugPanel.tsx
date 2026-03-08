@@ -26,10 +26,10 @@ export const DroneDebugPanel = () => {
         Drone Debugger ({drones.length})
       </h3>
       <div className="space-y-2">
-        {drones.map((drone) => (
-          <div key={drone.id} className="border border-white/5 bg-white/5 p-2 rounded hover:bg-white/10 transition-colors">
+        {drones.map((drone, index) => (
+          <div key={drone.id ?? `${drone.state ?? 'UNKNOWN'}-${index}`} className="border border-white/5 bg-white/5 p-2 rounded hover:bg-white/10 transition-colors">
             <div className="flex justify-between items-center mb-1">
-               <span className="text-gray-400">ID: {drone.id}</span>
+               <span className="text-gray-400">ID: {drone.id ?? 'N/A'}</span>
                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getStateColor(drone.state)}`}>
                  {drone.state}
                </span>

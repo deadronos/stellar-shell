@@ -77,7 +77,14 @@ The recommended direction is:
 - **RED:** added failing tests for allocator math, store bounds, `DroneRolePanel`, `BrainSystem`, and `ExplorerSystem` role behavior.
 - **GREEN:** implemented `src/utils/droneRoles.ts`, store role-target actions, persistent drone `roleAssignment`, role-aware `BrainSystem` / `ExplorerSystem`, HUD role controls, and updated `ADVANCED_EXPLORER` copy.
 - **Refactor/docs:** surfaced role assignment in the debug panel and synced gameplay / architecture docs to the new swarm role allocator.
-- **Validation:** full repository validation passed via `npm run lint`, `npm run typecheck`, `npm run build`, and `npm test` (31 files / 164 tests).
+- **Validation:** full repository validation passed via `npm run lint`, `npm run typecheck`, `npm run build`, and `npm test`.
+
+### 2026-03-08 — Browser verification follow-up
+
+- Verified the live HUD and role allocator in a real browser against the local Vite dev server.
+- Confirmed the role panel styling is consistent with the HUD and that live counts rebalance correctly after role-target changes and drone purchases.
+- Found and fixed a React key warning in `DroneDebugPanel` by giving spawned drones stable numeric ids and moving the id allocator into `src/ecs/droneIdAllocator.ts`.
+- Re-ran validation after the fix: `npm run lint`, `npm run typecheck`, `npm run build`, and `npm test` (31 files / 165 tests passing).
 
 ## Validation
 

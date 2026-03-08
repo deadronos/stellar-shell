@@ -10,6 +10,7 @@
   - persistent drone `roleAssignment` separate from transient state,
   - `BrainSystem` / `ExplorerSystem` updated to honor roles,
   - `ADVANCED_EXPLORER` copy and docs synced to assigned explorer behavior.
+- Browser verification pass confirmed the HUD/role panel flow works live; follow-up fix added stable numeric drone ids to eliminate the `DroneDebugPanel` React key warning.
 - Added `BvxEngine.computeDysonProgress()` to derive blueprint/frame/panel/shell counts and milestone readiness directly from world voxels.
 - Wired `dysonProgress` into Zustand store and updated build/mining systems to refresh metrics after voxel mutations.
 - Added HUD Dyson metrics row and gated System Jump visibility by both energy rate and Dyson prestige readiness milestone.
@@ -48,3 +49,4 @@
 - Chunk meshing now treats ECS chunk entities as the source of truth for mesh revision state; workers are pure snapshot processors only.
 - The next pass keeps the current architecture boundaries intact; all fixes are correctness-focused rather than gameplay-facing.
 - Issue `#50` is now implemented with swarm-level role allocation instead of dedicated drone classes.
+- Browser-only issue discovered during live verification: `DroneDebugPanel` required stable spawn ids for list keys; fixed by introducing `src/ecs/droneIdAllocator.ts`.
