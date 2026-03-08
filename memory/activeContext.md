@@ -1,9 +1,16 @@
 # Active Context — stellar-shell
 
-**Current focus:** TASK010 async meshing recovery, auto-blueprint reset semantics, and seeded asteroid determinism is implemented and validated.
+**Current focus:** TASK011 drone role allocation is implemented; the next work item is roadmap selection and playtest tuning.
 
 **Recent changes:**
 
+- Completed `DES010` + `TASK011`:
+  - manual HUD targets for miner / builder / explorer roles,
+  - deterministic even auto-fill with remainder priority `MINER -> BUILDER -> EXPLORER`,
+  - persistent drone `roleAssignment` separate from transient state,
+  - `BrainSystem` / `ExplorerSystem` updated to honor roles,
+  - `ADVANCED_EXPLORER` copy and docs synced to assigned explorer behavior.
+- Browser verification pass confirmed the HUD/role panel flow works live; follow-up fix added stable numeric drone ids to eliminate the `DroneDebugPanel` React key warning.
 - Added `BvxEngine.computeDysonProgress()` to derive blueprint/frame/panel/shell counts and milestone readiness directly from world voxels.
 - Wired `dysonProgress` into Zustand store and updated build/mining systems to refresh metrics after voxel mutations.
 - Added HUD Dyson metrics row and gated System Jump visibility by both energy rate and Dyson prestige readiness milestone.
@@ -32,6 +39,7 @@
 
 **Next steps:**
 
+- Playtest and tune the new swarm role allocator so builder starvation / over-allocation feels sensible.
 - Tune pacing/balance after the deterministic auto-blueprint ordering changes in live playtesting.
 - Continue roadmap work (next feature/task TBD).
 
@@ -40,3 +48,5 @@
 - Blueprint targets use existing `BLUEPRINT_FRAME` + `BlueprintManager` flow, so no new drone state paths were introduced.
 - Chunk meshing now treats ECS chunk entities as the source of truth for mesh revision state; workers are pure snapshot processors only.
 - The next pass keeps the current architecture boundaries intact; all fixes are correctness-focused rather than gameplay-facing.
+- Issue `#50` is now implemented with swarm-level role allocation instead of dedicated drone classes.
+- Browser-only issue discovered during live verification: `DroneDebugPanel` required stable spawn ids for list keys; fixed by introducing `src/ecs/droneIdAllocator.ts`.

@@ -15,6 +15,7 @@ import { TrailSystem } from './systems/TrailSystem';
 import { AsteroidOrbitSystem } from './systems/AsteroidOrbitSystem';
 import { AutoBlueprintSystem } from './systems/AutoBlueprintSystem';
 import { ExplorerSystem, resetExplorerSystem } from './systems/ExplorerSystem';
+import { getNextDroneEntityId } from './droneIdAllocator';
 
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
@@ -36,6 +37,7 @@ export const SystemRunner = () => {
           // Spawn more
           for (let i = currentCount; i < droneCount; i++) {
             ECS.add({
+              id: getNextDroneEntityId(),
               position: new THREE.Vector3(0, 0, 0),
               velocity: new THREE.Vector3(0, 0, 0),
               isDrone: true,

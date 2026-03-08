@@ -5,6 +5,7 @@ import { VoxelGenerator } from '../services/voxel/VoxelGenerator';
 import { SettingsModal } from './SettingsModal';
 import { DroneDebugPanel } from './DroneDebugPanel';
 import { UpgradesPanel } from './UpgradesPanel';
+import { DroneRolePanel } from './DroneRolePanel';
 
 export const HUD = () => {
   const matter = useStore((state) => state.matter);
@@ -35,124 +36,128 @@ export const HUD = () => {
       <UpgradesPanel />
 
       {/* Top Bar: Resources */}
-      <div className="flex gap-8 items-center bg-black/60 backdrop-blur border border-white/10 p-4 rounded-lg self-start pointer-events-auto">
-        <div>
-          <div className="text-xs text-gray-400 uppercase tracking-widest">Matter</div>
-          <div className="text-2xl font-mono text-cyan-400">{matter} kg</div>
-        </div>
-        <div>
-          <div className="text-xs text-purple-400 uppercase tracking-widest">Rare</div>
-          <div className="text-xl font-mono text-purple-300">
-            {rareMatter}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-yellow-400 uppercase tracking-widest">Energy</div>
-          <div className="text-xl font-mono text-yellow-300">
-            {Math.floor(energy)}
-            <span className="text-xs text-yellow-600 ml-1">
-              +{energyGenerationRate}/s
-            </span>
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-gray-400 uppercase tracking-widest">Drones</div>
-          <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
-        </div>
-        {research > 0 && (
-          <div aria-label={`Research: ${research}`}>
-            <div className="text-xs text-teal-400 uppercase tracking-widest">Research</div>
-            <div className="text-xl font-mono text-teal-300">⬡ {research}</div>
-          </div>
-        )}
-        <div className="h-8 w-px bg-white/20 mx-2"></div>
-        {/* Prestige Section */}
-        {prestigeLevel > 0 && (
+      <div className="self-start space-y-3">
+        <div className="flex gap-8 items-center bg-black/60 backdrop-blur border border-white/10 p-4 rounded-lg pointer-events-auto">
           <div>
-            <div className="text-xs text-cyan-400 uppercase tracking-widest">System Level</div>
-            <div className="text-xl font-mono text-cyan-300 animate-pulse">
-              Lv {prestigeLevel + 1}
+            <div className="text-xs text-gray-400 uppercase tracking-widest">Matter</div>
+            <div className="text-2xl font-mono text-cyan-400">{matter} kg</div>
+          </div>
+          <div>
+            <div className="text-xs text-purple-400 uppercase tracking-widest">Rare</div>
+            <div className="text-xl font-mono text-purple-300">
+              {rareMatter}
             </div>
           </div>
-        )}
-        {stellarCrystals > 0 && (
           <div>
-            <div className="text-xs text-indigo-400 uppercase tracking-widest">Crystals</div>
-            <div className="text-xl font-mono text-indigo-300">✦ {stellarCrystals}</div>
+            <div className="text-xs text-yellow-400 uppercase tracking-widest">Energy</div>
+            <div className="text-xl font-mono text-yellow-300">
+              {Math.floor(energy)}
+              <span className="text-xs text-yellow-600 ml-1">
+                +{energyGenerationRate}/s
+              </span>
+            </div>
           </div>
-        )}
-        <div>
-          <div className="text-xs text-emerald-400 uppercase tracking-widest">Dyson</div>
-          <div className="text-xs font-mono text-emerald-300">
-            F {dysonProgress.frames} · P {dysonProgress.panels} · S {dysonProgress.shells}
+          <div aria-label={`Drones: ${droneCount}`}>
+            <div className="text-xs text-gray-400 uppercase tracking-widest">Drones</div>
+            <div className="text-2xl font-mono text-yellow-400">{droneCount}</div>
           </div>
-          <div className="text-[10px] font-mono text-emerald-500">
-            Milestones {dysonProgress.milestones}/4
+          {research > 0 && (
+            <div aria-label={`Research: ${research}`}>
+              <div className="text-xs text-teal-400 uppercase tracking-widest">Research</div>
+              <div className="text-xl font-mono text-teal-300">⬡ {research}</div>
+            </div>
+          )}
+          <div className="h-8 w-px bg-white/20 mx-2"></div>
+          {/* Prestige Section */}
+          {prestigeLevel > 0 && (
+            <div>
+              <div className="text-xs text-cyan-400 uppercase tracking-widest">System Level</div>
+              <div className="text-xl font-mono text-cyan-300 animate-pulse">
+                Lv {prestigeLevel + 1}
+              </div>
+            </div>
+          )}
+          {stellarCrystals > 0 && (
+            <div>
+              <div className="text-xs text-indigo-400 uppercase tracking-widest">Crystals</div>
+              <div className="text-xl font-mono text-indigo-300">✦ {stellarCrystals}</div>
+            </div>
+          )}
+          <div>
+            <div className="text-xs text-emerald-400 uppercase tracking-widest">Dyson</div>
+            <div className="text-xs font-mono text-emerald-300">
+              F {dysonProgress.frames} · P {dysonProgress.panels} · S {dysonProgress.shells}
+            </div>
+            <div className="text-[10px] font-mono text-emerald-500">
+              Milestones {dysonProgress.milestones}/4
+            </div>
           </div>
+          <button
+            onClick={addDrone}
+            disabled={matter < droneCost}
+            className={`px-4 py-2 rounded font-bold text-xs uppercase tracking-wider transition-all
+               ${
+                 matter >= droneCost
+                   ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_15px_rgba(234,179,8,0.5)]'
+                   : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+               }`}
+          >
+            Build Drone ({droneCost})
+          </button>
+
+          <div className="h-8 w-px bg-white/20 mx-2"></div>
+
+          <button
+            onClick={toggleUpgrades}
+            aria-label="Open upgrades panel"
+            className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
+            title="Upgrades"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </button>
+
+          <button
+            onClick={toggleSettings}
+            className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
+            title="Settings"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={addDrone}
-          disabled={matter < droneCost}
-          className={`px-4 py-2 rounded font-bold text-xs uppercase tracking-wider transition-all
-             ${
-               matter >= droneCost
-                 ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_15px_rgba(234,179,8,0.5)]'
-                 : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-             }`}
-        >
-          Build Drone ({droneCost})
-        </button>
 
-        <div className="h-8 w-px bg-white/20 mx-2"></div>
-
-        <button
-          onClick={toggleUpgrades}
-          aria-label="Open upgrades panel"
-          className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
-          title="Upgrades"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
-          </svg>
-        </button>
-
-        <button
-          onClick={toggleSettings}
-          className="p-2 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition-colors"
-          title="Settings"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </button>
+        <DroneRolePanel />
       </div>
 
       {/* Center Reticle */}

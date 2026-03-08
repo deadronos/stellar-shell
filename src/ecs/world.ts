@@ -1,6 +1,7 @@
 import { World } from 'miniplex';
 import * as THREE from 'three';
 import { BlockType } from '../types';
+import { DroneRole } from '../utils/droneRoles';
 
 export type Entity = {
   // Core
@@ -14,6 +15,7 @@ export type Entity = {
   // Drone State
   target?: THREE.Vector3; // If present, entity is moving towards this
   state?: 'IDLE' | 'EXPLORING' | 'MOVING_TO_BUILD' | 'MOVING_TO_MINE' | 'RETURNING_RESOURCE';
+  roleAssignment?: DroneRole;
   targetBlock?: { x: number; y: number; z: number };
   carryingType?: BlockType | null;
   miningProgress?: number;

@@ -6,6 +6,7 @@ import { useStore } from '../../state/store';
 import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
 import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
+import { computeDroneRoleAllocation, DRONE_ROLE_ORDER } from '../../utils/droneRoles';
 
 const ENGINE = BvxEngine.getInstance();
 const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
@@ -14,7 +15,36 @@ const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
 let cachedMines: { x: number; y: number; z: number }[] | null = null;
 let lastCacheTime = 0;
 
+export const resetBrainSystemCaches = () => {
+  cachedMines = null;
+  lastCacheTime = 0;
+};
+
+const syncDroneRoleAssignments = () => {
+  const { droneCount, manualDroneRoleTargets } = useStore.getState();
+  const drones = [...ECS.with('isDrone', 'position', 'velocity').entities].sort(
+    (left, right) => (left.id ?? 0) - (right.id ?? 0),
+  );
+  const allocation = computeDroneRoleAllocation(droneCount, manualDroneRoleTargets);
+
+  let cursor = 0;
+  for (const role of DRONE_ROLE_ORDER) {
+    const targetCount = allocation.effective[role];
+    for (let index = 0; index < targetCount && cursor < drones.length; index += 1) {
+      drones[cursor].roleAssignment = role;
+      cursor += 1;
+    }
+  }
+
+  while (cursor < drones.length) {
+    drones[cursor].roleAssignment = 'MINER';
+    cursor += 1;
+  }
+};
+
 export const BrainSystem = (clock: THREE.Clock) => {
+  syncDroneRoleAssignments();
+
   const state = useStore.getState();
   const currentMatter = state.matter;
   const droneCount = state.droneCount;
@@ -56,6 +86,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
   for (const drone of allDrones) {
     if (drone.state !== 'IDLE' && drone.state !== 'EXPLORING') continue;
+    const roleAssignment = drone.roleAssignment ?? 'MINER';
 
     // SELF-HEALING: Clear stale components if IDLE or EXPLORING.
     // An IDLE/EXPLORING drone should have no targetBlock and no carryingType
@@ -94,31 +125,29 @@ export const BrainSystem = (clock: THREE.Clock) => {
       }
     };
 
-    // Priority: BUILD (Blueprints) > UPGRADE (Frames -> Energy) > MINE
-    if (canBuild && blueprints.length > 0) {
-      findClosest(blueprints, 'BUILD');
-    }
+    if (roleAssignment === 'BUILDER') {
+      // Priority: BUILD (Blueprints) > UPGRADE (Frames -> Energy)
+      if (canBuild && blueprints.length > 0) {
+        findClosest(blueprints, 'BUILD');
+      }
 
-    // Secondary Priority: Upgrade Frames -> Panels if Energy is needed
-    if (!bestTarget && canBuild && state.energy < 1000) {
-      const frames = ENGINE.findBlocksByType(BlockType.FRAME, 5);
-      if (frames.length > 0) {
-        findClosest(frames, 'BUILD');
+      if (!bestTarget && canBuild && state.energy < 1000) {
+        const frames = ENGINE.findBlocksByType(BlockType.FRAME, 5);
+        if (frames.length > 0) {
+          findClosest(frames, 'BUILD');
+        }
+      }
+
+      const canUpgradeToShell = state.rareMatter >= SHELL_COST;
+      if (!bestTarget && canUpgradeToShell) {
+        const panels = ENGINE.findBlocksByType(BlockType.PANEL, 5);
+        if (panels.length > 0) {
+          findClosest(panels, 'BUILD');
+        }
       }
     }
 
-    // Tertiary Priority: Upgrade Panels -> Shells (Highest Value) if Rare Matter available
-    const canUpgradeToShell = state.rareMatter >= SHELL_COST;
-    if (!bestTarget && canUpgradeToShell) {
-      // Find panels to upgrade
-      const panels = ENGINE.findBlocksByType(BlockType.PANEL, 5);
-      if (panels.length > 0) {
-        findClosest(panels, 'BUILD'); // Reuse BUILD mode
-      }
-    }
-
-    // If no build target found (or cannot build), look for mine
-    if (!bestTarget) {
+    if (roleAssignment === 'MINER' && !bestTarget) {
       const mines = getMines();
       if (Math.random() < 0.01) {
         console.log(
@@ -166,7 +195,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       );
 
       ECS.addComponent(drone, 'target', orbitPos);
-      drone.state = 'EXPLORING';
+      drone.state = roleAssignment === 'EXPLORER' ? 'EXPLORING' : 'IDLE';
     }
   }
 };

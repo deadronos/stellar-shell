@@ -40,12 +40,17 @@ vi.mock('../../src/state/store', () => ({
 }));
 
 import { SystemRunner } from '../../src/ecs/SystemRunner';
+import { resetDroneEntityIdsForTests } from '../../src/ecs/droneIdAllocator';
+import { ECS } from '../../src/ecs/world';
+import { useStore } from '../../src/state/store';
 
 describe('SystemRunner integration', () => {
   beforeEach(() => {
     frameCallbacks.length = 0;
     mockAuto.mockClear();
     mockResetExplorer.mockClear();
+    ECS.clear();
+    resetDroneEntityIdsForTests();
   });
 
   it('registers a frame callback and calls AutoBlueprintSystem with delta/elapsed', () => {
@@ -59,5 +64,19 @@ describe('SystemRunner integration', () => {
     frameCallbacks[0](fakeState, fakeDelta);
 
     expect(mockAuto).toHaveBeenCalledWith(fakeDelta, 2);
+  });
+
+  it('assigns stable numeric ids when spawning drones', async () => {
+    const mockUseStore = useStore as unknown as ReturnType<typeof vi.fn>;
+    mockUseStore.mockImplementation((selector) => {
+      const state = { droneCount: 2 };
+      return selector ? selector(state) : state;
+    });
+
+    render(<SystemRunner />);
+
+    const drones = ECS.with('isDrone').entities;
+    expect(drones).toHaveLength(2);
+    expect(drones.map((drone) => drone.id)).toEqual([1, 2]);
   });
 });

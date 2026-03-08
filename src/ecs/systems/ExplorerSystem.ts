@@ -16,7 +16,7 @@ export const ExplorerSystem = (delta: number) => {
 
   let exploringCount = 0;
   for (const d of allDrones) {
-    if (d.state === 'EXPLORING') exploringCount++;
+    if (d.state === 'EXPLORING' && d.roleAssignment === 'EXPLORER') exploringCount++;
   }
 
   const multiplier = store.upgrades['ADVANCED_EXPLORER'] ? 2 : 1;
