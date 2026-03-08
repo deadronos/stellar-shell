@@ -19,7 +19,10 @@ You play as an overseer of a drone swarm. Your goal is to gather resources ("Mat
 - **W, A, S, D**: Move Camera
 - **Space / Shift**: Move Up / Down
 - **Mouse Drag**: Look around
-- **Left Click**: Interact (Mine or Build)
+- **1**: Select Laser tool
+- **2**: Select Frame tool
+- **Left Click**: Mine / interact with the Laser tool
+- **Right Click**: Place a frame blueprint with the build tool
 
 ## 🛠️ Features
 
@@ -38,6 +41,7 @@ You play as an overseer of a drone swarm. Your goal is to gather resources ("Mat
 
 1. Clone the repository
 2. Install dependencies (pnpm required):
+
    ```bash
    pnpm install
    ```
@@ -52,7 +56,7 @@ Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
 ### Package Manager
 
-This project uses pnpm. Use pnpm 10.28.2 (or newer 10.x) to match the lockfile and CI.
+This project uses pnpm. Use pnpm 10.29.3 (or newer 10.x) to match the lockfile and CI.
 
 ## 🏗️ Tech Stack
 
