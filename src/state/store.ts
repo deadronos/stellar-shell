@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { BlockType, DysonProgressMetrics } from '../types';
 import { UPGRADES, UpgradeId } from '../data/upgrades';
 import { nextSystemSeed } from '../utils/lcg';
+import {
+  adjustManualDroneRoleTarget,
+  createEmptyDroneRoleTargets,
+  DroneRole,
+  DroneRoleTargets,
+} from '../utils/droneRoles';
 
 interface StoreState {
   matter: number;
@@ -28,6 +34,7 @@ interface StoreState {
   autoBlueprintEnabled: boolean;
   /** Runtime mode for Auto-Replicator behavior after upgrade purchase. */
   autoReplicatorEnabled: boolean;
+  manualDroneRoleTargets: DroneRoleTargets;
   dysonProgress: DysonProgressMetrics;
 
   /** Tech tree: record of purchased upgrade IDs */
@@ -60,6 +67,7 @@ interface StoreState {
   toggleAutoBlueprint: () => void;
   setAutoReplicatorEnabled: (enabled: boolean) => void;
   toggleAutoReplicator: () => void;
+  adjustDroneRoleTarget: (role: DroneRole, delta: 1 | -1) => void;
   setDysonProgress: (progress: DysonProgressMetrics) => void;
 
   // Upgrade actions
@@ -90,6 +98,7 @@ export const useStore = create<StoreState>((set, get) => ({
   asteroidOrbitVerticalAmplitude: 2,
   autoBlueprintEnabled: false,
   autoReplicatorEnabled: false,
+  manualDroneRoleTargets: createEmptyDroneRoleTargets(),
   dysonProgress: {
     blueprintFrames: 0,
     frames: 0,
@@ -121,6 +130,15 @@ export const useStore = create<StoreState>((set, get) => ({
         ? { autoReplicatorEnabled: !state.autoReplicatorEnabled }
         : {}
     ),
+  adjustDroneRoleTarget: (role, delta) =>
+    set((state) => ({
+      manualDroneRoleTargets: adjustManualDroneRoleTarget(
+        state.manualDroneRoleTargets,
+        state.droneCount,
+        role,
+        delta,
+      ),
+    })),
   setDysonProgress: (progress) => set({ dysonProgress: progress }),
 
   toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
@@ -170,6 +188,7 @@ export const useStore = create<StoreState>((set, get) => ({
       droneCount: 0,
       droneCost: 50,
       autoReplicatorEnabled: false,
+      manualDroneRoleTargets: createEmptyDroneRoleTargets(),
       dysonProgress: {
         blueprintFrames: 0,
         frames: 0,

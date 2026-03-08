@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
+import { createEmptyDroneRoleTargets } from '../../src/utils/droneRoles';
 
 describe('useStore', () => {
     beforeEach(() => {
@@ -19,6 +20,7 @@ describe('useStore', () => {
             asteroidOrbitVerticalAmplitude: 2,
             autoBlueprintEnabled: false,
             autoReplicatorEnabled: false,
+            manualDroneRoleTargets: createEmptyDroneRoleTargets(),
             upgrades: {
                 MINING_SPEED_1: false,
                 DRONE_SPEED_1: false,
@@ -260,10 +262,61 @@ describe('useStore', () => {
         expect(useStore.getState().research).toBe(8);
     });
 
+    it('increments manual role targets within the available drone pool', () => {
+        useStore.setState({ droneCount: 3 });
+
+        const { adjustDroneRoleTarget } = useStore.getState();
+        adjustDroneRoleTarget('MINER', 1);
+        adjustDroneRoleTarget('EXPLORER', 1);
+
+        expect(useStore.getState().manualDroneRoleTargets).toEqual({
+            MINER: 1,
+            BUILDER: 0,
+            EXPLORER: 1,
+        });
+    });
+
+    it('does not allow manual role targets to exceed the drone pool', () => {
+        useStore.setState({ droneCount: 1 });
+
+        const { adjustDroneRoleTarget } = useStore.getState();
+        adjustDroneRoleTarget('MINER', 1);
+        adjustDroneRoleTarget('BUILDER', 1);
+
+        expect(useStore.getState().manualDroneRoleTargets).toEqual({
+            MINER: 1,
+            BUILDER: 0,
+            EXPLORER: 0,
+        });
+    });
+
+    it('does not allow manual role targets to go below zero', () => {
+        const { adjustDroneRoleTarget } = useStore.getState();
+
+        adjustDroneRoleTarget('BUILDER', -1);
+
+        expect(useStore.getState().manualDroneRoleTargets).toEqual(createEmptyDroneRoleTargets());
+    });
+
     it('research persists across resetWorld', () => {
         useStore.setState({ research: 20 });
         useStore.getState().resetWorld();
         expect(useStore.getState().research).toBe(20);
+    });
+
+    it('resetWorld resets manual drone role targets', () => {
+        useStore.setState({
+            droneCount: 5,
+            manualDroneRoleTargets: {
+                MINER: 2,
+                BUILDER: 1,
+                EXPLORER: 1,
+            },
+        });
+
+        useStore.getState().resetWorld();
+
+        expect(useStore.getState().manualDroneRoleTargets).toEqual(createEmptyDroneRoleTargets());
     });
 
     it('purchaseUpgrade deducts research for research-gated upgrades', () => {

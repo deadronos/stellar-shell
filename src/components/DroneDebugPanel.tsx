@@ -44,6 +44,10 @@ export const DroneDebugPanel = () => {
               </div>
             </div>
 
+            <div className="mt-1 text-[10px] text-sky-400/80">
+              Role: {drone.roleAssignment ?? 'UNASSIGNED'}
+            </div>
+
             {drone.targetBlock && (
                <div className="mt-1 text-[10px] text-yellow-500/80">
                   Target Block: [{drone.targetBlock.x}, {drone.targetBlock.y}, {drone.targetBlock.z}]

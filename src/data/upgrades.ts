@@ -62,7 +62,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: UPGRADE_IDS.ADVANCED_EXPLORER,
     label: 'Advanced Explorer',
-    description: 'Exploring drones generate 2× research',
+    description: 'Assigned explorer drones generate 2× research',
     matterCost: 0,
     rareMatterCost: 0,
     researchCost: 10,

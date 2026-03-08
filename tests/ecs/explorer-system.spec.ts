@@ -35,6 +35,7 @@ describe('ExplorerSystem', () => {
     ECS.add({
       isDrone: true,
       position: new THREE.Vector3(0, 0, 0),
+      roleAssignment: 'EXPLORER',
       state: 'EXPLORING',
       carryingType: null,
     });
@@ -49,6 +50,7 @@ describe('ExplorerSystem', () => {
       ECS.add({
         isDrone: true,
         position: new THREE.Vector3(0, 0, 0),
+        roleAssignment: 'EXPLORER',
         state: 'EXPLORING',
         carryingType: null,
       });
@@ -63,6 +65,7 @@ describe('ExplorerSystem', () => {
     ECS.add({
       isDrone: true,
       position: new THREE.Vector3(0, 0, 0),
+      roleAssignment: 'EXPLORER',
       state: 'EXPLORING',
       carryingType: null,
     });
@@ -78,12 +81,14 @@ describe('ExplorerSystem', () => {
     ECS.add({
       isDrone: true,
       position: new THREE.Vector3(0, 0, 0),
+      roleAssignment: 'EXPLORER',
       state: 'MOVING_TO_MINE',
       carryingType: null,
     });
     ECS.add({
       isDrone: true,
       position: new THREE.Vector3(0, 0, 0),
+      roleAssignment: 'EXPLORER',
       state: 'RETURNING_RESOURCE',
       carryingType: null,
     });
@@ -96,6 +101,7 @@ describe('ExplorerSystem', () => {
     ECS.add({
       isDrone: true,
       position: new THREE.Vector3(0, 0, 0),
+      roleAssignment: 'EXPLORER',
       state: 'EXPLORING',
       carryingType: null,
     });
@@ -105,6 +111,20 @@ describe('ExplorerSystem', () => {
 
     resetExplorerSystem();
     ExplorerSystem(0.5); // if reset worked, still 0.25 total => 0 whole
+    expect(useStore.getState().research).toBe(0);
+  });
+
+  it('does not generate research for exploring drones without the explorer role', () => {
+    ECS.add({
+      isDrone: true,
+      position: new THREE.Vector3(0, 0, 0),
+      roleAssignment: 'MINER',
+      state: 'EXPLORING',
+      carryingType: null,
+    });
+
+    ExplorerSystem(2);
+
     expect(useStore.getState().research).toBe(0);
   });
 });

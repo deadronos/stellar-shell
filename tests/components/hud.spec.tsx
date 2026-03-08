@@ -47,7 +47,7 @@ describe('HUD', () => {
 
         // Check for Drones label and value
         expect(screen.getByText(/Drones/i)).toBeInTheDocument();
-        expect(screen.getByText(/5/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Drones: 5/i)).toBeInTheDocument();
         expect(screen.getByText(/Dyson/i)).toBeInTheDocument();
         expect(screen.getByText(/F 8 · P 16 · S 20/i)).toBeInTheDocument();
         expect(screen.getByText(/Milestones 4\/4/i)).toBeInTheDocument();

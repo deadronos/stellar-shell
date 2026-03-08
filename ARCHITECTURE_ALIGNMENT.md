@@ -8,9 +8,9 @@
 
 The project is broadly healthy and internally consistent at runtime.
 
-- Validation passed: `pnpm test` (**29 files, 148 tests**), `pnpm run lint` (success), `pnpm run build` (success).
-- Core gameplay loops (mining, construction, orbit-aware interaction, progression metrics, prestige flow, upgrades, and research generation) are implemented and covered by tests.
-- Most previously identified Phase 2 implementation gaps are now resolved. The main remaining drift is concentrated in two open design questions that now have explicit GitHub tracking.
+- Validation passed: `npm run lint`, `npm run typecheck`, `npm run build`, and `npm test` (**31 files, 164 tests**).
+- Core gameplay loops (mining, construction, orbit-aware interaction, progression metrics, prestige flow, upgrades, research generation, and swarm role allocation) are implemented and covered by tests.
+- Most previously identified Phase 2 implementation gaps are now resolved. The main remaining drift is concentrated in the auto-blueprint growth-shape design question.
 
 ## What Is Aligned ✅
 
@@ -25,8 +25,10 @@ The project is broadly healthy and internally consistent at runtime.
   - Orbit offsets are deterministic and consistently applied to chunk rendering, drone targets, and player voxel-space ray interactions.
 - **Dyson progression metrics**
   - World-derived metrics are computed and surfaced in HUD; prestige visibility uses milestone readiness.
-- **Research and advanced explorer mechanic**
-  - Research accumulation by exploring drones and `ADVANCED_EXPLORER` multiplier are implemented and tested.
+- **Research and swarm role allocation**
+  - HUD-driven manual role targets for miners, builders, and explorers are implemented.
+  - Remaining drones are auto-balanced evenly with remainder priority `miner -> builder -> explorer`.
+  - Research accumulation now comes from explorer-role drones in the `EXPLORING` loop, and `ADVANCED_EXPLORER` boosts those assigned explorers.
 
 ## Resolved Since Phase 2 ✅
 
@@ -34,23 +36,22 @@ The project is broadly healthy and internally consistent at runtime.
 - **Energy tick robustness** now uses catch-up ticking (`while (accumulatedTime >= 1.0)`).
 - **Auto-blueprint traversal** is deterministic and radius-aware, rather than a simple `+X` linear walk.
 - **Upgrade reset semantics** are reflected by the runtime and now documented more clearly.
+- **Research role ambiguity** is resolved by the new swarm role allocator and explicit explorer assignment model from issue `#50`.
 
 ## Remaining Design Drift / Open Questions ⚠️
 
 - **Auto-blueprint growth shape remains a design decision.** The runtime seeds a spherical Dyson skeleton, but automated follow-up growth still expands on the `y = 0` plane. Follow-up decision is tracked in GitHub issue #49.
-
-- **Research generation model needs explicit product direction.** The runtime grants research from drones in the `EXPLORING` state. Design language still implies a stronger "Explorer drone" identity than the code currently enforces. Follow-up decision is tracked in GitHub issue #50.
 
 - **Rare-resource narrative should stay explicit about current behavior.** Runtime rare ore placement is seeded-noise-driven, not depth-gated. Gameplay docs should continue to avoid implying a strict deep-core rule unless that mechanic is intentionally added.
 
 ## Current Alignment Objectives
 
 - Decide whether auto-blueprint growth should remain planar, become shell-aware, or use a hybrid frontier model.
-- Decide whether research should come from dedicated explorer drones, explicit swarm roles, or the current passive exploration model.
 - Keep gameplay and architecture docs synchronized with whichever decisions land.
 
 ## Traceability
 
 - **Design Plan:** `memory/designs/DES007-phase2-architecture-alignment-pass.md`
 - **Execution Task:** `memory/tasks/TASK008-phase2-architecture-alignment-pass.md`
-- **Open Design Issues:** `#49` (auto-blueprint growth shape), `#50` (research model / explorer role)
+- **Open Design Issues:** `#49` (auto-blueprint growth shape)
+- **Resolved Follow-up:** `memory/designs/DES010-drone-role-allocation-model.md` + `memory/tasks/TASK011-drone-role-allocation-model.md`
