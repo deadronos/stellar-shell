@@ -211,7 +211,7 @@ export const HUD = () => {
         <div className="text-xs text-gray-400">Controls</div>
         <div className="text-sm">WASD + Space/Shift to Fly</div>
         <div className="text-sm">Click + Drag to Look</div>
-        <div className="text-sm">Click to Mine / Build</div>
+        <div className="text-sm">Left Click Mine · Right Click Build</div>
       </div>
     </div>
   );

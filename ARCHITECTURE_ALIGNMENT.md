@@ -1,16 +1,16 @@
 # Architecture Alignment Report
 
 **Repository:** `deadronos/stellar-shell`  
-**Date:** 2026-02-28  
+**Date:** 2026-03-08  
 **Scope:** Gameplay mechanics, formulas, and implementation-vs-design alignment across docs, runtime systems, and tests.
 
 ## Executive Summary
 
 The project is broadly healthy and internally consistent at runtime.
 
-- Validation passed: `pnpm test` (**28 files, 130 tests**), `pnpm run lint` (0 errors, 2 pre-existing warnings), `pnpm run build` (success).
+- Validation passed: `pnpm test` (**29 files, 148 tests**), `pnpm run lint` (success), `pnpm run build` (success).
 - Core gameplay loops (mining, construction, orbit-aware interaction, progression metrics, prestige flow, upgrades, and research generation) are implemented and covered by tests.
-- A small set of **design drift items** and one **logic robustness issue** should be handled in a Phase 2 alignment pass.
+- Most previously identified Phase 2 implementation gaps are now resolved. The main remaining drift is concentrated in two open design questions that now have explicit GitHub tracking.
 
 ## What Is Aligned ✅
 
@@ -28,35 +28,29 @@ The project is broadly healthy and internally consistent at runtime.
 - **Research and advanced explorer mechanic**
   - Research accumulation by exploring drones and `ADVANCED_EXPLORER` multiplier are implemented and tested.
 
-## Alignment Gaps / Drift ⚠️
+## Resolved Since Phase 2 ✅
 
-1. **Auto-blueprint placement strategy differs from design intent**
-   - Current logic advances along `+X` (`(0,0,0)`, `(1,0,0)`, ...).
-   - DES005 intent describes deterministic outward/radius-constrained expansion.
+- **Auto-Replicator runtime toggle** now exists in settings and is respected by `EnergySystem`.
+- **Energy tick robustness** now uses catch-up ticking (`while (accumulatedTime >= 1.0)`).
+- **Auto-blueprint traversal** is deterministic and radius-aware, rather than a simple `+X` linear walk.
+- **Upgrade reset semantics** are reflected by the runtime and now documented more clearly.
 
-2. **Auto-Replicator is not toggleable after purchase**
-   - Gameplay design text describes toggleable behavior; implementation is always active when upgrade is owned.
+## Remaining Design Drift / Open Questions ⚠️
 
-3. **Rare-material sourcing differs from design narrative**
-   - Design text implies deep/core sourcing.
-   - Runtime uses noise-threshold `RARE_ORE` placement not strictly depth-gated.
+- **Auto-blueprint growth shape remains a design decision.** The runtime seeds a spherical Dyson skeleton, but automated follow-up growth still expands on the `y = 0` plane. Follow-up decision is tracked in GitHub issue #49.
 
-4. **Energy tick robustness under large delta**
-   - `EnergySystem` processes one 1-second tick per frame with `if (accumulatedTime >= 1)`.
-   - Under frame hitches, this can undercount expected progression.
+- **Research generation model needs explicit product direction.** The runtime grants research from drones in the `EXPLORING` state. Design language still implies a stronger "Explorer drone" identity than the code currently enforces. Follow-up decision is tracked in GitHub issue #50.
 
-5. **Documentation contract mismatch (upgrade persistence semantics)**
-   - Runtime resets upgrades on System Jump, but some early design wording suggests persistent upgrades.
+- **Rare-resource narrative should stay explicit about current behavior.** Runtime rare ore placement is seeded-noise-driven, not depth-gated. Gameplay docs should continue to avoid implying a strict deep-core rule unless that mechanic is intentionally added.
 
-## Phase 2 Alignment Objectives
+## Current Alignment Objectives
 
-- Replace linear auto-blueprint expansion with deterministic radius-aware expansion rules.
-- Add explicit Auto-Replicator runtime toggle and UI control.
-- Decide and codify rare-material policy (depth-biased vs free-noise distribution), then align generator + docs.
-- Make energy ticking hitch-safe using catch-up ticking semantics.
-- Normalize gameplay docs to reflect intended persistence/reset rules.
+- Decide whether auto-blueprint growth should remain planar, become shell-aware, or use a hybrid frontier model.
+- Decide whether research should come from dedicated explorer drones, explicit swarm roles, or the current passive exploration model.
+- Keep gameplay and architecture docs synchronized with whichever decisions land.
 
 ## Traceability
 
 - **Design Plan:** `memory/designs/DES007-phase2-architecture-alignment-pass.md`
 - **Execution Task:** `memory/tasks/TASK008-phase2-architecture-alignment-pass.md`
+- **Open Design Issues:** `#49` (auto-blueprint growth shape), `#50` (research model / explorer role)
