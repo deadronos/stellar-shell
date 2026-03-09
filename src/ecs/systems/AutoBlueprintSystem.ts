@@ -22,14 +22,16 @@ interface Candidate {
 const buildCandidates = (radius: number): ReadonlyArray<{ x: number; y: number; z: number }> => {
   const candidates: Candidate[] = [];
   for (let x = -radius; x <= radius; x++) {
-    for (let z = -radius; z <= radius; z++) {
-      const distSq = x * x + z * z;
-      if (distSq > radius * radius) continue;
-      candidates.push({ x, y: 0, z, distSq });
+    for (let y = -radius; y <= radius; y++) {
+      for (let z = -radius; z <= radius; z++) {
+        const distSq = x * x + y * y + z * z;
+        if (distSq > radius * radius) continue;
+        candidates.push({ x, y, z, distSq });
+      }
     }
   }
 
-  candidates.sort((a, b) => a.distSq - b.distSq || a.x - b.x || a.z - b.z);
+  candidates.sort((a, b) => a.distSq - b.distSq || a.x - b.x || a.y - b.y || a.z - b.z);
   return candidates.map(({ x, y, z }) => ({ x, y, z }));
 };
 
@@ -67,7 +69,9 @@ export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => 
   const engine = BvxEngine.getInstance();
   const manager = BlueprintManager.getInstance();
 
-  // Deterministic radius-aware scan around origin on y=0.
+  // Deterministic 3D radius-sorted scan around origin – sphere-aware expansion.
+  // Candidates are ordered from closest to farthest from the star at (0,0,0),
+  // covering the full sphere volume across all axes.
   // Skip any coordinates that are not AIR; only one blueprint per invocation.
   let attempts = 0;
   while (attempts < AUTO_CANDIDATES.length) {
