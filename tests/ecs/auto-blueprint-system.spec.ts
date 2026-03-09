@@ -46,7 +46,7 @@ describe('AutoBlueprintSystem', () => {
     expect(BlueprintManager.getInstance().getBlueprints()).toHaveLength(2);
   });
 
-  it('should expand in deterministic outward radius order from origin', () => {
+  it('should expand in deterministic sphere-aware order from origin', () => {
     useStore.setState({ autoBlueprintEnabled: true });
     const engine = BvxEngine.getInstance();
     engine.resetWorld();
@@ -56,9 +56,27 @@ describe('AutoBlueprintSystem', () => {
     AutoBlueprintSystem(0, 2.2);
 
     const bps = BlueprintManager.getInstance().getBlueprints();
+    // origin is closest (distSq=0)
     expect(bps).toContainEqual({ x: 0, y: 0, z: 0 });
+    // unit-distance neighbours (distSq=1) follow; x,y,z tiebreak gives (-1,0,0) then (0,-1,0)
     expect(bps).toContainEqual({ x: -1, y: 0, z: 0 });
-    expect(bps).toContainEqual({ x: 0, y: 0, z: -1 });
+    expect(bps).toContainEqual({ x: 0, y: -1, z: 0 });
+  });
+
+  it('should include y-axis neighbours in sphere-aware expansion', () => {
+    useStore.setState({ autoBlueprintEnabled: true });
+    const engine = BvxEngine.getInstance();
+    engine.resetWorld();
+
+    // Run 7 intervals to cover origin + all 6 unit-distance axis-aligned neighbours
+    for (let i = 0; i < 7; i++) {
+      AutoBlueprintSystem(0, i * 1.1);
+    }
+
+    const bps = BlueprintManager.getInstance().getBlueprints();
+    // Both y-axis unit neighbours must be present, proving expansion is 3-dimensional
+    expect(bps).toContainEqual({ x: 0, y: 1, z: 0 });
+    expect(bps).toContainEqual({ x: 0, y: -1, z: 0 });
   });
 
   it('should skip non-AIR coordinates during auto expansion', () => {

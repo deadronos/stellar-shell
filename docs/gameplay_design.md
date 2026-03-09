@@ -22,10 +22,10 @@ Construction is **phased** and **voxel-based**.
 
 ### Phase 0: The Skeleton
 
-- **Mechanism**: Player places "Frame Blueprints". The runtime seeds an initial spherical Dyson blueprint skeleton, then optional Auto-Blueprint expansion currently adds deterministic follow-up blueprints from a radius-sorted scan on the `y = 0` plane (see issue #49; automation is intentionally planar for now).
+- **Mechanism**: Player places "Frame Blueprints". The runtime seeds an initial spherical Dyson blueprint skeleton, then optional Auto-Blueprint expansion adds deterministic follow-up blueprints ordered by 3-D distance from the star, covering the full sphere volume from the inside out.
 - **Cost**: Blueprints themselves are free, but drones consume matter to build each frame when they arrive; the overall matter cost is therefore high.
 - **Gameplay**: Drones must physically fly to the construction site to "weld" the frames.
-- **Incremental Hook**: Unlocking "Auto-Blueprint" allows blueprint generation to continue automatically. Whether that automation should remain planar or become shell-aware is tracked in GitHub issue #49.
+- **Incremental Hook**: Unlocking "Auto-Blueprint" allows blueprint generation to continue automatically. New nodes are placed in deterministic sphere-aware order (closest to the star first), ensuring expansion looks and behaves like an ever-growing sphere rather than a planar disk.
 
 ### Phase 1: Solar Panels
 
