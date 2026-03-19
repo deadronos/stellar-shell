@@ -41,34 +41,25 @@ describe('VoxelGenerator', () => {
     expect(modifierMock.setBlock).toHaveBeenCalled();
   });
 
-  it('rare ore placement is noise-driven and not strictly core-gated', async () => {
-    vi.resetModules();
-    vi.doMock('simplex-noise', () => ({
-      createNoise3D: () => () => 1,
-    }));
+  it('rare ore placement is noise-driven and not strictly core-gated', () => {
+    const modifierMock: IVoxelModifier = { setBlock: vi.fn() };
+    const radius = 5;
+    const constantNoiseFactory = () => () => 1;
 
-    try {
-      const { VoxelGenerator: MockedVoxelGenerator } = await import('../../../src/services/voxel/VoxelGenerator');
-      const modifierMock: IVoxelModifier = { setBlock: vi.fn() };
-      const radius = 5;
-      MockedVoxelGenerator.generateAsteroid(0, 0, 0, radius, modifierMock, 0);
+    VoxelGenerator.generateAsteroid(0, 0, 0, radius, modifierMock, 0, constantNoiseFactory);
 
-      const calls = (modifierMock.setBlock as Mock).mock.calls as [number, number, number, BlockType][];
-      const center = { x: 8, y: 8, z: 8 };
-      const hasRareOutsideCore = calls.some(([x, y, z, type]) => {
-        if (type !== BlockType.RARE_ORE) return false;
-        const dx = x - center.x;
-        const dy = y - center.y;
-        const dz = z - center.z;
-        const dist = Math.hypot(dx, dy, dz);
-        return dist >= radius * 0.5;
-      });
+    const calls = (modifierMock.setBlock as Mock).mock.calls as [number, number, number, BlockType][];
+    const center = { x: 8, y: 8, z: 8 };
+    const hasRareOutsideCore = calls.some(([x, y, z, type]) => {
+      if (type !== BlockType.RARE_ORE) return false;
+      const dx = x - center.x;
+      const dy = y - center.y;
+      const dz = z - center.z;
+      const dist = Math.hypot(dx, dy, dz);
+      return dist >= radius * 0.5;
+    });
 
-      expect(hasRareOutsideCore).toBe(true);
-    } finally {
-      vi.doUnmock('simplex-noise');
-      vi.resetModules();
-    }
+    expect(hasRareOutsideCore).toBe(true);
   });
 
   describe('deriveSystemParams', () => {
