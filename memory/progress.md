@@ -17,6 +17,8 @@
 - TASK010 completed: worker-failure recovery now requeues chunks instead of wedging them, auto-blueprint traversal resets on re-enable/System Jump, and `systemSeed` now fully determines asteroid topology.
 - TASK011 completed: drones now use HUD-controlled miner / builder / explorer role targets with deterministic auto-fill allocation, and research generation comes only from explorer-role drones.
 - Browser verification follow-up completed: HUD/role UI looked consistent in the live app, and a discovered `DroneDebugPanel` key warning was fixed via stable drone ids.
+- Maintenance pass completed: direct dependencies were upgraded to latest available compatible versions, including `@astrumforge/bvx-kit`, React 19.2.4, Vite 8, Vitest 4.1, Tailwind 4.2, Three 0.183, and updated tooling packages.
+- Full validation is green after the upgrade pass with `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` (31 test files / 166 tests).
 
 **What's left / planned work:**
 
@@ -32,4 +34,4 @@
 - Monitor how often players pin too many builders or explorers so future fallback-borrowing rules can be evaluated from playtesting rather than guesswork.
 - Remaining browser-observed issue is minor: the dev server still returns `404` for `favicon.ico`, which does not affect gameplay or UI behavior.
 
-**Last updated:** 2026-03-08
+**Last updated:** 2026-03-19

@@ -1,6 +1,6 @@
 # Active Context — stellar-shell
 
-**Current focus:** TASK011 drone role allocation is implemented; the next work item is roadmap selection and playtest tuning.
+**Current focus:** Maintenance pass completed; the next work item is roadmap selection and playtest tuning.
 
 **Recent changes:**
 
@@ -36,6 +36,11 @@
   - auto-blueprint traversal now rewinds on re-enable and world reset,
   - asteroid topology is now fully seeded from `systemSeed`,
   - full validation (`pnpm test`, `pnpm build`, `pnpm typecheck`, `pnpm lint`) is green again.
+- Completed March 2026 dependency maintenance pass:
+  - upgraded direct dependencies to latest available compatible versions,
+  - kept ESLint on the latest 9.x line because the current React lint plugins are not yet compatible with ESLint 10,
+  - updated `VoxelGenerator` tests to inject a noise factory instead of relying on fragile module mocks under newer Vitest/Vite,
+  - confirmed full validation remains green (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`).
 
 **Next steps:**
 
