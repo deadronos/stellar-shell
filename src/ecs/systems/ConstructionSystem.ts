@@ -36,7 +36,7 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
         const currentBlock = ENGINE.getBlock(x, y, z);
 
         if (BlueprintManager.getInstance().hasBlueprint({ x, y, z })) {
-          if (store.consumeMatter(FRAME_COST)) {
+          if (store.consumeMatter(FRAME_COST) && store.consumeEnergy(10)) {
             ENGINE.setBlock(x, y, z, BlockType.FRAME);
             BlueprintManager.getInstance().removeBlueprint({ x, y, z });
             store.setDysonProgress(ENGINE.computeDysonProgress());
@@ -47,7 +47,7 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
             );
           }
         } else if (currentBlock === BlockType.FRAME) {
-          if (store.consumeMatter(FRAME_COST)) {
+          if (store.consumeMatter(FRAME_COST) && store.consumeEnergy(10)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
             const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
             store.setEnergyRate(energyRate);
@@ -55,7 +55,7 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
-          if (store.consumeRareMatter(SHELL_COST)) {
+          if (store.consumeRareMatter(SHELL_COST) && store.consumeEnergy(50)) {
             ENGINE.setBlock(x, y, z, BlockType.SHELL);
             const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
             store.setEnergyRate(energyRate);

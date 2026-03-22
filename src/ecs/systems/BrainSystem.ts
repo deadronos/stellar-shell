@@ -85,7 +85,30 @@ export const BrainSystem = (clock: THREE.Clock) => {
   }
 
   for (const drone of allDrones) {
+    // 1. Validation for active drones (Target Invalidation)
+    if (drone.state !== 'IDLE' && drone.state !== 'EXPLORING' && drone.targetBlock) {
+      const { x, y, z } = drone.targetBlock;
+      const block = ENGINE.getBlock(x, y, z);
+      let stillValid = false;
+
+      if (drone.state === 'MOVING_TO_MINE') {
+        stillValid = (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE || block === BlockType.RARE_ORE);
+      } else if (drone.state === 'MOVING_TO_BUILD') {
+        const hasBlueprint = BLUEPRINT_MANAGER.hasBlueprint({ x, y, z });
+        stillValid = hasBlueprint || block === BlockType.FRAME || block === BlockType.PANEL;
+      }
+
+      if (!stillValid) {
+        drone.state = 'IDLE';
+        ECS.removeComponent(drone, 'targetBlock');
+        ECS.removeComponent(drone, 'target');
+        drone.miningProgress = 0;
+        continue;
+      }
+    }
+
     if (drone.state !== 'IDLE' && drone.state !== 'EXPLORING') continue;
+
     const roleAssignment = drone.roleAssignment ?? 'MINER';
 
     // SELF-HEALING: Clear stale components if IDLE or EXPLORING.

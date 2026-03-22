@@ -53,6 +53,7 @@ interface StoreState {
   setEnergyRate: (rate: number) => void;
   consumeMatter: (amount: number) => boolean;
   consumeRareMatter: (amount: number) => boolean;
+  consumeEnergy: (amount: number) => boolean;
   addDrone: () => void;
   addResearch: (amount: number) => void;
   setTool: (tool: 'LASER' | 'BUILD') => void;
@@ -216,6 +217,15 @@ export const useStore = create<StoreState>((set, get) => ({
     const { matter } = get();
     if (matter >= amount) {
       set({ matter: matter - amount });
+      return true;
+    }
+    return false;
+  },
+
+  consumeEnergy: (amount) => {
+    const { energy } = get();
+    if (energy >= amount) {
+      set({ energy: energy - amount });
       return true;
     }
     return false;

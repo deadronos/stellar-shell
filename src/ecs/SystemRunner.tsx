@@ -1,4 +1,5 @@
 import { useFrame } from '@react-three/fiber';
+import { useRef } from 'react';
 import { BrainSystem } from './systems/BrainSystem';
 import { MovementSystem } from './systems/MovementSystem';
 import { ChunkSystem } from './systems/ChunkSystem';
@@ -32,7 +33,7 @@ export const SystemRunner = () => {
         // Sync ECS Population
         const drones = ECS.with('isDrone').entities;
         const currentCount = drones.length;
-    
+
         if (currentCount < droneCount) {
           // Spawn more
           for (let i = currentCount; i < droneCount; i++) {
@@ -54,16 +55,25 @@ export const SystemRunner = () => {
         }
       }, [droneCount]);
 
+    const throttledTime = useRef(0);
+    const THROTTLE_INTERVAL = 0.1; // 10Hz
+
     useFrame((state, delta) => {
         const elapsedTime = state.clock.elapsedTime;
-        BrainSystem(state.clock);
+        throttledTime.current += delta;
+
+        if (throttledTime.current >= THROTTLE_INTERVAL) {
+            BrainSystem(state.clock);
+            EnergySystem(throttledTime.current);
+            AutoBlueprintSystem(delta, elapsedTime);
+            ExplorerSystem(throttledTime.current);
+            throttledTime.current = 0;
+        }
+
         MiningSystem(delta, elapsedTime);
         ConstructionSystem(delta, elapsedTime);
         MovementSystem(delta);
-        EnergySystem(delta);
         AsteroidOrbitSystem(elapsedTime);
-        AutoBlueprintSystem(delta, elapsedTime);
-        ExplorerSystem(delta);
         ChunkSystem();
         PlayerSystem(delta, elapsedTime);
         TrailSystem(delta);
