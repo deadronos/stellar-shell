@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
-import { useStore } from '../../state/store';
 import { ParticleEvents } from '../../services/ParticleEvents';
 import { BLOCK_COLORS } from '../../constants';
 import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
@@ -10,16 +9,46 @@ import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 const ENGINE = BvxEngine.getInstance();
 const HUB_POSITION = new THREE.Vector3(0, 0, 0);
 
-export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
-  const store = useStore.getState();
+interface MiningSystemProps {
+  delta: number;
+  elapsedTime: number;
+  asteroidOrbitEnabled: boolean;
+  asteroidOrbitRadius: number;
+  asteroidOrbitSpeed: number;
+  asteroidOrbitVerticalAmplitude: number;
+  prestigeLevel: number;
+  upgrades: Record<string, boolean>;
+  consumeEnergy: (amount: number) => boolean;
+  addMatter: (amount: number) => void;
+  addRareMatter: (amount: number) => void;
+}
+
+export const MiningSystem = ({
+  delta,
+  elapsedTime,
+  asteroidOrbitEnabled,
+  asteroidOrbitRadius,
+  asteroidOrbitSpeed,
+  asteroidOrbitVerticalAmplitude,
+  prestigeLevel,
+  upgrades,
+  consumeEnergy,
+  addMatter,
+  addRareMatter
+}: MiningSystemProps) => {
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
-    enabled: store.asteroidOrbitEnabled,
-    radius: store.asteroidOrbitRadius,
-    speed: store.asteroidOrbitSpeed,
-    verticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+    enabled: asteroidOrbitEnabled,
+    radius: asteroidOrbitRadius,
+    speed: asteroidOrbitSpeed,
+    verticalAmplitude: asteroidOrbitVerticalAmplitude,
   });
   const miningDrones = ECS.with('isDrone', 'position', 'targetBlock', 'state', 'target');
   const returningDrones = ECS.with('isDrone', 'position', 'state', 'target');
+
+  // Performance optimization: When many drones are mining, reduce per-drone particle frequency
+  // to avoid overloading the particle system and causing frame drops.
+  const activeMinerCount = miningDrones.entities.length;
+  const particleThreshold = activeMinerCount > 20 ? 0.3 * (20 / activeMinerCount) : 0.3;
 
   for (const drone of miningDrones) {
     if (drone.state === 'MOVING_TO_MINE' && drone.targetBlock) {
@@ -44,12 +73,14 @@ export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
           if (!drone.miningProgress) drone.miningProgress = 0;
 
           // Prestige Multiplier: +50% Mining Speed per level
-          const miningMult = 1 + store.prestigeLevel * 0.5;
+          const miningMult = 1 + prestigeLevel * 0.5;
           // Upgrade Multiplier: Fast Drill +50%
-          const drillMult = store.upgrades['MINING_SPEED_1'] ? 1.5 : 1;
+          const drillMult = upgrades['MINING_SPEED_1'] ? 1.5 : 1;
           // Energy Check: Mining costs 5 energy/sec
           const energyCost = delta * 5;
-          if (store.consumeEnergy(energyCost)) {
+
+          const hasEnergy = consumeEnergy(energyCost);
+          if (hasEnergy) {
             drone.miningProgress += delta * 50 * miningMult * drillMult;
           } else {
              // Out of energy: slow down mining significantly
@@ -57,11 +88,15 @@ export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
           }
 
           // Emit spark occasionally
-          if (Math.random() < 0.3) {
-            const colorHex = BLOCK_COLORS[block] || '#ffffff';
+          // Visual feedback: If out of energy, emit red "exhaust" sparks instead of material-colored ones
+          if (Math.random() < particleThreshold) {
+            const color = hasEnergy
+              ? new THREE.Color(BLOCK_COLORS[block] || '#ffffff')
+              : new THREE.Color('#ff0000'); // Low power alert color
+
             ParticleEvents.emit(
               worldTarget.clone(),
-              new THREE.Color(colorHex),
+              color,
               1,
             );
           }
@@ -101,12 +136,12 @@ export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
     if (drone.state === 'RETURNING_RESOURCE') {
       const dist = drone.position.distanceTo(drone.target);
       if (dist < 1.5) {
-        if (drone.carryingType === BlockType.ASTEROID_CORE) store.addMatter(2);
+        if (drone.carryingType === BlockType.ASTEROID_CORE) addMatter(2);
         else if (drone.carryingType === BlockType.RARE_ORE) {
-          const yieldAmount = store.upgrades['DEEP_SCAN_1'] ? 2 : 1;
-          store.addRareMatter(yieldAmount);
+          const yieldAmount = upgrades['DEEP_SCAN_1'] ? 2 : 1;
+          addRareMatter(yieldAmount);
         }
-        else store.addMatter(1);
+        else addMatter(1);
 
         drone.carryingType = null;
         drone.state = 'IDLE';

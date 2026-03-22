@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
 import { BvxEngine } from '../../services/BvxEngine';
-import { BlockType } from '../../types';
-import { useStore } from '../../state/store';
+import { BlockType, DysonProgressMetrics } from '../../types';
 import { FRAME_COST, SHELL_COST } from '../../constants';
 import { BlueprintManager } from '../../services/BlueprintManager';
 import { ParticleEvents } from '../../services/ParticleEvents';
@@ -11,13 +10,36 @@ import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 
 const ENGINE = BvxEngine.getInstance();
 
-export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
-  const store = useStore.getState();
+interface ConstructionSystemProps {
+  elapsedTime: number;
+  asteroidOrbitEnabled: boolean;
+  asteroidOrbitRadius: number;
+  asteroidOrbitSpeed: number;
+  asteroidOrbitVerticalAmplitude: number;
+  consumeMatter: (amount: number) => boolean;
+  consumeRareMatter: (amount: number) => boolean;
+  consumeEnergy: (amount: number) => boolean;
+  setEnergyRate: (rate: number) => void;
+  setDysonProgress: (progress: DysonProgressMetrics) => void;
+}
+
+export const ConstructionSystem = ({
+  elapsedTime,
+  asteroidOrbitEnabled,
+  asteroidOrbitRadius,
+  asteroidOrbitSpeed,
+  asteroidOrbitVerticalAmplitude,
+  consumeMatter,
+  consumeRareMatter,
+  consumeEnergy,
+  setEnergyRate,
+  setDysonProgress
+}: ConstructionSystemProps) => {
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
-    enabled: store.asteroidOrbitEnabled,
-    radius: store.asteroidOrbitRadius,
-    speed: store.asteroidOrbitSpeed,
-    verticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+    enabled: asteroidOrbitEnabled,
+    radius: asteroidOrbitRadius,
+    speed: asteroidOrbitSpeed,
+    verticalAmplitude: asteroidOrbitVerticalAmplitude,
   });
   const buildingDrones = ECS.with('isDrone', 'position', 'targetBlock', 'state', 'target');
 
@@ -36,10 +58,10 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
         const currentBlock = ENGINE.getBlock(x, y, z);
 
         if (BlueprintManager.getInstance().hasBlueprint({ x, y, z })) {
-          if (store.consumeMatter(FRAME_COST) && store.consumeEnergy(10)) {
+          if (consumeMatter(FRAME_COST) && consumeEnergy(10)) {
             ENGINE.setBlock(x, y, z, BlockType.FRAME);
             BlueprintManager.getInstance().removeBlueprint({ x, y, z });
-            store.setDysonProgress(ENGINE.computeDysonProgress());
+            setDysonProgress(ENGINE.computeDysonProgress());
             ParticleEvents.emit(
               worldTarget.clone(),
               new THREE.Color(BLOCK_COLORS[BlockType.FRAME]),
@@ -47,19 +69,19 @@ export const ConstructionSystem = (_delta: number, elapsedTime: number = 0) => {
             );
           }
         } else if (currentBlock === BlockType.FRAME) {
-          if (store.consumeMatter(FRAME_COST) && store.consumeEnergy(10)) {
+          if (consumeMatter(FRAME_COST) && consumeEnergy(10)) {
             ENGINE.setBlock(x, y, z, BlockType.PANEL);
             const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
-            store.setEnergyRate(energyRate);
-            store.setDysonProgress(dysonProgress);
+            setEnergyRate(energyRate);
+            setDysonProgress(dysonProgress);
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
-          if (store.consumeRareMatter(SHELL_COST) && store.consumeEnergy(50)) {
+          if (consumeRareMatter(SHELL_COST) && consumeEnergy(50)) {
             ENGINE.setBlock(x, y, z, BlockType.SHELL);
             const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
-            store.setEnergyRate(energyRate);
-            store.setDysonProgress(dysonProgress);
+            setEnergyRate(energyRate);
+            setDysonProgress(dysonProgress);
             ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
           }
         }

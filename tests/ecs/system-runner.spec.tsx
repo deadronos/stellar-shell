@@ -36,7 +36,25 @@ vi.mock('../../src/ecs/systems/ExplorerSystem', () => ({
 
 // mock store for droneCount dependency
 vi.mock('../../src/state/store', () => ({
-  useStore: vi.fn(() => 0),
+  useStore: Object.assign(vi.fn(() => 0), {
+    getState: vi.fn(() => ({
+      droneCount: 0,
+      asteroidOrbitEnabled: false,
+      asteroidOrbitRadius: 0,
+      asteroidOrbitSpeed: 0,
+      asteroidOrbitVerticalAmplitude: 0,
+      prestigeLevel: 0,
+      upgrades: {},
+      energy: 0,
+      consumeEnergy: vi.fn(),
+      addMatter: vi.fn(),
+      addRareMatter: vi.fn(),
+      consumeMatter: vi.fn(),
+      consumeRareMatter: vi.fn(),
+      setEnergyRate: vi.fn(),
+      setDysonProgress: vi.fn(),
+    }))
+  })
 }));
 
 import { SystemRunner } from '../../src/ecs/SystemRunner';

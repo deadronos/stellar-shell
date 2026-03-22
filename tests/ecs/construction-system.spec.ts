@@ -15,6 +15,7 @@ describe('ConstructionSystem', () => {
     useStore.setState({
       matter: 10,
       rareMatter: 0,
+      energy: 1000,
       energyGenerationRate: 0,
       asteroidOrbitEnabled: true,
       asteroidOrbitRadius: 10,
@@ -26,6 +27,22 @@ describe('ConstructionSystem', () => {
   afterEach(() => {
     ECS.clear();
   });
+
+  const getSystemProps = (elapsedTime: number = 0) => {
+    const store = useStore.getState();
+    return {
+      elapsedTime,
+      asteroidOrbitEnabled: store.asteroidOrbitEnabled,
+      asteroidOrbitRadius: store.asteroidOrbitRadius,
+      asteroidOrbitSpeed: store.asteroidOrbitSpeed,
+      asteroidOrbitVerticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+      consumeMatter: store.consumeMatter,
+      consumeRareMatter: store.consumeRareMatter,
+      consumeEnergy: store.consumeEnergy,
+      setEnergyRate: store.setEnergyRate,
+      setDysonProgress: store.setDysonProgress,
+    };
+  };
 
   it('builds correctly when asteroid orbit motion is enabled', () => {
     const engine = BvxEngine.getInstance();
@@ -43,7 +60,7 @@ describe('ConstructionSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getSystemProps(0));
 
     expect(drone.state).toBe('IDLE');
     expect(engine.getBlock(1, 1, 1)).toBe(BlockType.PANEL);
@@ -56,6 +73,7 @@ describe('ConstructionSystem', () => {
     useStore.setState({
       matter: FRAME_COST,
       rareMatter: 0,
+      energy: 1000,
       energyGenerationRate: 99,
       asteroidOrbitEnabled: false,
       asteroidOrbitRadius: 10,
@@ -76,7 +94,7 @@ describe('ConstructionSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(0, 0, 0)).toBe(BlockType.PANEL);
     expect(useStore.getState().energyGenerationRate).toBe(PANEL_ENERGY_RATE);
@@ -90,6 +108,7 @@ describe('ConstructionSystem', () => {
     useStore.setState({
       matter: 0,
       rareMatter: SHELL_COST,
+      energy: 1000,
       energyGenerationRate: PANEL_ENERGY_RATE,
       asteroidOrbitEnabled: false,
       asteroidOrbitRadius: 10,
@@ -110,22 +129,21 @@ describe('ConstructionSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(0, 0, 0)).toBe(BlockType.SHELL);
     expect(useStore.getState().energyGenerationRate).toBe(SHELL_ENERGY_RATE);
     expect(useStore.getState().rareMatter).toBe(0);
   });
 
-  // negative case: insufficient resources should leave world unchanged
   it('does not upgrade when resources are insufficient', () => {
     const engine = BvxEngine.getInstance();
     engine.resetWorld();
 
-    // start with a panel but zero rareMatter and zero matter
     useStore.setState({
       matter: 0,
       rareMatter: 0,
+      energy: 1000,
       energyGenerationRate: PANEL_ENERGY_RATE,
       asteroidOrbitEnabled: false,
       asteroidOrbitRadius: 10,
@@ -146,10 +164,9 @@ describe('ConstructionSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(0, 0, 0)).toBe(BlockType.PANEL);
-    // energy rate should remain unchanged since nothing changed
     expect(useStore.getState().energyGenerationRate).toBe(PANEL_ENERGY_RATE);
     expect(useStore.getState().rareMatter).toBe(0);
     expect(useStore.getState().matter).toBe(0);
@@ -163,6 +180,7 @@ describe('ConstructionSystem', () => {
     useStore.setState({
       matter: FRAME_COST,
       rareMatter: 0,
+      energy: 1000,
       asteroidOrbitEnabled: false,
       asteroidOrbitRadius: 10,
       asteroidOrbitSpeed: 1,
@@ -183,7 +201,7 @@ describe('ConstructionSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.FRAME);
     expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
@@ -197,6 +215,7 @@ describe('ConstructionSystem', () => {
     useStore.setState({
       matter: FRAME_COST,
       rareMatter: 0,
+      energy: 1000,
       asteroidOrbitEnabled: false,
       asteroidOrbitRadius: 10,
       asteroidOrbitSpeed: 1,
@@ -206,7 +225,6 @@ describe('ConstructionSystem', () => {
     engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.BLUEPRINT_FRAME);
     BlueprintManager.getInstance().addBlueprint(blueprint);
 
-    // Simulate player removing the blueprint marker and voxel before drone arrives.
     engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.AIR);
     BlueprintManager.getInstance().removeBlueprint(blueprint);
 
@@ -221,7 +239,7 @@ describe('ConstructionSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.AIR);
     expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
