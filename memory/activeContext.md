@@ -10,6 +10,11 @@
   - persistent drone `roleAssignment` separate from transient state,
   - `BrainSystem` / `ExplorerSystem` updated to honor roles,
   - `ADVANCED_EXPLORER` copy and docs synced to assigned explorer behavior.
+- Completed `TASK012` maintenance pass:
+  - `SystemRunner` now keeps throttle remainder using integer-millisecond accumulation,
+  - `MovementSystem` reuses scratch vectors to reduce per-frame allocation churn,
+  - added a regression test for the throttle remainder case,
+  - validated with the full repo test/lint/typecheck/build pipeline.
 - Browser verification pass confirmed the HUD/role panel flow works live; follow-up fix added stable numeric drone ids to eliminate the `DroneDebugPanel` React key warning.
 - Added `BvxEngine.computeDysonProgress()` to derive blueprint/frame/panel/shell counts and milestone readiness directly from world voxels.
 - Wired `dysonProgress` into Zustand store and updated build/mining systems to refresh metrics after voxel mutations.

@@ -79,4 +79,21 @@ describe('SystemRunner integration', () => {
     expect(drones).toHaveLength(2);
     expect(drones.map((drone) => drone.id)).toEqual([1, 2]);
   });
+
+  it('preserves throttle remainder so closely spaced frames still advance logic', () => {
+    render(<SystemRunner />);
+
+    const fakeStateA: FakeState = { clock: { elapsedTime: 0.06 } };
+    const fakeStateB: FakeState = { clock: { elapsedTime: 0.12 } };
+    const fakeStateC: FakeState = { clock: { elapsedTime: 0.2 } };
+
+    frameCallbacks[0](fakeStateA, 0.06);
+    expect(mockAuto).not.toHaveBeenCalled();
+
+    frameCallbacks[0](fakeStateB, 0.06);
+    expect(mockAuto).toHaveBeenCalledTimes(1);
+
+    frameCallbacks[0](fakeStateC, 0.08);
+    expect(mockAuto).toHaveBeenCalledTimes(2);
+  });
 });

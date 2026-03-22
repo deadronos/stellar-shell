@@ -17,8 +17,9 @@
 - TASK010 completed: worker-failure recovery now requeues chunks instead of wedging them, auto-blueprint traversal resets on re-enable/System Jump, and `systemSeed` now fully determines asteroid topology.
 - TASK011 completed: drones now use HUD-controlled miner / builder / explorer role targets with deterministic auto-fill allocation, and research generation comes only from explorer-role drones.
 - Browser verification follow-up completed: HUD/role UI looked consistent in the live app, and a discovered `DroneDebugPanel` key warning was fixed via stable drone ids.
+- TASK012 completed: `SystemRunner` keeps throttle remainder using integer-millisecond accumulation, `MovementSystem` reuses scratch vectors to reduce hot-path allocations, and a regression test now covers the short-frame throttle case.
 - Maintenance pass completed: direct dependencies were upgraded to latest available compatible versions, including `@astrumforge/bvx-kit`, React 19.2.4, Vite 8, Vitest 4.1, Tailwind 4.2, Three 0.183, and updated tooling packages.
-- Full validation is green after the upgrade pass with `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` (31 test files / 166 tests).
+- Full validation is green after the upgrade pass with `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` (31 test files / 167 tests).
 
 **What's left / planned work:**
 

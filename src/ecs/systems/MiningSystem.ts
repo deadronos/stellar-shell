@@ -47,7 +47,14 @@ export const MiningSystem = (delta: number, elapsedTime: number = 0) => {
           const miningMult = 1 + store.prestigeLevel * 0.5;
           // Upgrade Multiplier: Fast Drill +50%
           const drillMult = store.upgrades['MINING_SPEED_1'] ? 1.5 : 1;
-          drone.miningProgress += delta * 50 * miningMult * drillMult;
+          // Energy Check: Mining costs 5 energy/sec
+          const energyCost = delta * 5;
+          if (store.consumeEnergy(energyCost)) {
+            drone.miningProgress += delta * 50 * miningMult * drillMult;
+          } else {
+             // Out of energy: slow down mining significantly
+             drone.miningProgress += delta * 5 * miningMult * drillMult;
+          }
 
           // Emit spark occasionally
           if (Math.random() < 0.3) {

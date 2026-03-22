@@ -1,4 +1,5 @@
 import { useFrame } from '@react-three/fiber';
+import { useRef } from 'react';
 import { BrainSystem } from './systems/BrainSystem';
 import { MovementSystem } from './systems/MovementSystem';
 import { ChunkSystem } from './systems/ChunkSystem';
@@ -17,6 +18,8 @@ import { AutoBlueprintSystem } from './systems/AutoBlueprintSystem';
 import { ExplorerSystem, resetExplorerSystem } from './systems/ExplorerSystem';
 import { getNextDroneEntityId } from './droneIdAllocator';
 
+const THROTTLE_INTERVAL_MS = 100; // 10Hz
+
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
     const droneCount = useStore((state) => state.droneCount);
@@ -32,7 +35,7 @@ export const SystemRunner = () => {
         // Sync ECS Population
         const drones = ECS.with('isDrone').entities;
         const currentCount = drones.length;
-    
+
         if (currentCount < droneCount) {
           // Spawn more
           for (let i = currentCount; i < droneCount; i++) {
@@ -54,16 +57,25 @@ export const SystemRunner = () => {
         }
       }, [droneCount]);
 
+    const throttledTime = useRef(0);
+
     useFrame((state, delta) => {
         const elapsedTime = state.clock.elapsedTime;
-        BrainSystem(state.clock);
+      throttledTime.current += delta * 1000;
+
+      if (throttledTime.current >= THROTTLE_INTERVAL_MS) {
+        const throttledDelta = throttledTime.current / 1000;
+            BrainSystem(state.clock);
+        EnergySystem(throttledDelta);
+        AutoBlueprintSystem(throttledDelta, elapsedTime);
+        ExplorerSystem(throttledDelta);
+        throttledTime.current -= THROTTLE_INTERVAL_MS;
+        }
+
         MiningSystem(delta, elapsedTime);
         ConstructionSystem(delta, elapsedTime);
         MovementSystem(delta);
-        EnergySystem(delta);
         AsteroidOrbitSystem(elapsedTime);
-        AutoBlueprintSystem(delta, elapsedTime);
-        ExplorerSystem(delta);
         ChunkSystem();
         PlayerSystem(delta, elapsedTime);
         TrailSystem(delta);
