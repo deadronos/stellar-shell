@@ -3,6 +3,11 @@ import { ECS } from '../world';
 import { useStore } from '../../state/store';
 
 const DRONE_SPEED = 20;
+const MAX_SEPARATION_DISTANCE_SQ = 6.25; // 2.5^2
+
+const steeringDesired = new THREE.Vector3();
+const steeringDelta = new THREE.Vector3();
+const separationPush = new THREE.Vector3();
 
 // We need a way to spawn explosions (Particles).
 // Since systems are pure logic, we can trigger an event or write to a "ParticleRequest" queue in ECS.
@@ -35,22 +40,23 @@ export const MovementSystem = (delta: number) => {
 
     // STEERING
     if (drone.target) {
-        const desired = new THREE.Vector3().subVectors(drone.target, drone.position);
-        const dist = desired.length();
-        desired.normalize();
+        steeringDesired.subVectors(drone.target, drone.position);
+        const dist = steeringDesired.length();
+        if (dist === 0) continue;
+        steeringDesired.divideScalar(dist);
 
         // Prestige + upgrade modifiers
         const currentDataSpeed = maxDroneSpeed;
 
         if (!isOrbiting && dist < 5) {
-          desired.multiplyScalar(currentDataSpeed * (dist / 5));
+          steeringDesired.multiplyScalar(currentDataSpeed * (dist / 5));
         } else {
-          desired.multiplyScalar(currentDataSpeed);
+          steeringDesired.multiplyScalar(currentDataSpeed);
         }
 
-        const steer = new THREE.Vector3().subVectors(desired, drone.velocity);
-        steer.clampLength(0, 35 * delta);
-        drone.velocity.add(steer);
+        steeringDelta.subVectors(steeringDesired, drone.velocity);
+        steeringDelta.clampLength(0, 35 * delta);
+        drone.velocity.add(steeringDelta);
     }
   }  // SEPARATION Logic - Optimized with simple spatial grid
   const allDrones = ECS.with('isDrone', 'position', 'velocity').entities;
@@ -94,11 +100,10 @@ export const MovementSystem = (delta: number) => {
             const d2 = allDrones[j];
 
             const distSq = d1.position.distanceToSquared(d2.position);
-            if (distSq > 0 && distSq < 6.25) { // 2.5^2
-              const dist = Math.sqrt(distSq);
-              const push = new THREE.Vector3().subVectors(d1.position, d2.position).normalize();
-              push.divideScalar(dist);
-              separation.add(push);
+            if (distSq > 0 && distSq < MAX_SEPARATION_DISTANCE_SQ) {
+              separationPush.subVectors(d1.position, d2.position);
+              separationPush.multiplyScalar(1 / distSq);
+              separation.add(separationPush);
               neighbors++;
             }
           }

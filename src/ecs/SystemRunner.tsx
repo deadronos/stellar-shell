@@ -18,6 +18,8 @@ import { AutoBlueprintSystem } from './systems/AutoBlueprintSystem';
 import { ExplorerSystem, resetExplorerSystem } from './systems/ExplorerSystem';
 import { getNextDroneEntityId } from './droneIdAllocator';
 
+const THROTTLE_INTERVAL_MS = 100; // 10Hz
+
 export const SystemRunner = () => {
     // We can also handle Spawning logic here or in a separate SpawnerSystem
     const droneCount = useStore((state) => state.droneCount);
@@ -56,18 +58,18 @@ export const SystemRunner = () => {
       }, [droneCount]);
 
     const throttledTime = useRef(0);
-    const THROTTLE_INTERVAL = 0.1; // 10Hz
 
     useFrame((state, delta) => {
         const elapsedTime = state.clock.elapsedTime;
-        throttledTime.current += delta;
+      throttledTime.current += delta * 1000;
 
-        if (throttledTime.current >= THROTTLE_INTERVAL) {
+      if (throttledTime.current >= THROTTLE_INTERVAL_MS) {
+        const throttledDelta = throttledTime.current / 1000;
             BrainSystem(state.clock);
-            EnergySystem(throttledTime.current);
-            AutoBlueprintSystem(delta, elapsedTime);
-            ExplorerSystem(throttledTime.current);
-            throttledTime.current = 0;
+        EnergySystem(throttledDelta);
+        AutoBlueprintSystem(throttledDelta, elapsedTime);
+        ExplorerSystem(throttledDelta);
+        throttledTime.current -= THROTTLE_INTERVAL_MS;
         }
 
         MiningSystem(delta, elapsedTime);

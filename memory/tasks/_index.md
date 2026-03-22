@@ -21,3 +21,4 @@
 - [TASK009] Correctness and Meshing Alignment - Completed 2026-03-06 - Added revision-safe chunk meshing, renderer geometry cleanup, typecheck fixes, canonical mesher ownership, and synced docs/spec artifacts.
 - [TASK010] Async Recovery and Seeded Determinism - Completed 2026-03-06 - Added worker-failure retry recovery, auto-blueprint reset semantics, fully seeded asteroid topology, and synced validation/docs.
 - [TASK011] Drone Role Allocation Model - Completed 2026-03-08 - Added HUD role targets, deterministic auto-fill allocation, persistent drone role assignment, and explorer-only research generation.
+- [TASK012] System Runner and Movement Optimization - Completed 2026-03-22 - Preserved the 10Hz logic throttle without dropping remainder time and reduced `MovementSystem` allocation churn with scratch vectors.
