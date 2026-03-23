@@ -54,6 +54,11 @@ pnpm dev
 
 Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
+### GitHub Pages Deployment
+
+Production builds are configured with the `/stellar-shell/` base path so the app
+loads correctly from `https://deadronos.github.io/stellar-shell/`.
+
 ### Package Manager
 
 This project uses pnpm. Use pnpm 10.29.3 (or newer 10.x) to match the lockfile and CI.

@@ -1,0 +1,11 @@
+{
+  "subject": "GitHub Pages base path",
+  "fact": "This repository is deployed to a GitHub Pages project site at /stellar-shell/, so production builds must use /stellar-shell/ as Vite's base path to load JS/CSS assets correctly.",
+  "citations": [
+    "vite.config.ts:6-15",
+    "README.md:31-37",
+    "build output 2026-03-23: dist/index.html references /stellar-shell/assets/..."
+  ],
+  "reason": "Future deployment or asset-loading fixes need to preserve the repository subpath; otherwise the live Pages site will 404 on static assets.",
+  "category": "deployment"
+}

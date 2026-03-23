@@ -21,8 +21,9 @@
 - TASK013 completed: `SystemRunner` now re-reads store state before movement, `BvxEngine` can resync cached Dyson counters from the voxel world snapshot, and `MovementSystem` no longer clones velocity every frame.
 - TASK014 completed: CI and deploy workflows now install pnpm explicitly with `pnpm/action-setup@v4`, avoiding the `setup-node` pnpm cache error on GitHub-hosted runners.
 - TASK015 completed: CI and deploy workflows now rely on `packageManager` as the sole pnpm version pin, avoiding the `pnpm/action-setup` version mismatch error.
+- TASK016 completed: Vite production builds now use `/stellar-shell/` as the base path so GitHub Pages assets load correctly from the repository subpath.
 - Maintenance pass completed: direct dependencies were upgraded to latest available compatible versions, including `@astrumforge/bvx-kit`, React 19.2.4, Vite 8, Vitest 4.1, Tailwind 4.2, Three 0.183, and updated tooling packages.
-- Full validation for the codebase remains green; the workflow fixes themselves were validated with `git diff --check` and `pnpm exec prettier --check` on the modified YAML files.
+- Full validation for the codebase remains green; the GitHub Pages base-path fix was validated with `pnpm build` and the generated `dist/index.html`.
 
 **What's left / planned work:**
 
@@ -38,4 +39,4 @@
 - Monitor how often players pin too many builders or explorers so future fallback-borrowing rules can be evaluated from playtesting rather than guesswork.
 - Remaining browser-observed issue is minor: the dev server still returns `404` for `favicon.ico`, which does not affect gameplay or UI behavior.
 
-**Last updated:** 2026-03-19
+**Last updated:** 2026-03-23

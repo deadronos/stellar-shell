@@ -4,6 +4,10 @@
 
 **Recent changes:**
 
+- Completed `TASK016` GitHub Pages base-path fix:
+  - Vite now uses `/stellar-shell/` as the production asset base,
+  - the README documents the Pages deployment path,
+  - confirmed the generated `dist/index.html` points at `/stellar-shell/assets/...`.
 - Completed `TASK015` follow-up workflow fix:
   - removed the duplicate `version` pin from `pnpm/action-setup@v4` in CI and deploy workflows,
   - let `package.json`'s `packageManager` field remain the single source of truth for pnpm version selection,
