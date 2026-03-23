@@ -24,3 +24,4 @@
 - [TASK012] System Runner and Movement Optimization - Completed 2026-03-22 - Preserved the 10Hz logic throttle without dropping remainder time and reduced `MovementSystem` allocation churn with scratch vectors.
 - [TASK013] Correctness and State Sync Follow-up - Completed 2026-03-23 - Freshened the movement energy snapshot, added Dyson counter resync support, and removed the remaining movement hot-path clone allocation.
 - [TASK014] Fix Deploy pnpm Setup - Completed 2026-03-23 - Removed the pnpm cache dependency from `actions/setup-node` and installed pnpm explicitly in CI/deploy workflows.
+- [TASK015] Remove Duplicate pnpm Pin - Completed 2026-03-23 - Removed the explicit pnpm version from `pnpm/action-setup` so the workflows use `packageManager` as the single source of truth.

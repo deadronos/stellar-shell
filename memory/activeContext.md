@@ -4,6 +4,10 @@
 
 **Recent changes:**
 
+- Completed `TASK015` follow-up workflow fix:
+  - removed the duplicate `version` pin from `pnpm/action-setup@v4` in CI and deploy workflows,
+  - let `package.json`'s `packageManager` field remain the single source of truth for pnpm version selection,
+  - validated the workflow YAML with `git diff --check` and `pnpm exec prettier --check`.
 - Completed `TASK014` workflow reliability fix:
   - CI and deploy workflows now install pnpm explicitly with `pnpm/action-setup@v4` before dependency installation,
   - removed the `actions/setup-node` pnpm cache dependency that was failing when pnpm was not yet on PATH,

@@ -1,0 +1,11 @@
+{
+  "subject": "pnpm workflow version pinning",
+  "fact": "If a repository already pins pnpm in package.json via the packageManager field, GitHub Actions workflows using pnpm/action-setup@v4 should omit the action's version input and let packageManager be the single source of truth.",
+  "citations": [
+    ".github/workflows/ci.yml:15-27",
+    ".github/workflows/deploy-pages-on-tag.yml:15-27",
+    "package.json:1-7"
+  ],
+  "reason": "Prevents ERR_PNPM_BAD_PM_VERSION / multiple-version errors when pnpm/action-setup compares its version input against the repository pin.",
+  "category": "workflow"
+}
