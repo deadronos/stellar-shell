@@ -1,0 +1,10 @@
+{
+  "subject": "GitHub Actions pnpm setup",
+  "fact": "When a GitHub Actions workflow uses actions/setup-node@v6 with pnpm, install pnpm explicitly first (for example with pnpm/action-setup@v4) instead of requesting pnpm cache setup from actions/setup-node before pnpm exists on PATH.",
+  "citations": [
+    ".github/workflows/ci.yml:15-28",
+    ".github/workflows/deploy-pages-on-tag.yml:15-31"
+  ],
+  "reason": "This prevents the runner error 'Unable to locate executable file: pnpm' and is a reusable workflow pattern for future CI/CD edits in this repository.",
+  "category": "workflow"
+}

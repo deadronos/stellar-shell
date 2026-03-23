@@ -4,6 +4,10 @@
 
 **Recent changes:**
 
+- Completed `TASK014` workflow reliability fix:
+  - CI and deploy workflows now install pnpm explicitly with `pnpm/action-setup@v4` before dependency installation,
+  - removed the `actions/setup-node` pnpm cache dependency that was failing when pnpm was not yet on PATH,
+  - validated the workflow YAML with `git diff --check` and `pnpm exec prettier --check`.
 - Completed `TASK013` follow-up correctness pass:
   - `SystemRunner` now re-reads store state before `MovementSystem` so low-power movement reacts to same-frame energy changes,
   - `BvxEngine` now exposes `refreshDysonCountersFromWorld()` and resyncs cached Dyson counters from the voxel world snapshot,
