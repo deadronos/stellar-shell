@@ -8,6 +8,7 @@ describe('MovementSystem', () => {
   beforeEach(() => {
     ECS.clear();
     useStore.setState({
+      energy: 1000,
       prestigeLevel: 0,
       upgrades: {
         MINING_SPEED_1: false,
@@ -24,26 +25,25 @@ describe('MovementSystem', () => {
     ECS.clear();
   });
 
+  const getSystemProps = (delta: number = 1 / 60) => {
+    const store = useStore.getState();
+    return {
+      delta,
+      energy: store.energy,
+      prestigeLevel: store.prestigeLevel,
+      upgrades: store.upgrades,
+    };
+  };
+
   it('moves entities towards target', () => {
     const entity = ECS.add({
       isDrone: true,
       position: new THREE.Vector3(0, 0, 0),
       target: new THREE.Vector3(10, 0, 0),
       velocity: new THREE.Vector3(0, 0, 0),
-      speed: 1
     });
 
-    // Mock dt
-    // MovementSystem usually takes dt? Or runs in efficient loop?
-    // Based on typical signature: (world, dt)
-    // Checking standard miniplex system pattern usually just function(world) but typically game loops pass dt.
-    
-    // Let's assume (world) or assume it calculates time internally or just moves fixed step.
-    // If it's pure logic:
-    // MovementSystem(ECS.world)
-    
-    // Ideally we check if position changed.
-    MovementSystem(1/60); 
+    MovementSystem(getSystemProps(1 / 60));
 
     expect(entity.position.x).toBeGreaterThan(0);
 
@@ -70,10 +70,9 @@ describe('MovementSystem', () => {
         position: new THREE.Vector3(0, 0, 0),
         target: new THREE.Vector3(100, 0, 0),
         velocity: new THREE.Vector3(0, 0, 0),
-        speed: 1,
       });
 
-      MovementSystem(1);
+      MovementSystem(getSystemProps(1));
       return drone.position.x;
     };
 
@@ -97,7 +96,7 @@ describe('MovementSystem', () => {
         state,
       });
 
-      MovementSystem(1);
+      MovementSystem(getSystemProps(1));
       return drone.position.x;
     };
 

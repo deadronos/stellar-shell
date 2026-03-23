@@ -4,6 +4,12 @@
 
 **Recent changes:**
 
+- Completed `TASK013` follow-up correctness pass:
+  - `SystemRunner` now re-reads store state before `MovementSystem` so low-power movement reacts to same-frame energy changes,
+  - `BvxEngine` now exposes `refreshDysonCountersFromWorld()` and resyncs cached Dyson counters from the voxel world snapshot,
+  - `MovementSystem` now uses `addScaledVector()` instead of cloning velocity in the hot path,
+  - added regressions for the fresh energy snapshot and Dyson counter resync cases,
+  - validated with `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
 - Completed `DES010` + `TASK011`:
   - manual HUD targets for miner / builder / explorer roles,
   - deterministic even auto-fill with remainder priority `MINER -> BUILDER -> EXPLORER`,

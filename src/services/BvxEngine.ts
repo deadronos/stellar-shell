@@ -22,6 +22,14 @@ export class BvxEngine {
   // We use this to quickly mark chunks dirty without querying the ECS every time.
   private chunkEntities: Map<string, Entity> = new Map();
 
+  // Persistent counters for Dyson-related blocks to avoid full world scans
+  private counters = {
+    blueprintFrames: 0,
+    frames: 0,
+    panels: 0,
+    shells: 0,
+  };
+
   // Singleton pattern for the engine core
   private static instance: BvxEngine;
   public static getInstance(): BvxEngine {
@@ -69,6 +77,54 @@ export class BvxEngine {
     return { cx, cy, cz, lx, ly, lz };
   }
 
+  private updateVoxelCounter(type: BlockType, delta: number) {
+    if (type === BlockType.BLUEPRINT_FRAME) this.counters.blueprintFrames += delta;
+    else if (type === BlockType.FRAME) this.counters.frames += delta;
+    else if (type === BlockType.PANEL) this.counters.panels += delta;
+    else if (type === BlockType.SHELL) this.counters.shells += delta;
+  }
+
+  private scanDysonCounts(): {
+    blueprintFrames: number;
+    frames: number;
+    panels: number;
+    shells: number;
+  } {
+    let blueprintFrames = 0;
+    let frames = 0;
+    let panels = 0;
+    let shells = 0;
+
+    for (const entity of this.chunkEntities.values()) {
+      if (!entity.chunkPosition) continue;
+      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+            const block = this.getBlock(
+              cx * CHUNK_SIZE + lx,
+              cy * CHUNK_SIZE + ly,
+              cz * CHUNK_SIZE + lz,
+            );
+            if (block === BlockType.BLUEPRINT_FRAME) blueprintFrames++;
+            else if (block === BlockType.FRAME) frames++;
+            else if (block === BlockType.PANEL) panels++;
+            else if (block === BlockType.SHELL) shells++;
+          }
+        }
+      }
+    }
+
+    return { blueprintFrames, frames, panels, shells };
+  }
+
+  /**
+   * Rebuild the cached Dyson counters from the current voxel world snapshot.
+   */
+  public refreshDysonCountersFromWorld(): void {
+    this.counters = this.scanDysonCounts();
+  }
+
   public setBlock(wx: number, wy: number, wz: number, type: BlockType) {
     // 1. Update bvx-kit VoxelWorld
     // bvx-kit uses 4x4x4 chunks.
@@ -92,10 +148,17 @@ export class BvxEngine {
     const blz = ((wz % bvxChunkSize) + bvxChunkSize) % bvxChunkSize;
 
     const vIndex = VoxelIndex.from(blx, bly, blz);
+    const oldType = (bChunk as VoxelChunk8).getMetaData(vIndex) as BlockType;
+
+    if (oldType === type) return;
 
     // Set Metadata (Block Type)
     // Cast strict BlockType enum to number for setMetaData
     (bChunk as VoxelChunk8).setMetaData(vIndex, type);
+
+    // Update Counters
+    this.updateVoxelCounter(oldType, -1);
+    this.updateVoxelCounter(type, 1);
 
     // Set Geometry Bit (Solid vs Air) used for internal bvx operations
     if (type !== BlockType.AIR) {
@@ -194,45 +257,9 @@ export class BvxEngine {
   }
 
   // Compute the energy generation rate from actual voxel world state (single source of truth).
-  // Full scan is intentional: called only on rare events (block built/removed), never per-frame.
-  // World is bounded (asteroid ~radius 20 ≈ 125 render chunks) so scan stays <1 ms.
+  // Use cached counters for O(1) computation.
   public computeEnergyRate(): number {
-    const counts = this.scanDysonCounts();
-    return this.computeEnergyRateFromCounts(counts);
-  }
-
-  private scanDysonCounts(): {
-    blueprintFrames: number;
-    frames: number;
-    panels: number;
-    shells: number;
-  } {
-    let blueprintFrames = 0;
-    let frames = 0;
-    let panels = 0;
-    let shells = 0;
-
-    for (const entity of this.chunkEntities.values()) {
-      if (!entity.chunkPosition) continue;
-      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
-      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-        for (let ly = 0; ly < CHUNK_SIZE; ly++) {
-          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
-            const block = this.getBlock(
-              cx * CHUNK_SIZE + lx,
-              cy * CHUNK_SIZE + ly,
-              cz * CHUNK_SIZE + lz,
-            );
-            if (block === BlockType.BLUEPRINT_FRAME) blueprintFrames++;
-            else if (block === BlockType.FRAME) frames++;
-            else if (block === BlockType.PANEL) panels++;
-            else if (block === BlockType.SHELL) shells++;
-          }
-        }
-      }
-    }
-
-    return { blueprintFrames, frames, panels, shells };
+    return this.computeEnergyRateFromCounts(this.counters);
   }
 
   private computeEnergyRateFromCounts(counts: { panels: number; shells: number }): number {
@@ -264,7 +291,7 @@ export class BvxEngine {
 
   // Compute explicit Dyson progression metrics from world state.
   public computeDysonProgress(): DysonProgressMetrics {
-    return this.toDysonProgressMetrics(this.scanDysonCounts());
+    return this.toDysonProgressMetrics(this.counters);
   }
 
   // Single-pass world scan for events that need both energy and Dyson progression updates.
@@ -272,10 +299,9 @@ export class BvxEngine {
     energyRate: number;
     dysonProgress: DysonProgressMetrics;
   } {
-    const counts = this.scanDysonCounts();
     return {
-      energyRate: this.computeEnergyRateFromCounts(counts),
-      dysonProgress: this.toDysonProgressMetrics(counts),
+      energyRate: this.computeEnergyRateFromCounts(this.counters),
+      dysonProgress: this.toDysonProgressMetrics(this.counters),
     };
   }
 
@@ -293,9 +319,18 @@ export class BvxEngine {
     // Clear local cache map
     this.chunkEntities.clear();
 
+    // Reset counters
+    this.counters = {
+      blueprintFrames: 0,
+      frames: 0,
+      panels: 0,
+      shells: 0,
+    };
+
     // Clear blueprint overlays so stale markers don't persist in the new system
     BlueprintManager.getInstance().reset();
     resetAutoBlueprintTraversal();
+    this.refreshDysonCountersFromWorld();
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
@@ -336,6 +371,7 @@ export class BvxEngine {
       this.setBlock(x, worldY, z, BlockType.BLUEPRINT_FRAME);
       blueprints.addBlueprint({ x, y: worldY, z });
     }
+    this.refreshDysonCountersFromWorld();
   }
 
   // Meshing: Simple Face Culling

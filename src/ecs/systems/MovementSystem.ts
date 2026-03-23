@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
-import { useStore } from '../../state/store';
 
 const DRONE_SPEED = 20;
 const MAX_SEPARATION_DISTANCE_SQ = 6.25; // 2.5^2
@@ -9,26 +8,21 @@ const steeringDesired = new THREE.Vector3();
 const steeringDelta = new THREE.Vector3();
 const separationPush = new THREE.Vector3();
 
-// We need a way to spawn explosions (Particles).
-// Since systems are pure logic, we can trigger an event or write to a "ParticleRequest" queue in ECS.
-// For now, let's assume we can treat particles as ECS entities or just keep it simple and maybe pass a callback?
-// Refactoring to "pure" systems often means logic doesn't touch the renderer directly.
-// The Drones.tsx used to manage particles.
-// Let's create an "EffectEvent" queue/singleton we can push to, or use Miniplex to spawn "Particle" entities.
-// For simplicity, we'll assume particles are handled visually, but we need to trigger them.
-// Let's import a global event bus or just export a queue?
-// ACTUALLY, checking Drones.tsx, it manages `particles` ref directly.
-// To decouple, we should spawn "Explosion" entities in ECS that a RenderSystem consumes.
-// But `Drones.tsx` particle system is "legacy array based".
-// Let's stick to modifying state/voxel world here.
-// We can skip the visual explosion for a moment or add a temporary solution.
-// I will just omit the `spawnExplosion` visual call for now to keep it clean, or todo it.
+interface MovementSystemProps {
+  delta: number;
+  energy: number;
+  prestigeLevel: number;
+  upgrades: Record<string, boolean>;
+}
 
-export const MovementSystem = (delta: number) => {
-  const store = useStore.getState();
-  const speedMult = 1 + (store.prestigeLevel * 0.5);
-  const thrusterMult = store.upgrades['DRONE_SPEED_1'] ? 1.5 : 1;
-  const maxDroneSpeed = DRONE_SPEED * speedMult * thrusterMult;
+export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: MovementSystemProps) => {
+  const speedMult = 1 + (prestigeLevel * 0.5);
+  const thrusterMult = upgrades['DRONE_SPEED_1'] ? 1.5 : 1;
+
+  // Low Power mode: Reduce speed by 75% when energy is depleted
+  const energyMult = energy > 0 ? 1 : 0.25;
+
+  const maxDroneSpeed = DRONE_SPEED * speedMult * thrusterMult * energyMult;
   const movingDrones = ECS.with('isDrone', 'position', 'velocity', 'target');
 
   for (const drone of movingDrones) {
@@ -58,7 +52,9 @@ export const MovementSystem = (delta: number) => {
         steeringDelta.clampLength(0, 35 * delta);
         drone.velocity.add(steeringDelta);
     }
-  }  // SEPARATION Logic - Optimized with simple spatial grid
+  }
+
+  // SEPARATION Logic - Optimized with simple spatial grid
   const allDrones = ECS.with('isDrone', 'position', 'velocity').entities;
 
   // Use a simple spatial hash grid for neighbor search
@@ -116,7 +112,7 @@ export const MovementSystem = (delta: number) => {
       d1.velocity.add(separation);
     }
 
-    d1.velocity.clampLength(0, maxDroneSpeed);
-    d1.position.add(d1.velocity.clone().multiplyScalar(delta));
+      d1.velocity.clampLength(0, maxDroneSpeed);
+      d1.position.addScaledVector(d1.velocity, delta);
   }
 };

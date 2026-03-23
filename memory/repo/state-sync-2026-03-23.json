@@ -1,0 +1,10 @@
+{
+  "subject": "Dyson counter state sync",
+  "fact": "BvxEngine now exposes refreshDysonCountersFromWorld() to resync cached Dyson counters from the voxel world snapshot, and SystemRunner re-reads store state before MovementSystem so same-frame energy mutations affect movement speed.",
+  "citations": [
+    "src/services/BvxEngine.ts:80-129, 218-320",
+    "src/ecs/SystemRunner.tsx:57-100"
+  ],
+  "reason": "Future changes touching world metrics or frame ordering need to preserve the counter-resync path and avoid stale store snapshots across throttled systems.",
+  "category": "architecture"
+}

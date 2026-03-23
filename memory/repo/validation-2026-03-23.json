@@ -1,0 +1,10 @@
+{
+  "subject": "validation commands",
+  "fact": "Validate branch changes with pnpm lint, pnpm typecheck, pnpm test, and pnpm build; the 2026-03-23 follow-up pass is green at 31 test files / 169 tests.",
+  "citations": [
+    "package.json:6-18",
+    "terminal run 2026-03-23: pnpm lint && pnpm typecheck && pnpm test && pnpm build (31 test files / 169 tests, build succeeded)"
+  ],
+  "reason": "Captures the current known-good validation command sequence and test baseline for future changes and review comparisons.",
+  "category": "validation commands"
+}

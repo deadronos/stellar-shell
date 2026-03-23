@@ -23,6 +23,22 @@ describe('AutoBlueprintSystem', () => {
     resetEngine();
   });
 
+  const getConstructionProps = (elapsedTime: number = 0) => {
+    const store = useStore.getState();
+    return {
+      elapsedTime,
+      asteroidOrbitEnabled: store.asteroidOrbitEnabled,
+      asteroidOrbitRadius: store.asteroidOrbitRadius,
+      asteroidOrbitSpeed: store.asteroidOrbitSpeed,
+      asteroidOrbitVerticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+      consumeMatter: store.consumeMatter,
+      consumeRareMatter: store.consumeRareMatter,
+      consumeEnergy: store.consumeEnergy,
+      setEnergyRate: store.setEnergyRate,
+      setDysonProgress: store.setDysonProgress,
+    };
+  };
+
   it('should not add blueprints when auto mode is disabled', () => {
     useStore.setState({ autoBlueprintEnabled: false });
     AutoBlueprintSystem(0, 0);
@@ -134,6 +150,7 @@ describe('AutoBlueprintSystem', () => {
       autoBlueprintEnabled: true,
       matter: FRAME_COST,
       rareMatter: 0,
+      energy: 1000,
       asteroidOrbitEnabled: false,
       asteroidOrbitRadius: 10,
       asteroidOrbitSpeed: 1,
@@ -161,7 +178,7 @@ describe('AutoBlueprintSystem', () => {
       miningProgress: 0,
     });
 
-    ConstructionSystem(1 / 60, 0);
+    ConstructionSystem(getConstructionProps(0));
 
     expect(engine.getBlock(target.x, target.y, target.z)).toBe(BlockType.FRAME);
     expect(BlueprintManager.getInstance().hasBlueprint(target)).toBe(false);
