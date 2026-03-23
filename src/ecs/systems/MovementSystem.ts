@@ -112,7 +112,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
       d1.velocity.add(separation);
     }
 
-    d1.velocity.clampLength(0, maxDroneSpeed);
-    d1.position.add(d1.velocity.clone().multiplyScalar(delta));
+      d1.velocity.clampLength(0, maxDroneSpeed);
+      d1.position.addScaledVector(d1.velocity, delta);
   }
 };

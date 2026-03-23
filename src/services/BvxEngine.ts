@@ -84,6 +84,47 @@ export class BvxEngine {
     else if (type === BlockType.SHELL) this.counters.shells += delta;
   }
 
+  private scanDysonCounts(): {
+    blueprintFrames: number;
+    frames: number;
+    panels: number;
+    shells: number;
+  } {
+    let blueprintFrames = 0;
+    let frames = 0;
+    let panels = 0;
+    let shells = 0;
+
+    for (const entity of this.chunkEntities.values()) {
+      if (!entity.chunkPosition) continue;
+      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+        for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+          for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+            const block = this.getBlock(
+              cx * CHUNK_SIZE + lx,
+              cy * CHUNK_SIZE + ly,
+              cz * CHUNK_SIZE + lz,
+            );
+            if (block === BlockType.BLUEPRINT_FRAME) blueprintFrames++;
+            else if (block === BlockType.FRAME) frames++;
+            else if (block === BlockType.PANEL) panels++;
+            else if (block === BlockType.SHELL) shells++;
+          }
+        }
+      }
+    }
+
+    return { blueprintFrames, frames, panels, shells };
+  }
+
+  /**
+   * Rebuild the cached Dyson counters from the current voxel world snapshot.
+   */
+  public refreshDysonCountersFromWorld(): void {
+    this.counters = this.scanDysonCounts();
+  }
+
   public setBlock(wx: number, wy: number, wz: number, type: BlockType) {
     // 1. Update bvx-kit VoxelWorld
     // bvx-kit uses 4x4x4 chunks.
@@ -221,15 +262,6 @@ export class BvxEngine {
     return this.computeEnergyRateFromCounts(this.counters);
   }
 
-  private scanDysonCounts(): {
-    blueprintFrames: number;
-    frames: number;
-    panels: number;
-    shells: number;
-  } {
-    return { ...this.counters };
-  }
-
   private computeEnergyRateFromCounts(counts: { panels: number; shells: number }): number {
     return counts.panels * PANEL_ENERGY_RATE + counts.shells * SHELL_ENERGY_RATE;
   }
@@ -298,6 +330,7 @@ export class BvxEngine {
     // Clear blueprint overlays so stale markers don't persist in the new system
     BlueprintManager.getInstance().reset();
     resetAutoBlueprintTraversal();
+    this.refreshDysonCountersFromWorld();
   }
 
   // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
@@ -338,6 +371,7 @@ export class BvxEngine {
       this.setBlock(x, worldY, z, BlockType.BLUEPRINT_FRAME);
       blueprints.addBlueprint({ x, y: worldY, z });
     }
+    this.refreshDysonCountersFromWorld();
   }
 
   // Meshing: Simple Face Culling

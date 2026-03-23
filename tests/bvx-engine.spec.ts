@@ -137,4 +137,36 @@ describe('BvxEngine basic behaviors', () => {
     expect(metrics.dysonProgress.milestones).toBe(3);
     expect(metrics.dysonProgress.prestigeReady).toBe(false);
   });
+
+  it('refreshDysonCountersFromWorld rebuilds cached counters from the voxel world', () => {
+    const engine = new BvxEngine();
+    engine.resetWorld();
+
+    engine.setBlock(0, 0, 0, BlockType.BLUEPRINT_FRAME);
+    engine.setBlock(1, 0, 0, BlockType.FRAME);
+    engine.setBlock(2, 0, 0, BlockType.PANEL);
+    engine.setBlock(3, 0, 0, BlockType.SHELL);
+
+    const engineState = engine as unknown as {
+      counters: { blueprintFrames: number; frames: number; panels: number; shells: number };
+    };
+    engineState.counters = {
+      blueprintFrames: 9,
+      frames: 9,
+      panels: 9,
+      shells: 9,
+    };
+
+    engine.refreshDysonCountersFromWorld();
+
+    expect(engine.computeDysonProgress()).toEqual({
+      blueprintFrames: 1,
+      frames: 1,
+      panels: 1,
+      shells: 1,
+      milestones: 3,
+      prestigeReady: false,
+    });
+    expect(engine.computeEnergyRate()).toBe(PANEL_ENERGY_RATE + SHELL_ENERGY_RATE);
+  });
 });

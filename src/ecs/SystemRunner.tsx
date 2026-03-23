@@ -92,11 +92,12 @@ export const SystemRunner = () => {
           setDysonProgress: store.setDysonProgress
         });
 
+        const movementStore = useStore.getState();
         MovementSystem({
           delta,
-          energy: store.energy,
-          prestigeLevel: store.prestigeLevel,
-          upgrades: store.upgrades
+          energy: movementStore.energy,
+          prestigeLevel: movementStore.prestigeLevel,
+          upgrades: movementStore.upgrades
         });
 
         AsteroidOrbitSystem(elapsedTime);
