@@ -58,7 +58,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
   const allDrones = ECS.with('isDrone', 'position', 'velocity').entities;
 
   // Use a simple spatial hash grid for neighbor search
-  const grid = new Map<string, number[]>();
+  const grid = new Map<number, number[]>();
   const cellSize = 2.5;
 
   for (let i = 0; i < allDrones.length; i++) {
@@ -66,7 +66,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
     const gx = Math.floor(pos.x / cellSize);
     const gy = Math.floor(pos.y / cellSize);
     const gz = Math.floor(pos.z / cellSize);
-    const key = `${gx},${gy},${gz}`;
+    const key = (((gx & 0x3FF) << 20) | ((gy & 0x3FF) << 10) | (gz & 0x3FF));
     if (!grid.has(key)) grid.set(key, []);
     grid.get(key)!.push(i);
   }
@@ -87,7 +87,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
     for (let x = gx - 1; x <= gx + 1; x++) {
       for (let y = gy - 1; y <= gy + 1; y++) {
         for (let z = gz - 1; z <= gz + 1; z++) {
-          const key = `${x},${y},${z}`;
+          const key = (((x & 0x3FF) << 20) | ((y & 0x3FF) << 10) | (z & 0x3FF));
           const cellIndices = grid.get(key);
           if (!cellIndices) continue;
 
