@@ -15,13 +15,20 @@ const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
 let cachedMines: { x: number; y: number; z: number }[] | null = null;
 let lastCacheTime = 0;
 
+let lastRoleAssignmentSignature = '';
+
 export const resetBrainSystemCaches = () => {
   cachedMines = null;
   lastCacheTime = 0;
+  lastRoleAssignmentSignature = '';
 };
 
 const syncDroneRoleAssignments = () => {
   const { droneCount, manualDroneRoleTargets } = useStore.getState();
+  const signature = `${droneCount}:${manualDroneRoleTargets.MINER}:${manualDroneRoleTargets.BUILDER}:${manualDroneRoleTargets.EXPLORER}`;
+  if (signature === lastRoleAssignmentSignature) return;
+  lastRoleAssignmentSignature = signature;
+
   const drones = [...ECS.with('isDrone', 'position', 'velocity').entities].sort(
     (left, right) => (left.id ?? 0) - (right.id ?? 0),
   );
@@ -77,10 +84,10 @@ export const BrainSystem = (clock: THREE.Clock) => {
   const targetBlockDrones = ECS.with('targetBlock');
 
   // Build reserved set from ECS
-  const reservedBlocks = new Set<string>();
+  const reservedBlocks = new Set<number>();
   for (const d of targetBlockDrones) {
     if (d.targetBlock) {
-      reservedBlocks.add(`${d.targetBlock.x},${d.targetBlock.y},${d.targetBlock.z}`);
+      reservedBlocks.add((((d.targetBlock.x & 0x3FF) << 20) | ((d.targetBlock.y & 0x3FF) << 10) | (d.targetBlock.z & 0x3FF)));
     }
   }
 
@@ -129,7 +136,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
     const findClosest = (list: { x: number; y: number; z: number }[], type: 'BUILD' | 'MINE') => {
       for (const item of list) {
-        const key = `${item.x},${item.y},${item.z}`;
+        const key = (((item.x & 0x3FF) << 20) | ((item.y & 0x3FF) << 10) | (item.z & 0x3FF));
         if (reservedBlocks.has(key)) continue;
 
         const tx = item.x + orbitOffset.x;
@@ -193,7 +200,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       drone.state = targetType === 'BUILD' ? 'MOVING_TO_BUILD' : 'MOVING_TO_MINE';
       drone.carryingType = targetType === 'BUILD' ? BlockType.FRAME : null;
 
-      reservedBlocks.add(`${t.x},${t.y},${t.z}`);
+      reservedBlocks.add((((t.x & 0x3FF) << 20) | ((t.y & 0x3FF) << 10) | (t.z & 0x3FF)));
     } else {
       // Dynamic idle patrol around the current asteroid center for coordinate consistency.
       const fallbackSpeed =

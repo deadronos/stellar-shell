@@ -246,7 +246,7 @@ export const useStore = create<StoreState>((set, get) => ({
       set({
         matter: matter - droneCost,
         droneCount: droneCount + 1,
-        droneCost: Math.floor(droneCost * 1.2),
+        droneCost: droneCost + 10,
       });
     }
   },
