@@ -13,7 +13,7 @@ describe('BvxEngine basic behaviors', () => {
     // To clear safely:
     const entities = [...ECS.entities];
     for (const entity of entities) {
-        ECS.remove(entity);
+      ECS.remove(entity);
     }
     BlueprintManager.getInstance().resetForTests();
   });
@@ -39,7 +39,7 @@ describe('BvxEngine basic behaviors', () => {
     // We can use ECS.with, but that's a query object.
     // Find manually
     const entity = ECS.entities.find((e) => e.chunkKey === key);
-    
+
     expect(entity).toBeDefined();
     expect(entity?.isChunk).toBe(true);
     expect(entity?.needsUpdate).toBe(true);
@@ -49,7 +49,7 @@ describe('BvxEngine basic behaviors', () => {
     const engine = new BvxEngine();
     engine.setBlock(0, 0, 0, BlockType.FRAME);
     const { cx, cy, cz } = engine.worldToChunk(0, 0, 0);
-    
+
     const mesh = engine.generateChunkMesh(cx, cy, cz);
     expect(mesh.positions.length).toBeGreaterThan(0);
     expect(mesh.normals.length).toBeGreaterThan(0);
@@ -97,7 +97,9 @@ describe('BvxEngine basic behaviors', () => {
       const distance = Math.hypot(blueprint.x, blueprint.y, blueprint.z);
       expect(distance).toBeGreaterThanOrEqual(22);
       expect(distance).toBeLessThanOrEqual(26);
-      expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.BLUEPRINT_FRAME);
+      expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(
+        BlockType.BLUEPRINT_FRAME,
+      );
     }
   });
 

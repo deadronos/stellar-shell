@@ -41,17 +41,17 @@ export class VoxelQuery {
     chunkEntities: Iterable<Entity>,
     voxelSource: IVoxelSource,
     type: BlockType,
-    limit: number = 20
+    limit: number = 20,
   ): { x: number; y: number; z: number }[] {
     const blocks: { x: number; y: number; z: number }[] = [];
 
     // Iterating over Render Chunks (Entities)
     for (const entity of chunkEntities) {
-        if (blocks.length >= limit) break;
-        if (!entity.chunkPosition) continue;
-        const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+      if (blocks.length >= limit) break;
+      if (!entity.chunkPosition) continue;
+      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
 
-         // Iterate all voxels in this logical chunk
+      // Iterate all voxels in this logical chunk
       for (let x = 0; x < CHUNK_SIZE; x++) {
         for (let y = 0; y < CHUNK_SIZE; y++) {
           for (let z = 0; z < CHUNK_SIZE; z++) {
@@ -75,7 +75,7 @@ export class VoxelQuery {
   public static findMiningTargets(
     chunkEntities: Iterable<Entity>,
     voxelSource: IVoxelSource,
-    limit: number = 20
+    limit: number = 20,
   ): { x: number; y: number; z: number }[] {
     const targets: { x: number; y: number; z: number }[] = [];
     const directions = [
@@ -90,12 +90,12 @@ export class VoxelQuery {
     // ...
     // Debug counter
     let potentialFound = 0;
-    
+
     // Scan Chunk Entities
     for (const entity of chunkEntities) {
       if (targets.length >= limit) break;
-        if (!entity.chunkPosition) continue;
-        const { x: cx, y: cy, z: cz } = entity.chunkPosition;
+      if (!entity.chunkPosition) continue;
+      const { x: cx, y: cy, z: cz } = entity.chunkPosition;
 
       for (let x = 0; x < CHUNK_SIZE; x++) {
         for (let y = 0; y < CHUNK_SIZE; y++) {
@@ -108,7 +108,11 @@ export class VoxelQuery {
 
             const block = voxelSource.getBlock(wx, wy, wz);
 
-            if (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE || block === BlockType.RARE_ORE) {
+            if (
+              block === BlockType.ASTEROID_SURFACE ||
+              block === BlockType.ASTEROID_CORE ||
+              block === BlockType.RARE_ORE
+            ) {
               potentialFound++;
               // Check exposure
               let isExposed = false;
@@ -128,11 +132,13 @@ export class VoxelQuery {
         }
       }
     }
-    
+
     if (Math.random() < 0.05) {
-        console.log(`[VoxelQuery] Scan complete. Potential: ${potentialFound}. Found: ${targets.length}. Limit: ${limit}`);
+      console.log(
+        `[VoxelQuery] Scan complete. Potential: ${potentialFound}. Found: ${targets.length}. Limit: ${limit}`,
+      );
     }
-    
+
     return targets;
   }
 }

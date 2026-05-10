@@ -11,11 +11,11 @@ describe('ECS World', () => {
 
   it('allows adding and removing entities', () => {
     const entity = ECS.add({
-        position: new THREE.Vector3(10, 10, 10)
+      position: new THREE.Vector3(10, 10, 10),
     });
-    
+
     expect(ECS.entities.includes(entity)).toBe(true);
-    
+
     ECS.remove(entity);
     expect(ECS.entities.includes(entity)).toBe(false);
   });

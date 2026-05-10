@@ -29,7 +29,7 @@ export const SettingsModal = () => {
       <div className="bg-gray-900 border border-white/20 rounded-xl p-6 w-96 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white tracking-widest uppercase">Settings</h2>
-          <button 
+          <button
             onClick={toggleSettings}
             className="text-gray-400 hover:text-white transition-colors"
           >
@@ -83,7 +83,9 @@ export const SettingsModal = () => {
           <label className="block p-3 rounded-lg bg-white/5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-300 font-mono text-sm">Orbit Radius</span>
-              <span className="text-cyan-300 font-mono text-xs">{asteroidOrbitRadius.toFixed(0)}</span>
+              <span className="text-cyan-300 font-mono text-xs">
+                {asteroidOrbitRadius.toFixed(0)}
+              </span>
             </div>
             <input
               type="range"
@@ -99,7 +101,9 @@ export const SettingsModal = () => {
           <label className="block p-3 rounded-lg bg-white/5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-300 font-mono text-sm">Orbit Speed</span>
-              <span className="text-cyan-300 font-mono text-xs">{asteroidOrbitSpeed.toFixed(2)}</span>
+              <span className="text-cyan-300 font-mono text-xs">
+                {asteroidOrbitSpeed.toFixed(2)}
+              </span>
             </div>
             <input
               type="range"
@@ -131,9 +135,7 @@ export const SettingsModal = () => {
           </label>
         </div>
 
-        <div className="mt-8 text-center text-xs text-gray-600">
-          Stellar Shell v0.1.0 dev
-        </div>
+        <div className="mt-8 text-center text-xs text-gray-600">Stellar Shell v0.1.0 dev</div>
       </div>
     </div>
   );

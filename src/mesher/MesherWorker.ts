@@ -1,13 +1,13 @@
 export class MesherWorker {
-    private worker: Worker;
+  private worker: Worker;
 
-    constructor() {
-        this.worker = new Worker(new URL('./worker.ts', import.meta.url), {
-            type: 'module'
-        });
-    }
+  constructor() {
+    this.worker = new Worker(new URL('./worker.ts', import.meta.url), {
+      type: 'module',
+    });
+  }
 
-    public terminate() {
-        this.worker.terminate();
-    }
+  public terminate() {
+    this.worker.terminate();
+  }
 }

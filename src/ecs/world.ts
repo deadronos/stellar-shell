@@ -38,7 +38,7 @@ export type Entity = {
     z: number;
     w: number;
   };
-  
+
   // Visuals
   color?: THREE.Color;
 

@@ -87,7 +87,11 @@ export const BrainSystem = (clock: THREE.Clock) => {
   const reservedBlocks = new Set<number>();
   for (const d of targetBlockDrones) {
     if (d.targetBlock) {
-      reservedBlocks.add((((d.targetBlock.x & 0x3FF) << 20) | ((d.targetBlock.y & 0x3FF) << 10) | (d.targetBlock.z & 0x3FF)));
+      reservedBlocks.add(
+        ((d.targetBlock.x & 0x3ff) << 20) |
+          ((d.targetBlock.y & 0x3ff) << 10) |
+          (d.targetBlock.z & 0x3ff),
+      );
     }
   }
 
@@ -99,7 +103,10 @@ export const BrainSystem = (clock: THREE.Clock) => {
       let stillValid = false;
 
       if (drone.state === 'MOVING_TO_MINE') {
-        stillValid = (block === BlockType.ASTEROID_SURFACE || block === BlockType.ASTEROID_CORE || block === BlockType.RARE_ORE);
+        stillValid =
+          block === BlockType.ASTEROID_SURFACE ||
+          block === BlockType.ASTEROID_CORE ||
+          block === BlockType.RARE_ORE;
       } else if (drone.state === 'MOVING_TO_BUILD') {
         const hasBlueprint = BLUEPRINT_MANAGER.hasBlueprint({ x, y, z });
         stillValid = hasBlueprint || block === BlockType.FRAME || block === BlockType.PANEL;
@@ -136,7 +143,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
     const findClosest = (list: { x: number; y: number; z: number }[], type: 'BUILD' | 'MINE') => {
       for (const item of list) {
-        const key = (((item.x & 0x3FF) << 20) | ((item.y & 0x3FF) << 10) | (item.z & 0x3FF));
+        const key = ((item.x & 0x3ff) << 20) | ((item.y & 0x3ff) << 10) | (item.z & 0x3ff);
         if (reservedBlocks.has(key)) continue;
 
         const tx = item.x + orbitOffset.x;
@@ -200,7 +207,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       drone.state = targetType === 'BUILD' ? 'MOVING_TO_BUILD' : 'MOVING_TO_MINE';
       drone.carryingType = targetType === 'BUILD' ? BlockType.FRAME : null;
 
-      reservedBlocks.add((((t.x & 0x3FF) << 20) | ((t.y & 0x3FF) << 10) | (t.z & 0x3FF)));
+      reservedBlocks.add(((t.x & 0x3ff) << 20) | ((t.y & 0x3ff) << 10) | (t.z & 0x3ff));
     } else {
       // Dynamic idle patrol around the current asteroid center for coordinate consistency.
       const fallbackSpeed =
@@ -208,7 +215,9 @@ export const BrainSystem = (clock: THREE.Clock) => {
           ? state.asteroidOrbitSpeed
           : 0.1;
       const time = clock.elapsedTime * fallbackSpeed + (drone.id || Math.random() * 100) * 0.137;
-      const baseRadius = state.asteroidOrbitEnabled ? Math.max(8, state.asteroidOrbitRadius * 0.35) : 30;
+      const baseRadius = state.asteroidOrbitEnabled
+        ? Math.max(8, state.asteroidOrbitRadius * 0.35)
+        : 30;
       const radius = baseRadius + Math.sin(time * 2.0) * 5;
       const heightAmplitude = state.asteroidOrbitEnabled
         ? Math.max(3, state.asteroidOrbitVerticalAmplitude * 4)

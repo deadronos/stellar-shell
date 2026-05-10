@@ -5,7 +5,8 @@ import { IVoxelModifier } from '../../../src/services/voxel/types';
 
 const collectGeneratedBlocks = async (seed: number) => {
   vi.resetModules();
-  const { VoxelGenerator: FreshVoxelGenerator } = await import('../../../src/services/voxel/VoxelGenerator');
+  const { VoxelGenerator: FreshVoxelGenerator } =
+    await import('../../../src/services/voxel/VoxelGenerator');
   const placements: [number, number, number, BlockType][] = [];
   const modifierMock: IVoxelModifier = {
     setBlock: (x, y, z, type) => {
@@ -31,7 +32,7 @@ describe('VoxelGenerator', () => {
     const calls = (modifierMock.setBlock as Mock).mock.calls as unknown[][];
     const hasCore = calls.some((args) => (args[3] as unknown) === BlockType.ASTEROID_CORE);
     const hasSurface = calls.some((args) => (args[3] as unknown) === BlockType.ASTEROID_SURFACE);
-    
+
     expect(hasCore || hasSurface).toBe(true);
   });
 
@@ -48,7 +49,12 @@ describe('VoxelGenerator', () => {
 
     VoxelGenerator.generateAsteroid(0, 0, 0, radius, modifierMock, 0, constantNoiseFactory);
 
-    const calls = (modifierMock.setBlock as Mock).mock.calls as [number, number, number, BlockType][];
+    const calls = (modifierMock.setBlock as Mock).mock.calls as [
+      number,
+      number,
+      number,
+      BlockType,
+    ][];
     const center = { x: 8, y: 8, z: 8 };
     const hasRareOutsideCore = calls.some(([x, y, z, type]) => {
       if (type !== BlockType.RARE_ORE) return false;
@@ -76,7 +82,7 @@ describe('VoxelGenerator', () => {
         expect(noiseScale).toBeLessThanOrEqual(0.12);
         expect(rareThreshold).toBeGreaterThanOrEqual(0.55);
         // Allow for floating-point imprecision (e.g. 0.55 + 3*0.05 = 0.7000000000000001)
-        expect(rareThreshold).toBeLessThanOrEqual(0.70 + 1e-9);
+        expect(rareThreshold).toBeLessThanOrEqual(0.7 + 1e-9);
       }
     });
 

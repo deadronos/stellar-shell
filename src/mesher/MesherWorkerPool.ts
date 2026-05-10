@@ -4,19 +4,19 @@ import { BlockType } from '../types';
 import { CHUNK_SIZE } from '../constants';
 
 export interface MeshJob {
-    taskId: string;
-    cx: number;
-    cy: number;
-    cz: number;
-    voxelData: Record<string, BlockType>;
+  taskId: string;
+  cx: number;
+  cy: number;
+  cz: number;
+  voxelData: Record<string, BlockType>;
 }
 
 export interface MeshResult {
-    taskId: string;
-    positions: Float32Array;
-    normals: Float32Array;
-    colors: Float32Array;
-    indices: number[];
+  taskId: string;
+  positions: Float32Array;
+  normals: Float32Array;
+  colors: Float32Array;
+  indices: number[];
 }
 
 export type MeshResultCallback = (result: MeshResult) => void;
@@ -27,247 +27,252 @@ export type MeshErrorCallback = (error: Error) => void;
  * Uses a simple queue with backpressure when all workers are busy.
  */
 export class MesherWorkerPool {
-    private workers: Worker[] = [];
-    private availableWorkers: Worker[] = [];
-    private jobQueue: MeshJob[] = [];
-    private pendingJobs: Map<string, { job: MeshJob; resolve: MeshResultCallback; reject: MeshErrorCallback }> = new Map();
-    private activeTasks: Map<Worker, string> = new Map();
-    private workerCount: number;
-    private taskIdCounter = 0;
+  private workers: Worker[] = [];
+  private availableWorkers: Worker[] = [];
+  private jobQueue: MeshJob[] = [];
+  private pendingJobs: Map<
+    string,
+    { job: MeshJob; resolve: MeshResultCallback; reject: MeshErrorCallback }
+  > = new Map();
+  private activeTasks: Map<Worker, string> = new Map();
+  private workerCount: number;
+  private taskIdCounter = 0;
 
-    constructor(workerCount: number = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4) {
-        this.workerCount = workerCount;
-        this.initWorkers();
+  constructor(
+    workerCount: number = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4,
+  ) {
+    this.workerCount = workerCount;
+    this.initWorkers();
+  }
+
+  private initWorkers() {
+    for (let i = 0; i < this.workerCount; i++) {
+      this.createWorker();
+    }
+  }
+
+  private createWorker(addToAvailable: boolean = true): Worker {
+    const worker = new Worker(new URL('./worker.ts', import.meta.url), {
+      type: 'module',
+    });
+
+    worker.onmessage = (e: MessageEvent) => {
+      this.handleWorkerMessage(worker, e.data);
+    };
+
+    worker.onerror = (error) => {
+      this.handleWorkerError(worker, error);
+    };
+
+    this.workers.push(worker);
+    if (addToAvailable) {
+      this.availableWorkers.push(worker);
+    }
+    return worker;
+  }
+
+  private handleWorkerMessage(worker: Worker, data: { taskId: string; mesh: MeshResult }) {
+    this.activeTasks.delete(worker);
+    const pending = this.pendingJobs.get(data.taskId);
+    if (pending) {
+      pending.resolve(data.mesh);
+      this.pendingJobs.delete(data.taskId);
     }
 
-    private initWorkers() {
-        for (let i = 0; i < this.workerCount; i++) {
-            this.createWorker();
-        }
+    // Return worker to pool or dispatch next queued job
+    this.processQueue(worker);
+  }
+
+  private normalizeWorkerError(error: ErrorEvent | Error): Error {
+    if (error instanceof Error) {
+      return error;
     }
 
-    private createWorker(addToAvailable: boolean = true): Worker {
-        const worker = new Worker(new URL('./worker.ts', import.meta.url), {
-            type: 'module'
-        });
-
-        worker.onmessage = (e: MessageEvent) => {
-            this.handleWorkerMessage(worker, e.data);
-        };
-
-        worker.onerror = (error) => {
-            this.handleWorkerError(worker, error);
-        };
-
-        this.workers.push(worker);
-        if (addToAvailable) {
-            this.availableWorkers.push(worker);
-        }
-        return worker;
+    const underlyingError = error.error;
+    if (underlyingError instanceof Error) {
+      return underlyingError;
     }
 
-    private handleWorkerMessage(worker: Worker, data: { taskId: string; mesh: MeshResult }) {
-        this.activeTasks.delete(worker);
-        const pending = this.pendingJobs.get(data.taskId);
-        if (pending) {
-            pending.resolve(data.mesh);
-            this.pendingJobs.delete(data.taskId);
-        }
-
-        // Return worker to pool or dispatch next queued job
-        this.processQueue(worker);
+    const parts: string[] = [];
+    if (error.message) {
+      parts.push(error.message);
     }
 
-    private normalizeWorkerError(error: ErrorEvent | Error): Error {
-        if (error instanceof Error) {
-            return error;
-        }
-
-        const underlyingError = error.error;
-        if (underlyingError instanceof Error) {
-            return underlyingError;
-        }
-
-        const parts: string[] = [];
-        if (error.message) {
-            parts.push(error.message);
-        }
-
-        if (error.filename) {
-            const location = [error.filename, error.lineno || 0, error.colno || 0].join(':');
-            parts.push(`at ${location}`);
-        }
-
-        return new Error(parts.length > 0 ? parts.join(' ') : 'Mesher worker failed');
+    if (error.filename) {
+      const location = [error.filename, error.lineno || 0, error.colno || 0].join(':');
+      parts.push(`at ${location}`);
     }
 
-    private handleWorkerError(worker: Worker, error: ErrorEvent | Error) {
-        console.error('MesherWorker error:', error);
-        const normalizedError = this.normalizeWorkerError(error);
+    return new Error(parts.length > 0 ? parts.join(' ') : 'Mesher worker failed');
+  }
 
-        const taskId = this.activeTasks.get(worker);
-        if (taskId) {
-            const pending = this.pendingJobs.get(taskId);
-            if (pending) {
-                pending.reject(normalizedError);
-                this.pendingJobs.delete(taskId);
-            }
-            this.activeTasks.delete(worker);
-        }
+  private handleWorkerError(worker: Worker, error: ErrorEvent | Error) {
+    console.error('MesherWorker error:', error);
+    const normalizedError = this.normalizeWorkerError(error);
 
-        this.replaceWorker(worker);
+    const taskId = this.activeTasks.get(worker);
+    if (taskId) {
+      const pending = this.pendingJobs.get(taskId);
+      if (pending) {
+        pending.reject(normalizedError);
+        this.pendingJobs.delete(taskId);
+      }
+      this.activeTasks.delete(worker);
     }
 
-    private replaceWorker(worker: Worker) {
-        this.availableWorkers = this.availableWorkers.filter((candidate) => candidate !== worker);
-        this.workers = this.workers.filter((candidate) => candidate !== worker);
-        worker.terminate();
+    this.replaceWorker(worker);
+  }
 
-        const replacement = this.createWorker(false);
-        this.processQueue(replacement);
+  private replaceWorker(worker: Worker) {
+    this.availableWorkers = this.availableWorkers.filter((candidate) => candidate !== worker);
+    this.workers = this.workers.filter((candidate) => candidate !== worker);
+    worker.terminate();
+
+    const replacement = this.createWorker(false);
+    this.processQueue(replacement);
+  }
+
+  private processQueue(worker: Worker) {
+    const job = this.jobQueue.shift();
+    if (!job) {
+      // No jobs waiting, return worker to available pool
+      this.availableWorkers.push(worker);
+      return;
     }
 
-    private processQueue(worker: Worker) {
-        const job = this.jobQueue.shift();
-        if (!job) {
-            // No jobs waiting, return worker to available pool
-            this.availableWorkers.push(worker);
-            return;
-        }
+    // Send next queued job to the freed worker
+    this.activeTasks.set(worker, job.taskId);
+    try {
+      worker.postMessage(job);
+    } catch (error) {
+      this.handleWorkerError(
+        worker,
+        error instanceof Error ? error : new Error('Failed to post mesh job to worker'),
+      );
+    }
+  }
 
-        // Send next queued job to the freed worker
+  /**
+   * Queue a mesh generation job.
+   * Returns a promise that resolves with the mesh data.
+   */
+  public generateMesh(
+    cx: number,
+    cy: number,
+    cz: number,
+    voxelSource: IVoxelSource,
+  ): Promise<MeshResult> {
+    const taskId = `mesh-${++this.taskIdCounter}-${cx}-${cy}-${cz}`;
+
+    // Extract voxel data for this chunk + 1-voxel neighbor halo on all sides.
+    // The halo is required so the worker can correctly cull faces at chunk boundaries
+    // (otherwise neighbor lookups outside the chunk always return AIR).
+    const voxelData: Record<string, BlockType> = {};
+    const startX = cx * CHUNK_SIZE;
+    const startY = cy * CHUNK_SIZE;
+    const startZ = cz * CHUNK_SIZE;
+
+    for (let x = startX - 1; x <= startX + CHUNK_SIZE; x++) {
+      for (let y = startY - 1; y <= startY + CHUNK_SIZE; y++) {
+        for (let z = startZ - 1; z <= startZ + CHUNK_SIZE; z++) {
+          const block = voxelSource.getBlock(x, y, z);
+          if (block !== BlockType.AIR) {
+            voxelData[`${x},${y},${z}`] = block;
+          }
+        }
+      }
+    }
+
+    const job: MeshJob = {
+      taskId,
+      cx,
+      cy,
+      cz,
+      voxelData,
+    };
+
+    // Return promise that resolves when worker responds
+    return new Promise((resolve, reject) => {
+      this.pendingJobs.set(taskId, { job, resolve, reject });
+
+      // Check if we have an available worker
+      const worker = this.availableWorkers.pop();
+
+      if (worker) {
         this.activeTasks.set(worker, job.taskId);
         try {
-            worker.postMessage(job);
+          worker.postMessage(job);
         } catch (error) {
-            this.handleWorkerError(
-                worker,
-                error instanceof Error ? error : new Error('Failed to post mesh job to worker'),
-            );
+          this.handleWorkerError(
+            worker,
+            error instanceof Error ? error : new Error('Failed to post mesh job to worker'),
+          );
         }
+      } else {
+        // Queue the job (backpressure)
+        this.jobQueue.push(job);
+      }
+    });
+  }
+
+  /**
+   * Generate mesh synchronously (for fallback or testing).
+   */
+  public generateMeshSync(
+    cx: number,
+    cy: number,
+    cz: number,
+    voxelSource: IVoxelSource,
+  ): MeshResult {
+    const mesh = VoxelMesher.generateChunkMesh(cx, cy, cz, voxelSource);
+    return {
+      taskId: 'sync',
+      ...mesh,
+    };
+  }
+
+  /**
+   * Get queue depth for monitoring.
+   */
+  public getQueueDepth(): number {
+    return this.jobQueue.length;
+  }
+
+  /**
+   * Get number of active workers.
+   */
+  public getActiveWorkerCount(): number {
+    return this.workerCount - this.availableWorkers.length;
+  }
+
+  /**
+   * Terminate all workers.
+   */
+  public dispose() {
+    for (const worker of this.workers) {
+      worker.terminate();
     }
-
-    /**
-     * Queue a mesh generation job.
-     * Returns a promise that resolves with the mesh data.
-     */
-    public generateMesh(
-        cx: number,
-        cy: number,
-        cz: number,
-        voxelSource: IVoxelSource
-    ): Promise<MeshResult> {
-        const taskId = `mesh-${++this.taskIdCounter}-${cx}-${cy}-${cz}`;
-
-        // Extract voxel data for this chunk + 1-voxel neighbor halo on all sides.
-        // The halo is required so the worker can correctly cull faces at chunk boundaries
-        // (otherwise neighbor lookups outside the chunk always return AIR).
-        const voxelData: Record<string, BlockType> = {};
-        const startX = cx * CHUNK_SIZE;
-        const startY = cy * CHUNK_SIZE;
-        const startZ = cz * CHUNK_SIZE;
-
-        for (let x = startX - 1; x <= startX + CHUNK_SIZE; x++) {
-            for (let y = startY - 1; y <= startY + CHUNK_SIZE; y++) {
-                for (let z = startZ - 1; z <= startZ + CHUNK_SIZE; z++) {
-                    const block = voxelSource.getBlock(x, y, z);
-                    if (block !== BlockType.AIR) {
-                        voxelData[`${x},${y},${z}`] = block;
-                    }
-                }
-            }
-        }
-
-        const job: MeshJob = {
-            taskId,
-            cx,
-            cy,
-            cz,
-            voxelData
-        };
-
-        // Return promise that resolves when worker responds
-        return new Promise((resolve, reject) => {
-            this.pendingJobs.set(taskId, { job, resolve, reject });
-
-            // Check if we have an available worker
-            const worker = this.availableWorkers.pop();
-
-            if (worker) {
-                this.activeTasks.set(worker, job.taskId);
-                try {
-                    worker.postMessage(job);
-                } catch (error) {
-                    this.handleWorkerError(
-                        worker,
-                        error instanceof Error ? error : new Error('Failed to post mesh job to worker'),
-                    );
-                }
-            } else {
-                // Queue the job (backpressure)
-                this.jobQueue.push(job);
-            }
-        });
-    }
-
-    /**
-     * Generate mesh synchronously (for fallback or testing).
-     */
-    public generateMeshSync(
-        cx: number,
-        cy: number,
-        cz: number,
-        voxelSource: IVoxelSource
-    ): MeshResult {
-        const mesh = VoxelMesher.generateChunkMesh(cx, cy, cz, voxelSource);
-        return {
-            taskId: 'sync',
-            ...mesh
-        };
-    }
-
-    /**
-     * Get queue depth for monitoring.
-     */
-    public getQueueDepth(): number {
-        return this.jobQueue.length;
-    }
-
-    /**
-     * Get number of active workers.
-     */
-    public getActiveWorkerCount(): number {
-        return this.workerCount - this.availableWorkers.length;
-    }
-
-    /**
-     * Terminate all workers.
-     */
-    public dispose() {
-        for (const worker of this.workers) {
-            worker.terminate();
-        }
-        this.workers = [];
-        this.availableWorkers = [];
-        this.jobQueue = [];
-        this.pendingJobs.clear();
-        this.activeTasks.clear();
-    }
+    this.workers = [];
+    this.availableWorkers = [];
+    this.jobQueue = [];
+    this.pendingJobs.clear();
+    this.activeTasks.clear();
+  }
 }
 
 // Singleton instance
 let poolInstance: MesherWorkerPool | null = null;
 
 export function getMesherPool(): MesherWorkerPool {
-    if (!poolInstance) {
-        poolInstance = new MesherWorkerPool();
-    }
-    return poolInstance;
+  if (!poolInstance) {
+    poolInstance = new MesherWorkerPool();
+  }
+  return poolInstance;
 }
 
 export function disposeMesherPool() {
-    if (poolInstance) {
-        poolInstance.dispose();
-        poolInstance = null;
-    }
+  if (poolInstance) {
+    poolInstance.dispose();
+    poolInstance = null;
+  }
 }

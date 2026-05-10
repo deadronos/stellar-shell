@@ -34,7 +34,7 @@ export const MiningSystem = ({
   upgrades,
   consumeEnergy,
   addMatter,
-  addRareMatter
+  addRareMatter,
 }: MiningSystemProps) => {
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
     enabled: asteroidOrbitEnabled,
@@ -83,8 +83,8 @@ export const MiningSystem = ({
           if (hasEnergy) {
             drone.miningProgress += delta * 50 * miningMult * drillMult;
           } else {
-             // Out of energy: slow down mining significantly
-             drone.miningProgress += delta * 5 * miningMult * drillMult;
+            // Out of energy: slow down mining significantly
+            drone.miningProgress += delta * 5 * miningMult * drillMult;
           }
 
           // Emit spark occasionally
@@ -94,11 +94,7 @@ export const MiningSystem = ({
               ? new THREE.Color(BLOCK_COLORS[block] || '#ffffff')
               : new THREE.Color('#ff0000'); // Low power alert color
 
-            ParticleEvents.emit(
-              worldTarget.clone(),
-              color,
-              1,
-            );
+            ParticleEvents.emit(worldTarget.clone(), color, 1);
           }
 
           if (drone.miningProgress >= 100) {
@@ -140,8 +136,7 @@ export const MiningSystem = ({
         else if (drone.carryingType === BlockType.RARE_ORE) {
           const yieldAmount = upgrades['DEEP_SCAN_1'] ? 2 : 1;
           addRareMatter(yieldAmount);
-        }
-        else addMatter(1);
+        } else addMatter(1);
 
         drone.carryingType = null;
         drone.state = 'IDLE';

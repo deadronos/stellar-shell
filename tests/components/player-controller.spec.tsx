@@ -7,19 +7,19 @@ import { PlayerController } from '../../src/components/PlayerController';
 // We can check if it mounts.
 
 vi.mock('@react-three/fiber', () => ({
-    useFrame: vi.fn(),
-    useThree: () => ({
-        camera: {
-            position: { set: vi.fn() },
-            rotation: { set: vi.fn(), order: '' }
-        }
-    })
+  useFrame: vi.fn(),
+  useThree: () => ({
+    camera: {
+      position: { set: vi.fn() },
+      rotation: { set: vi.fn(), order: '' },
+    },
+  }),
 }));
 
 describe('PlayerController', () => {
   it('instantiates without crashing', () => {
     // Basic render test
-    // Usually R3F components need to be inside <Canvas>, but if we mock hooks, we might get away with it 
+    // Usually R3F components need to be inside <Canvas>, but if we mock hooks, we might get away with it
     // or test hook logic separately.
     // For now, let's skip complex R3F testing and just ensure imports work and it is a function.
     expect(PlayerController).toBeDefined();

@@ -29,7 +29,10 @@ export const DroneRolePanel = () => {
   const droneCount = useStore((state) => state.droneCount);
   const manualTargets = useStore((state) => state.manualDroneRoleTargets);
   const adjustDroneRoleTarget = useStore((state) => state.adjustDroneRoleTarget);
-  const allocation = computeDroneRoleAllocation(droneCount, manualTargets ?? createEmptyDroneRoleTargets());
+  const allocation = computeDroneRoleAllocation(
+    droneCount,
+    manualTargets ?? createEmptyDroneRoleTargets(),
+  );
 
   return (
     <div className="pointer-events-auto rounded-2xl border border-white/10 bg-black/55 p-4 shadow-[0_0_25px_rgba(0,0,0,0.35)] backdrop-blur-md">
@@ -58,10 +61,14 @@ export const DroneRolePanel = () => {
               className={`grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border px-3 py-2 ${style.accent}`}
             >
               <div>
-                <div className={`text-xs font-semibold uppercase tracking-[0.25em] ${style.accentText}`}>
+                <div
+                  className={`text-xs font-semibold uppercase tracking-[0.25em] ${style.accentText}`}
+                >
                   {style.label}
                 </div>
-                <div className="text-xs text-gray-400">{manual} manual · {auto} auto</div>
+                <div className="text-xs text-gray-400">
+                  {manual} manual · {auto} auto
+                </div>
               </div>
 
               <div className="text-right font-mono">

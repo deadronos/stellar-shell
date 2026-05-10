@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../../src/state/store';
-import { AutoBlueprintSystem, resetAutoBlueprintSystemForTests } from '../../src/ecs/systems/AutoBlueprintSystem';
+import {
+  AutoBlueprintSystem,
+  resetAutoBlueprintSystemForTests,
+} from '../../src/ecs/systems/AutoBlueprintSystem';
 import { BlueprintManager } from '../../src/services/BlueprintManager';
 import { BvxEngine } from '../../src/services/BvxEngine';
 import { BlockType } from '../../src/types';

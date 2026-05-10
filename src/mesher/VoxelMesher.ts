@@ -8,7 +8,7 @@ export class VoxelMesher {
     cx: number,
     cy: number,
     cz: number,
-    voxelSource: IVoxelSource
+    voxelSource: IVoxelSource,
   ): {
     positions: Float32Array;
     normals: Float32Array;

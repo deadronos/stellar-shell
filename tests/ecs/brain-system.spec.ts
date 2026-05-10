@@ -74,9 +74,9 @@ describe('BrainSystem', () => {
 
     expect(drone.state).toBe('MOVING_TO_MINE');
     expect(drone.targetBlock).toEqual({ x: 0, y: 0, z: 0 });
-    expect(drone.target.x).toBeCloseTo(10, 5);
-    expect(drone.target.y).toBeCloseTo(0, 5);
-    expect(drone.target.z).toBeCloseTo(0, 5);
+    expect(drone.target!.x).toBeCloseTo(10, 5);
+    expect(drone.target!.y).toBeCloseTo(0, 5);
+    expect(drone.target!.z).toBeCloseTo(0, 5);
   });
 
   it('keeps idle patrol centered around the moving asteroid when orbit is enabled', () => {

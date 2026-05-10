@@ -22,7 +22,12 @@ export const UpgradesPanel = () => {
         className="bg-gray-900 border border-white/20 rounded-xl p-6 w-96 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 id="upgrades-panel-title" className="text-xl font-bold text-white tracking-widest uppercase">Upgrades</h2>
+          <h2
+            id="upgrades-panel-title"
+            className="text-xl font-bold text-white tracking-widest uppercase"
+          >
+            Upgrades
+          </h2>
           <button
             onClick={toggleUpgrades}
             aria-label="Close upgrades panel"
@@ -56,17 +61,27 @@ export const UpgradesPanel = () => {
                     {!purchased && (
                       <div className="flex gap-3 mt-1 text-xs">
                         {def.matterCost > 0 && (
-                          <span className={matter >= def.matterCost ? 'text-cyan-400' : 'text-red-400'}>
+                          <span
+                            className={matter >= def.matterCost ? 'text-cyan-400' : 'text-red-400'}
+                          >
                             {def.matterCost} matter
                           </span>
                         )}
                         {def.rareMatterCost > 0 && (
-                          <span className={rareMatter >= def.rareMatterCost ? 'text-purple-400' : 'text-red-400'}>
+                          <span
+                            className={
+                              rareMatter >= def.rareMatterCost ? 'text-purple-400' : 'text-red-400'
+                            }
+                          >
                             {def.rareMatterCost} rare
                           </span>
                         )}
                         {def.researchCost > 0 && (
-                          <span className={research >= def.researchCost ? 'text-teal-400' : 'text-red-400'}>
+                          <span
+                            className={
+                              research >= def.researchCost ? 'text-teal-400' : 'text-red-400'
+                            }
+                          >
                             {def.researchCost} research
                           </span>
                         )}
@@ -94,9 +109,7 @@ export const UpgradesPanel = () => {
           })}
         </div>
 
-        <div className="mt-6 text-center text-xs text-gray-600">
-          Upgrades reset on System Jump
-        </div>
+        <div className="mt-6 text-center text-xs text-gray-600">Upgrades reset on System Jump</div>
       </div>
     </div>
   );

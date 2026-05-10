@@ -3,7 +3,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 // Prepare containers for mocks before importing SystemRunner
-interface FakeState { clock: { elapsedTime: number } }
+interface FakeState {
+  clock: { elapsedTime: number };
+}
 type FrameCallback = (state: FakeState, delta: number) => void;
 const frameCallbacks: FrameCallback[] = [];
 const mockStoreState = vi.hoisted(() => ({
@@ -59,9 +61,12 @@ vi.mock('../../src/ecs/systems/ExplorerSystem', () => ({
 
 // mock store for droneCount dependency
 vi.mock('../../src/state/store', () => ({
-  useStore: Object.assign(vi.fn((selector) => (selector ? selector(mockStoreState) : mockStoreState)), {
-    getState: vi.fn(() => mockStoreState),
-  })
+  useStore: Object.assign(
+    vi.fn((selector) => (selector ? selector(mockStoreState) : mockStoreState)),
+    {
+      getState: vi.fn(() => mockStoreState),
+    },
+  ),
 }));
 
 import { SystemRunner } from '../../src/ecs/SystemRunner';
@@ -140,8 +145,6 @@ describe('SystemRunner integration', () => {
 
     expect(mockEnergySystem).toHaveBeenCalledTimes(1);
     expect(mockMovementSystem).toHaveBeenCalledTimes(1);
-    expect(mockMovementSystem).toHaveBeenCalledWith(
-      expect.objectContaining({ energy: 0 }),
-    );
+    expect(mockMovementSystem).toHaveBeenCalledWith(expect.objectContaining({ energy: 0 }));
   });
 });
