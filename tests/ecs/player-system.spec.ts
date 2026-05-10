@@ -8,403 +8,403 @@ import { BvxEngine } from '../../src/services/BvxEngine';
 import { createTestUpgrades } from '../helpers/upgrades';
 
 const mockBlueprintManager = {
-    addBlueprint: vi.fn(),
-    removeBlueprint: vi.fn(),
+  addBlueprint: vi.fn(),
+  removeBlueprint: vi.fn(),
 };
 
 // Mock BvxEngine
 vi.mock('../../src/services/BvxEngine', () => {
-    const mockEngine = {
-        getBlock: vi.fn(),
-        setBlock: vi.fn(),
-        computeEnergyRate: vi.fn().mockReturnValue(0),
-        computeWorldDerivedMetrics: vi.fn().mockReturnValue({
-            energyRate: 0,
-            dysonProgress: {
-                blueprintFrames: 0,
-                frames: 0,
-                panels: 0,
-                shells: 0,
-                milestones: 0,
-                prestigeReady: false,
-            },
-        }),
-        computeDysonProgress: vi.fn().mockReturnValue({
-            blueprintFrames: 0,
-            frames: 0,
-            panels: 0,
-            shells: 0,
-            milestones: 0,
-            prestigeReady: false,
-        }),
-    };
-    return {
-        BvxEngine: {
-            getInstance: () => mockEngine
-        }
-    };
+  const mockEngine = {
+    getBlock: vi.fn(),
+    setBlock: vi.fn(),
+    computeEnergyRate: vi.fn().mockReturnValue(0),
+    computeWorldDerivedMetrics: vi.fn().mockReturnValue({
+      energyRate: 0,
+      dysonProgress: {
+        blueprintFrames: 0,
+        frames: 0,
+        panels: 0,
+        shells: 0,
+        milestones: 0,
+        prestigeReady: false,
+      },
+    }),
+    computeDysonProgress: vi.fn().mockReturnValue({
+      blueprintFrames: 0,
+      frames: 0,
+      panels: 0,
+      shells: 0,
+      milestones: 0,
+      prestigeReady: false,
+    }),
+  };
+  return {
+    BvxEngine: {
+      getInstance: () => mockEngine,
+    },
+  };
 });
 
 vi.mock('../../src/services/BlueprintManager', () => ({
-    BlueprintManager: {
-        getInstance: () => mockBlueprintManager,
-    },
+  BlueprintManager: {
+    getInstance: () => mockBlueprintManager,
+  },
 }));
 
 describe('PlayerSystem', () => {
-    type MockEngine = {
-        getBlock: ReturnType<typeof vi.fn>;
-        setBlock: ReturnType<typeof vi.fn>;
-        computeEnergyRate: ReturnType<typeof vi.fn>;
-        computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
-        computeDysonProgress: ReturnType<typeof vi.fn>;
-    };
+  type MockEngine = {
+    getBlock: ReturnType<typeof vi.fn>;
+    setBlock: ReturnType<typeof vi.fn>;
+    computeEnergyRate: ReturnType<typeof vi.fn>;
+    computeWorldDerivedMetrics: ReturnType<typeof vi.fn>;
+    computeDysonProgress: ReturnType<typeof vi.fn>;
+  };
 
-    const getMockEngine = (): MockEngine => BvxEngine.getInstance() as unknown as MockEngine;
+  const getMockEngine = (): MockEngine => BvxEngine.getInstance() as unknown as MockEngine;
 
-    beforeEach(() => {
-        ECS.clear();
-        vi.clearAllMocks();
-        useStore.setState({
-            matter: 0,
-            rareMatter: 0,
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: false,
-            asteroidOrbitRadius: 24,
-            asteroidOrbitSpeed: 0.08,
-            asteroidOrbitVerticalAmplitude: 2,
-            upgrades: createTestUpgrades(),
-        });
-
-        const engine = getMockEngine();
-        engine.getBlock.mockReturnValue(BlockType.AIR);
+  beforeEach(() => {
+    ECS.clear();
+    vi.clearAllMocks();
+    useStore.setState({
+      matter: 0,
+      rareMatter: 0,
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: false,
+      asteroidOrbitRadius: 24,
+      asteroidOrbitSpeed: 0.08,
+      asteroidOrbitVerticalAmplitude: 2,
+      upgrades: createTestUpgrades(),
     });
 
-    it('should move player when input is active', () => {
-        const player = ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 0),
-            input: {
-                forward: true,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: false,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 }
-        });
+    const engine = getMockEngine();
+    engine.getBlock.mockReturnValue(BlockType.AIR);
+  });
 
-        // Run System
-        PlayerSystem(1.0); // Delta 1s
-
-        // Speed is 15. Directions: Forward is -Z (0,0,-1)
-        expect(player.position.z).toBeCloseTo(-15);
-        expect(player.position.x).toBe(0);
-        expect(player.position.y).toBe(0);
+  it('should move player when input is active', () => {
+    const player = ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 0),
+      input: {
+        forward: true,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: false,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    it('should handle multiple inputs correctly', () => {
-         const player = ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 0),
-            input: {
-                forward: true,
-                backward: false,
-                left: false,
-                right: true, // Right is +X
-                up: false,
-                down: false,
-                mine: false,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 }
-        });
-        
-        PlayerSystem(1.0);
+    // Run System
+    PlayerSystem(1.0); // Delta 1s
 
-        // Vector should be normalized. (0, 0, -1) + (1, 0, 0) = (1, 0, -1). Length sqrt(2).
-        // Normalized: (1/sqrt2, 0, -1/sqrt2) * 15 * 1
-        // 1/sqrt(2) approx 0.707 * 15 = 10.6
-        expect(player.position.x).toBeGreaterThan(10);
-        expect(player.position.z).toBeLessThan(-10);
+    // Speed is 15. Directions: Forward is -Z (0,0,-1)
+    expect(player.position.z).toBeCloseTo(-15);
+    expect(player.position.x).toBe(0);
+    expect(player.position.y).toBe(0);
+  });
+
+  it('should handle multiple inputs correctly', () => {
+    const player = ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 0),
+      input: {
+        forward: true,
+        backward: false,
+        left: false,
+        right: true, // Right is +X
+        up: false,
+        down: false,
+        mine: false,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    it('mines the correct local voxel when orbit offset is active', () => {
-        useStore.setState({
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: true,
-            asteroidOrbitRadius: 10,
-            asteroidOrbitSpeed: 1,
-            asteroidOrbitVerticalAmplitude: 0,
-            matter: 0,
-        });
+    PlayerSystem(1.0);
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
-        );
+    // Vector should be normalized. (0, 0, -1) + (1, 0, 0) = (1, 0, -1). Length sqrt(2).
+    // Normalized: (1/sqrt2, 0, -1/sqrt2) * 15 * 1
+    // 1/sqrt(2) approx 0.707 * 15 = 10.6
+    expect(player.position.x).toBeGreaterThan(10);
+    expect(player.position.z).toBeLessThan(-10);
+  });
 
-        const player = ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(10, 0, 1.2),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: true,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(useStore.getState().matter).toBe(1);
-        expect(player.input.mine).toBe(false);
+  it('mines the correct local voxel when orbit offset is active', () => {
+    useStore.setState({
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: true,
+      asteroidOrbitRadius: 10,
+      asteroidOrbitSpeed: 1,
+      asteroidOrbitVerticalAmplitude: 0,
+      matter: 0,
     });
 
-    it('builds a blueprint in the correct local voxel when orbit offset is active', () => {
-        useStore.setState({
-            selectedTool: 'BUILD',
-            asteroidOrbitEnabled: true,
-            asteroidOrbitRadius: 10,
-            asteroidOrbitSpeed: 1,
-            asteroidOrbitVerticalAmplitude: 0,
-        });
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
+    );
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
-        );
-
-        const player = ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(10, 0, 1.2),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: false,
-                build: true,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 1, BlockType.BLUEPRINT_FRAME);
-        expect(mockBlueprintManager.addBlueprint).toHaveBeenCalledWith(
-            expect.objectContaining({ x: 0, y: 0, z: 1 }),
-        );
-        expect(player.input.build).toBe(false);
+    const player = ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(10, 0, 1.2),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: true,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    it('grants rare matter when player laser-mines a rare ore block', () => {
-        useStore.setState({
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: false,
-            matter: 0,
-            rareMatter: 0,
-        });
+    PlayerSystem(1 / 60, 0);
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.RARE_ORE : BlockType.AIR,
-        );
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(useStore.getState().matter).toBe(1);
+    expect(player.input.mine).toBe(false);
+  });
 
-        ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 8),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: true,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(useStore.getState().rareMatter).toBe(1);
-        expect(useStore.getState().matter).toBe(0);
+  it('builds a blueprint in the correct local voxel when orbit offset is active', () => {
+    useStore.setState({
+      selectedTool: 'BUILD',
+      asteroidOrbitEnabled: true,
+      asteroidOrbitRadius: 10,
+      asteroidOrbitSpeed: 1,
+      asteroidOrbitVerticalAmplitude: 0,
     });
 
-    it('applies LASER_EFFICIENCY_1 to double laser matter yield', () => {
-        useStore.setState({
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: false,
-            matter: 0,
-            rareMatter: 0,
-            upgrades: createTestUpgrades({ LASER_EFFICIENCY_1: true }),
-        });
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
+    );
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
-        );
-
-        ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 8),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: true,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(useStore.getState().matter).toBe(2);
+    const player = ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(10, 0, 1.2),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: false,
+        build: true,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    it('reconciles energy rate when player laser-mines a PANEL block', () => {
-        useStore.setState({
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: false,
-            energyGenerationRate: 5,
-        });
+    PlayerSystem(1 / 60, 0);
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
-        );
-        engine.computeWorldDerivedMetrics.mockReturnValue({
-            energyRate: 4,
-            dysonProgress: {
-                blueprintFrames: 0,
-                frames: 0,
-                panels: 0,
-                shells: 0,
-                milestones: 0,
-                prestigeReady: false,
-            },
-        });
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 1, BlockType.BLUEPRINT_FRAME);
+    expect(mockBlueprintManager.addBlueprint).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 0, y: 0, z: 1 }),
+    );
+    expect(player.input.build).toBe(false);
+  });
 
-        ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 8),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: true,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
-        expect(useStore.getState().energyGenerationRate).toBe(4);
+  it('grants rare matter when player laser-mines a rare ore block', () => {
+    useStore.setState({
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: false,
+      matter: 0,
+      rareMatter: 0,
     });
 
-    it('reconciles energy rate when player laser-mines a SHELL block', () => {
-        useStore.setState({
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: false,
-            energyGenerationRate: 6,
-        });
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.RARE_ORE : BlockType.AIR,
+    );
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.SHELL : BlockType.AIR,
-        );
-        engine.computeWorldDerivedMetrics.mockReturnValue({
-            energyRate: 0,
-            dysonProgress: {
-                blueprintFrames: 0,
-                frames: 0,
-                panels: 0,
-                shells: 0,
-                milestones: 0,
-                prestigeReady: false,
-            },
-        });
-
-        ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 8),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: true,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
-        expect(useStore.getState().energyGenerationRate).toBe(0);
+    ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 8),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: true,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    it('removes blueprint registration when player laser-mines a BLUEPRINT_FRAME block', () => {
-        useStore.setState({
-            selectedTool: 'LASER',
-            asteroidOrbitEnabled: false,
-        });
+    PlayerSystem(1 / 60, 0);
 
-        const engine = getMockEngine();
-        engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
-            x === 0 && y === 0 && z === 0 ? BlockType.BLUEPRINT_FRAME : BlockType.AIR,
-        );
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(useStore.getState().rareMatter).toBe(1);
+    expect(useStore.getState().matter).toBe(0);
+  });
 
-        ECS.add({
-            isPlayer: true,
-            position: new THREE.Vector3(0, 0, 8),
-            input: {
-                forward: false,
-                backward: false,
-                left: false,
-                right: false,
-                up: false,
-                down: false,
-                mine: true,
-                build: false,
-            },
-            cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
-        });
-
-        PlayerSystem(1 / 60, 0);
-
-        expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-        expect(mockBlueprintManager.removeBlueprint).toHaveBeenCalledWith(
-            expect.objectContaining({ x: 0, y: 0, z: 0 }),
-        );
+  it('applies LASER_EFFICIENCY_1 to double laser matter yield', () => {
+    useStore.setState({
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: false,
+      matter: 0,
+      rareMatter: 0,
+      upgrades: createTestUpgrades({ LASER_EFFICIENCY_1: true }),
     });
+
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
+    );
+
+    ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 8),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: true,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+    });
+
+    PlayerSystem(1 / 60, 0);
+
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(useStore.getState().matter).toBe(2);
+  });
+
+  it('reconciles energy rate when player laser-mines a PANEL block', () => {
+    useStore.setState({
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: false,
+      energyGenerationRate: 5,
+    });
+
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
+    );
+    engine.computeWorldDerivedMetrics.mockReturnValue({
+      energyRate: 4,
+      dysonProgress: {
+        blueprintFrames: 0,
+        frames: 0,
+        panels: 0,
+        shells: 0,
+        milestones: 0,
+        prestigeReady: false,
+      },
+    });
+
+    ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 8),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: true,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+    });
+
+    PlayerSystem(1 / 60, 0);
+
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
+    expect(useStore.getState().energyGenerationRate).toBe(4);
+  });
+
+  it('reconciles energy rate when player laser-mines a SHELL block', () => {
+    useStore.setState({
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: false,
+      energyGenerationRate: 6,
+    });
+
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.SHELL : BlockType.AIR,
+    );
+    engine.computeWorldDerivedMetrics.mockReturnValue({
+      energyRate: 0,
+      dysonProgress: {
+        blueprintFrames: 0,
+        frames: 0,
+        panels: 0,
+        shells: 0,
+        milestones: 0,
+        prestigeReady: false,
+      },
+    });
+
+    ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 8),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: true,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+    });
+
+    PlayerSystem(1 / 60, 0);
+
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
+    expect(useStore.getState().energyGenerationRate).toBe(0);
+  });
+
+  it('removes blueprint registration when player laser-mines a BLUEPRINT_FRAME block', () => {
+    useStore.setState({
+      selectedTool: 'LASER',
+      asteroidOrbitEnabled: false,
+    });
+
+    const engine = getMockEngine();
+    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+      x === 0 && y === 0 && z === 0 ? BlockType.BLUEPRINT_FRAME : BlockType.AIR,
+    );
+
+    ECS.add({
+      isPlayer: true,
+      position: new THREE.Vector3(0, 0, 8),
+      input: {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        mine: true,
+        build: false,
+      },
+      cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
+    });
+
+    PlayerSystem(1 / 60, 0);
+
+    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockBlueprintManager.removeBlueprint).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 0, y: 0, z: 0 }),
+    );
+  });
 });

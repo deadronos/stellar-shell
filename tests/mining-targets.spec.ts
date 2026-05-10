@@ -23,19 +23,21 @@ describe('Mining Targets Logic', () => {
     // Center of asteroid: 2*16 + 8 = 40
     // Actually generateAsteroid uses chunk coordinates for center?
     // BvxEngine.ts: generateAsteroid(cx, cy, cz, radius)
-    // It likely calls VoxelGenerator which uses world coords or local? 
+    // It likely calls VoxelGenerator which uses world coords or local?
     // Usually (cx * 16 + 8, ...)
-    
+
     // Let's just check if ANY targets are found.
     const targets = engine.findMiningTargets(100);
-    
+
     console.log(`Found ${targets.length} mining targets`);
-    
+
     expect(targets.length).toBeGreaterThan(0);
-    
+
     const first = targets[0];
     const block = engine.getBlock(first.x, first.y, first.z);
-    expect([BlockType.ASTEROID_SURFACE, BlockType.ASTEROID_CORE, BlockType.RARE_ORE]).toContain(block);
+    expect([BlockType.ASTEROID_SURFACE, BlockType.ASTEROID_CORE, BlockType.RARE_ORE]).toContain(
+      block,
+    );
   });
 
   it('should include an exposed rare ore block as a mining target', () => {

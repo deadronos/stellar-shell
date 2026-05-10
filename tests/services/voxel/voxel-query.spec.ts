@@ -47,16 +47,14 @@ describe('VoxelQuery', () => {
 
     it('returns true when all solid voxels in the chunk are PANEL', () => {
       const panelSource: IVoxelSource = {
-        getBlock: (x, y, z) =>
-          x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
+        getBlock: (x, y, z) => (x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR),
       };
       expect(VoxelQuery.isChunkCompletedDyson(0, 0, 0, panelSource)).toBe(true);
     });
 
     it('returns true when all solid voxels in the chunk are SHELL', () => {
       const shellSource: IVoxelSource = {
-        getBlock: (x, y, z) =>
-          x === 1 && y === 1 && z === 1 ? BlockType.SHELL : BlockType.AIR,
+        getBlock: (x, y, z) => (x === 1 && y === 1 && z === 1 ? BlockType.SHELL : BlockType.AIR),
       };
       expect(VoxelQuery.isChunkCompletedDyson(0, 0, 0, shellSource)).toBe(true);
     });
@@ -83,8 +81,7 @@ describe('VoxelQuery', () => {
     it('only inspects voxels within the specified render chunk', () => {
       // Chunk (1,0,0) has a PANEL at world coord (16,0,0); chunk (0,0,0) is empty.
       const panelInChunk1: IVoxelSource = {
-        getBlock: (x, y, z) =>
-          x === 16 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
+        getBlock: (x, y, z) => (x === 16 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR),
       };
       expect(VoxelQuery.isChunkCompletedDyson(0, 0, 0, panelInChunk1)).toBe(false);
       expect(VoxelQuery.isChunkCompletedDyson(1, 0, 0, panelInChunk1)).toBe(true);

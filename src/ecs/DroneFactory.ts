@@ -17,5 +17,5 @@ export const DroneFactory = {
 
   destroy(entity: Entity) {
     ECS.remove(entity);
-  }
+  },
 };

@@ -5,7 +5,12 @@ interface ParticleOptions {
   life?: number;
 }
 
-type ParticleCallback = (position: THREE.Vector3, color: THREE.Color, count?: number, options?: ParticleOptions) => void;
+type ParticleCallback = (
+  position: THREE.Vector3,
+  color: THREE.Color,
+  count?: number,
+  options?: ParticleOptions,
+) => void;
 
 class ParticleEventsService {
   private listeners: ParticleCallback[] = [];
@@ -17,7 +22,12 @@ class ParticleEventsService {
     };
   }
 
-  public emit(position: THREE.Vector3, color: THREE.Color, count: number = 1, options?: ParticleOptions) {
+  public emit(
+    position: THREE.Vector3,
+    color: THREE.Color,
+    count: number = 1,
+    options?: ParticleOptions,
+  ) {
     this.listeners.forEach((cb) => cb(position, color, count, options));
   }
 }

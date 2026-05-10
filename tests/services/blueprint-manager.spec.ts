@@ -12,7 +12,7 @@ describe('BlueprintManager', () => {
     manager = BlueprintManager.getInstance();
     // A better pattern for testing singletons is to allow resetting or accessing internal state
     // But let's work with the public API
-    
+
     // Ensure clean state for tests via helper
     manager.resetForTests();
   });

@@ -20,91 +20,91 @@ import { DroneFactory } from './DroneFactory';
 const THROTTLE_INTERVAL_MS = 100; // 10Hz
 
 export const SystemRunner = () => {
-    // We can also handle Spawning logic here or in a separate SpawnerSystem
-    const droneCount = useStore((state) => state.droneCount);
+  // We can also handle Spawning logic here or in a separate SpawnerSystem
+  const droneCount = useStore((state) => state.droneCount);
 
   useEffect(() => {
     resetExplorerSystem();
   }, []);
 
-    useEffect(() => {
-        // Ensure Engine is initialized and world is generated
-        BvxEngine.getInstance();
+  useEffect(() => {
+    // Ensure Engine is initialized and world is generated
+    BvxEngine.getInstance();
 
-        // Sync ECS Population
-        const drones = ECS.with('isDrone').entities;
-        const currentCount = drones.length;
+    // Sync ECS Population
+    const drones = ECS.with('isDrone').entities;
+    const currentCount = drones.length;
 
-        if (currentCount < droneCount) {
-          // Spawn more
-          for (let i = currentCount; i < droneCount; i++) {
-            DroneFactory.create();
-          }
-        } else if (currentCount > droneCount) {
-          // Despawn extras
-          for (let i = currentCount - 1; i >= droneCount; i--) {
-            DroneFactory.destroy(drones[i]);
-          }
-        }
-      }, [droneCount]);
+    if (currentCount < droneCount) {
+      // Spawn more
+      for (let i = currentCount; i < droneCount; i++) {
+        DroneFactory.create();
+      }
+    } else if (currentCount > droneCount) {
+      // Despawn extras
+      for (let i = currentCount - 1; i >= droneCount; i--) {
+        DroneFactory.destroy(drones[i]);
+      }
+    }
+  }, [droneCount]);
 
-    const throttledTime = useRef(0);
+  const throttledTime = useRef(0);
 
-    useFrame((state, delta) => {
-        const elapsedTime = state.clock.elapsedTime;
-      throttledTime.current += delta * 1000;
+  useFrame((state, delta) => {
+    const elapsedTime = state.clock.elapsedTime;
+    throttledTime.current += delta * 1000;
 
-      const store = useStore.getState();
+    const store = useStore.getState();
 
-      if (throttledTime.current >= THROTTLE_INTERVAL_MS) {
-        const throttledDelta = throttledTime.current / 1000;
-            BrainSystem(state.clock);
-        EnergySystem(throttledDelta);
-        AutoBlueprintSystem(throttledDelta, elapsedTime);
-        ExplorerSystem(throttledDelta);
-        throttledTime.current -= THROTTLE_INTERVAL_MS;
-        }
+    if (throttledTime.current >= THROTTLE_INTERVAL_MS) {
+      const throttledDelta = throttledTime.current / 1000;
+      BrainSystem(state.clock);
+      EnergySystem(throttledDelta);
+      AutoBlueprintSystem(throttledDelta, elapsedTime);
+      ExplorerSystem(throttledDelta);
+      throttledTime.current -= THROTTLE_INTERVAL_MS;
+    }
 
-        MiningSystem({
-          delta,
-          elapsedTime,
-          asteroidOrbitEnabled: store.asteroidOrbitEnabled,
-          asteroidOrbitRadius: store.asteroidOrbitRadius,
-          asteroidOrbitSpeed: store.asteroidOrbitSpeed,
-          asteroidOrbitVerticalAmplitude: store.asteroidOrbitVerticalAmplitude,
-          prestigeLevel: store.prestigeLevel,
-          upgrades: store.upgrades,
-          consumeEnergy: store.consumeEnergy,
-          addMatter: store.addMatter,
-          addRareMatter: store.addRareMatter
-        });
-
-        ConstructionSystem({
-          elapsedTime,
-          asteroidOrbitEnabled: store.asteroidOrbitEnabled,
-          asteroidOrbitRadius: store.asteroidOrbitRadius,
-          asteroidOrbitSpeed: store.asteroidOrbitSpeed,
-          asteroidOrbitVerticalAmplitude: store.asteroidOrbitVerticalAmplitude,
-          consumeMatter: store.consumeMatter,
-          consumeRareMatter: store.consumeRareMatter,
-          consumeEnergy: store.consumeEnergy,
-          setEnergyRate: store.setEnergyRate,
-          setDysonProgress: store.setDysonProgress
-        });
-
-        const movementStore = useStore.getState();
-        MovementSystem({
-          delta,
-          energy: movementStore.energy,
-          prestigeLevel: movementStore.prestigeLevel,
-          upgrades: movementStore.upgrades
-        });
-
-        AsteroidOrbitSystem(elapsedTime);
-        ChunkSystem();
-        PlayerSystem(delta, elapsedTime);
-        TrailSystem(delta);
+    MiningSystem({
+      delta,
+      elapsedTime,
+      asteroidOrbitEnabled: store.asteroidOrbitEnabled,
+      asteroidOrbitRadius: store.asteroidOrbitRadius,
+      asteroidOrbitSpeed: store.asteroidOrbitSpeed,
+      asteroidOrbitVerticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+      prestigeLevel: store.prestigeLevel,
+      upgrades: store.upgrades,
+      consumeEnergy: store.consumeEnergy,
+      addMatter: store.addMatter,
+      addRareMatter: store.addRareMatter,
     });
 
-    return null;
+    ConstructionSystem({
+      elapsedTime,
+      asteroidOrbitEnabled: store.asteroidOrbitEnabled,
+      asteroidOrbitRadius: store.asteroidOrbitRadius,
+      asteroidOrbitSpeed: store.asteroidOrbitSpeed,
+      asteroidOrbitVerticalAmplitude: store.asteroidOrbitVerticalAmplitude,
+      consumeMatter: store.consumeMatter,
+      consumeRareMatter: store.consumeRareMatter,
+      consumeEnergy: store.consumeEnergy,
+      setEnergyRate: store.setEnergyRate,
+      setDysonProgress: store.setDysonProgress,
+    });
+
+    const movementStore = useStore.getState();
+    MovementSystem({
+      delta,
+      energy: movementStore.energy,
+      prestigeLevel: movementStore.prestigeLevel,
+      upgrades: movementStore.upgrades,
+    });
+
+    AsteroidOrbitSystem(elapsedTime);
+    ChunkSystem();
+    PlayerSystem(delta, elapsedTime);
+    TrailSystem(delta);
+  });
+
+  return null;
 };

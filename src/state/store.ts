@@ -122,14 +122,13 @@ export const useStore = create<StoreState>((set, get) => ({
 
   // auto-blueprint methods
   setAutoBlueprintEnabled: (enabled) => set({ autoBlueprintEnabled: enabled }),
-  toggleAutoBlueprint: () => set((state) => ({ autoBlueprintEnabled: !state.autoBlueprintEnabled })),
+  toggleAutoBlueprint: () =>
+    set((state) => ({ autoBlueprintEnabled: !state.autoBlueprintEnabled })),
   setAutoReplicatorEnabled: (enabled) =>
     set((state) => (state.upgrades.AUTO_REPLICATOR ? { autoReplicatorEnabled: enabled } : {})),
   toggleAutoReplicator: () =>
     set((state) =>
-      state.upgrades.AUTO_REPLICATOR
-        ? { autoReplicatorEnabled: !state.autoReplicatorEnabled }
-        : {}
+      state.upgrades.AUTO_REPLICATOR ? { autoReplicatorEnabled: !state.autoReplicatorEnabled } : {},
     ),
   adjustDroneRoleTarget: (role, delta) =>
     set((state) => ({
@@ -161,8 +160,7 @@ export const useStore = create<StoreState>((set, get) => ({
       matter: s.matter - def.matterCost,
       rareMatter: s.rareMatter - def.rareMatterCost,
       research: s.research - def.researchCost,
-      autoReplicatorEnabled:
-        id === 'AUTO_REPLICATOR' ? true : s.autoReplicatorEnabled,
+      autoReplicatorEnabled: id === 'AUTO_REPLICATOR' ? true : s.autoReplicatorEnabled,
       upgrades: { ...s.upgrades, [id]: true },
     }));
     return true;
@@ -173,45 +171,46 @@ export const useStore = create<StoreState>((set, get) => ({
   addEnergy: (amount) => set((state) => ({ energy: state.energy + amount })),
   setEnergyRate: (rate) => set({ energyGenerationRate: rate }),
   addResearch: (amount) => set((state) => ({ research: state.research + amount })),
-  
-  resetWorld: () => set((state) => {
-    // ── PRESTIGE ECONOMY ──────────────────────────────────────────────────────
-    // Crystals earned this run: rare-matter haul + per-prestige bonus.
-    const crystalsEarned = Math.floor(state.rareMatter / 2) + state.prestigeLevel * 5;
-    // Next seed via LCG – gives deterministic per-system variation.
-    const nextSeed = nextSystemSeed(state.systemSeed);
-    return {
-      // ── RESET (per-system state) ───────────────────────────────────────────
-      matter: 0,
-      rareMatter: 0,
-      energy: 0,
-      energyGenerationRate: 0,
-      droneCount: 0,
-      droneCost: 50,
-      autoReplicatorEnabled: false,
-      manualDroneRoleTargets: createEmptyDroneRoleTargets(),
-      dysonProgress: {
-        blueprintFrames: 0,
-        frames: 0,
-        panels: 0,
-        shells: 0,
-        milestones: 0,
-        prestigeReady: false,
-      },
-      upgrades: {
-        MINING_SPEED_1: false,
-        DRONE_SPEED_1: false,
-        LASER_EFFICIENCY_1: false,
-        AUTO_REPLICATOR: false,
-        DEEP_SCAN_1: false,
-        ADVANCED_EXPLORER: false,
-      },
-      // ── KEEP (persistent across jumps) ────────────────────────────────────
-      prestigeLevel: state.prestigeLevel + 1,
-      stellarCrystals: state.stellarCrystals + crystalsEarned,
-      systemSeed: nextSeed,
-    };
-  }),
+
+  resetWorld: () =>
+    set((state) => {
+      // ── PRESTIGE ECONOMY ──────────────────────────────────────────────────────
+      // Crystals earned this run: rare-matter haul + per-prestige bonus.
+      const crystalsEarned = Math.floor(state.rareMatter / 2) + state.prestigeLevel * 5;
+      // Next seed via LCG – gives deterministic per-system variation.
+      const nextSeed = nextSystemSeed(state.systemSeed);
+      return {
+        // ── RESET (per-system state) ───────────────────────────────────────────
+        matter: 0,
+        rareMatter: 0,
+        energy: 0,
+        energyGenerationRate: 0,
+        droneCount: 0,
+        droneCost: 50,
+        autoReplicatorEnabled: false,
+        manualDroneRoleTargets: createEmptyDroneRoleTargets(),
+        dysonProgress: {
+          blueprintFrames: 0,
+          frames: 0,
+          panels: 0,
+          shells: 0,
+          milestones: 0,
+          prestigeReady: false,
+        },
+        upgrades: {
+          MINING_SPEED_1: false,
+          DRONE_SPEED_1: false,
+          LASER_EFFICIENCY_1: false,
+          AUTO_REPLICATOR: false,
+          DEEP_SCAN_1: false,
+          ADVANCED_EXPLORER: false,
+        },
+        // ── KEEP (persistent across jumps) ────────────────────────────────────
+        prestigeLevel: state.prestigeLevel + 1,
+        stellarCrystals: state.stellarCrystals + crystalsEarned,
+        systemSeed: nextSeed,
+      };
+    }),
 
   consumeMatter: (amount) => {
     const { matter } = get();

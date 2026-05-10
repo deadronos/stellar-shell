@@ -16,7 +16,7 @@ interface MovementSystemProps {
 }
 
 export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: MovementSystemProps) => {
-  const speedMult = 1 + (prestigeLevel * 0.5);
+  const speedMult = 1 + prestigeLevel * 0.5;
   const thrusterMult = upgrades['DRONE_SPEED_1'] ? 1.5 : 1;
 
   // Low Power mode: Reduce speed by 75% when energy is depleted
@@ -34,23 +34,23 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
 
     // STEERING
     if (drone.target) {
-        steeringDesired.subVectors(drone.target, drone.position);
-        const dist = steeringDesired.length();
-        if (dist === 0) continue;
-        steeringDesired.divideScalar(dist);
+      steeringDesired.subVectors(drone.target, drone.position);
+      const dist = steeringDesired.length();
+      if (dist === 0) continue;
+      steeringDesired.divideScalar(dist);
 
-        // Prestige + upgrade modifiers
-        const currentDataSpeed = maxDroneSpeed;
+      // Prestige + upgrade modifiers
+      const currentDataSpeed = maxDroneSpeed;
 
-        if (!isOrbiting && dist < 5) {
-          steeringDesired.multiplyScalar(currentDataSpeed * (dist / 5));
-        } else {
-          steeringDesired.multiplyScalar(currentDataSpeed);
-        }
+      if (!isOrbiting && dist < 5) {
+        steeringDesired.multiplyScalar(currentDataSpeed * (dist / 5));
+      } else {
+        steeringDesired.multiplyScalar(currentDataSpeed);
+      }
 
-        steeringDelta.subVectors(steeringDesired, drone.velocity);
-        steeringDelta.clampLength(0, 35 * delta);
-        drone.velocity.add(steeringDelta);
+      steeringDelta.subVectors(steeringDesired, drone.velocity);
+      steeringDelta.clampLength(0, 35 * delta);
+      drone.velocity.add(steeringDelta);
     }
   }
 
@@ -66,7 +66,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
     const gx = Math.floor(pos.x / cellSize);
     const gy = Math.floor(pos.y / cellSize);
     const gz = Math.floor(pos.z / cellSize);
-    const key = (((gx & 0x3FF) << 20) | ((gy & 0x3FF) << 10) | (gz & 0x3FF));
+    const key = ((gx & 0x3ff) << 20) | ((gy & 0x3ff) << 10) | (gz & 0x3ff);
     if (!grid.has(key)) grid.set(key, []);
     grid.get(key)!.push(i);
   }
@@ -87,7 +87,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
     for (let x = gx - 1; x <= gx + 1; x++) {
       for (let y = gy - 1; y <= gy + 1; y++) {
         for (let z = gz - 1; z <= gz + 1; z++) {
-          const key = (((x & 0x3FF) << 20) | ((y & 0x3FF) << 10) | (z & 0x3FF));
+          const key = ((x & 0x3ff) << 20) | ((y & 0x3ff) << 10) | (z & 0x3ff);
           const cellIndices = grid.get(key);
           if (!cellIndices) continue;
 
@@ -112,7 +112,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
       d1.velocity.add(separation);
     }
 
-      d1.velocity.clampLength(0, maxDroneSpeed);
-      d1.position.addScaledVector(d1.velocity, delta);
+    d1.velocity.clampLength(0, maxDroneSpeed);
+    d1.position.addScaledVector(d1.velocity, delta);
   }
 };

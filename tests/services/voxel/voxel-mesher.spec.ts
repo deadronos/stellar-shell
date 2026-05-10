@@ -7,10 +7,10 @@ describe('VoxelMesher', () => {
   it('generateChunkMesh creates mesh data for visible blocks', () => {
     // Mock source that returns air everywhere except 0,0,0
     const sourceMock: IVoxelSource = {
-        getBlock: (x: number, y: number, z: number) => {
-            if (x === 0 && y === 0 && z === 0) return BlockType.ASTEROID_SURFACE;
-            return BlockType.AIR;
-        }
+      getBlock: (x: number, y: number, z: number) => {
+        if (x === 0 && y === 0 && z === 0) return BlockType.ASTEROID_SURFACE;
+        return BlockType.AIR;
+      },
     };
 
     const mesh = VoxelMesher.generateChunkMesh(0, 0, 0, sourceMock);
@@ -24,7 +24,7 @@ describe('VoxelMesher', () => {
 
   it('generateChunkMesh returns empty for empty chunk', () => {
     const sourceMock: IVoxelSource = {
-        getBlock: () => BlockType.AIR
+      getBlock: () => BlockType.AIR,
     };
 
     const mesh = VoxelMesher.generateChunkMesh(0, 0, 0, sourceMock);

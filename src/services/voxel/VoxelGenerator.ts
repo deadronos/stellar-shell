@@ -22,9 +22,9 @@ export class VoxelGenerator {
   public static deriveSystemParams(seed: number): SystemParams {
     const s = seed >>> 0; // treat as unsigned 32-bit
     return {
-      radius: 16 + ((s >> 8) % 9),                        // [16 – 24]
-      noiseScale: 0.08 + (s % 5) * 0.01,                  // [0.08 – 0.12]
-      rareThreshold: 0.55 + ((s >> 4) % 4) * 0.05,        // [0.55 – 0.70]
+      radius: 16 + ((s >> 8) % 9), // [16 – 24]
+      noiseScale: 0.08 + (s % 5) * 0.01, // [0.08 – 0.12]
+      rareThreshold: 0.55 + ((s >> 4) % 4) * 0.05, // [0.55 – 0.70]
     };
   }
 
@@ -67,11 +67,11 @@ export class VoxelGenerator {
                 if (dist < radius + noise * 5) {
                   let blockType = BlockType.ASTEROID_SURFACE;
                   const isCore = dist < radius * 0.5;
-                  
+
                   if (isCore) {
-                      blockType = BlockType.ASTEROID_CORE;
+                    blockType = BlockType.ASTEROID_CORE;
                   }
-                  
+
                   // Rare Ore Veins (High frequency noise)
                   const rareNoise = noise3D(
                     wx * noiseScale * 3,
@@ -79,15 +79,10 @@ export class VoxelGenerator {
                     wz * noiseScale * 3,
                   );
                   if (rareNoise > rareThreshold) {
-                      blockType = BlockType.RARE_ORE;
+                    blockType = BlockType.RARE_ORE;
                   }
 
-                  voxelModifier.setBlock(
-                    wx,
-                    wy,
-                    wz,
-                    blockType,
-                  );
+                  voxelModifier.setBlock(wx, wy, wz, blockType);
                 }
               }
             }

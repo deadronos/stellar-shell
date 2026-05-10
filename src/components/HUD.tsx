@@ -44,17 +44,13 @@ export const HUD = () => {
           </div>
           <div>
             <div className="text-xs text-purple-400 uppercase tracking-widest">Rare</div>
-            <div className="text-xl font-mono text-purple-300">
-              {rareMatter}
-            </div>
+            <div className="text-xl font-mono text-purple-300">{rareMatter}</div>
           </div>
           <div>
             <div className="text-xs text-yellow-400 uppercase tracking-widest">Energy</div>
             <div className="text-xl font-mono text-yellow-300">
               {Math.floor(energy)}
-              <span className="text-xs text-yellow-600 ml-1">
-                +{energyGenerationRate}/s
-              </span>
+              <span className="text-xs text-yellow-600 ml-1">+{energyGenerationRate}/s</span>
             </div>
           </div>
           <div aria-label={`Drones: ${droneCount}`}>

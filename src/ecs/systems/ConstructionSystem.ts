@@ -33,7 +33,7 @@ export const ConstructionSystem = ({
   consumeRareMatter,
   consumeEnergy,
   setEnergyRate,
-  setDysonProgress
+  setDysonProgress,
 }: ConstructionSystemProps) => {
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
     enabled: asteroidOrbitEnabled,
