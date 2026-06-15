@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../state/store';
 
 export const SettingsModal = () => {
@@ -21,6 +21,18 @@ export const SettingsModal = () => {
   );
   const toggleAutoBlueprint = useStore((state) => state.toggleAutoBlueprint);
   const toggleAutoReplicator = useStore((state) => state.toggleAutoReplicator);
+  const resetUniverse = useStore((state) => state.resetUniverse);
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const handleResetUniverse = () => {
+    if (!showResetConfirm) {
+      setShowResetConfirm(true);
+      return;
+    }
+    resetUniverse();
+    setShowResetConfirm(false);
+  };
 
   if (!isSettingsOpen) return null;
 
@@ -135,7 +147,25 @@ export const SettingsModal = () => {
           </label>
         </div>
 
-        <div className="mt-8 text-center text-xs text-gray-600">Stellar Shell v0.1.0 dev</div>
+        <div className="mt-4 pt-4 border-t border-red-900/30">
+          <button
+            onClick={handleResetUniverse}
+            className={`w-full py-2 px-4 rounded-lg font-mono text-sm font-bold transition-all ${
+              showResetConfirm
+                ? 'bg-red-600 text-white hover:bg-red-500'
+                : 'bg-red-900/30 text-red-400 hover:bg-red-900/50 hover:text-red-300 border border-red-800/30'
+            }`}
+          >
+            {showResetConfirm ? '⚠ Confirm Reset Universe' : 'Reset Universe'}
+          </button>
+          {showResetConfirm && (
+            <p className="text-xs text-red-400/70 mt-2 text-center">
+              This will permanently delete all progress.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-4 text-center text-xs text-gray-600">Stellar Shell v0.1.0 dev</div>
       </div>
     </div>
   );
