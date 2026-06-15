@@ -3,6 +3,7 @@ import { useStore } from '../state/store';
 import { BvxEngine } from '../services/BvxEngine';
 import { VoxelGenerator } from '../services/voxel/VoxelGenerator';
 import { BlueprintManager } from '../services/BlueprintManager';
+import { DroneFactory } from '../ecs/DroneFactory';
 import { SettingsModal } from './SettingsModal';
 import { DroneDebugPanel } from './DroneDebugPanel';
 import { UpgradesPanel } from './UpgradesPanel';
@@ -175,6 +176,11 @@ export const HUD = () => {
 
               // Reset engine (clears voxels, ECS chunks, and blueprint overlays)
               engine.resetWorld(blueprints);
+
+              // Synchronously remove all drone entities and reset system caches
+              // so no stale targets survive into the next frame before React
+              // re-syncs through the store's droneCount.
+              DroneFactory.resetDrones();
 
               // Advance prestige, grant stellar crystals, and update systemSeed
               useStore.getState().resetWorld();
