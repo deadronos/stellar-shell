@@ -52,7 +52,7 @@ You play as an overseer of a drone swarm. Your goal is to gather resources ("Mat
 pnpm dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser. The dev server is configured to run on port 3000 in `vite.config.ts`.
 
 ### GitHub Pages Deployment
 

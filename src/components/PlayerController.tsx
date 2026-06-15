@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ECS } from '../ecs/world';
+import { useStore } from '../state/store';
 
 export const PlayerController = () => {
   const { camera, gl } = useThree();
@@ -41,7 +42,16 @@ export const PlayerController = () => {
 
   // Input Handling
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => (keys.current[e.code] = true);
+    const onKeyDown = (e: KeyboardEvent) => {
+      keys.current[e.code] = true;
+
+      // Tool shortcuts documented in README
+      if (e.code === 'Digit1') {
+        useStore.getState().setTool('LASER');
+      } else if (e.code === 'Digit2') {
+        useStore.getState().setTool('BUILD');
+      }
+    };
     const onKeyUp = (e: KeyboardEvent) => (keys.current[e.code] = false);
 
     // Mouse State

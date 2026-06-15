@@ -1,8 +1,20 @@
 # Active Context — stellar-shell
 
-**Current focus:** Maintenance pass completed; the next work item is roadmap selection and playtest tuning.
+**Current focus:** Completed a maintenance bundle branch (`fix/maintenance-pass-5-items`) addressing five review findings plus one incidental TypeScript config fix. Awaiting review/merge before resuming roadmap work.
 
 **Recent changes:**
+
+- Completed `TASK017` + `TASK018` + `TASK019` + `TASK020` + `TASK021` (design `DES011`):
+  - Removed the broken `.github/workflows/profile.yml` (npm/pnpm mismatch + missing `scripts/profile.js`).
+  - Updated `README.md` dev server port from `5173` to `3000` to match `vite.config.ts`.
+  - Implemented `Digit1`/`Digit2` keyboard shortcuts for Laser/Build tools in `PlayerController.tsx`.
+  - Added unit tests in `tests/components/player-controller.spec.tsx` covering the new shortcuts.
+  - Removed unused `multithreading` dependency from `package.json`/`pnpm-lock.yaml`.
+  - Added an inline SVG favicon to `index.html` to eliminate `/favicon.ico` 404s.
+  - Added `"exclude": ["node_modules", "dist"]` to `tsconfig.json` so local build artifacts no longer break `pnpm typecheck`.
+  - Validated with `pnpm lint`, `pnpm typecheck`, `pnpm test` (171 tests), and `pnpm build`.
+
+**Previous changes:**
 
 - Completed `TASK016` GitHub Pages base-path fix:
   - Vite now uses `/stellar-shell/` as the production asset base,
