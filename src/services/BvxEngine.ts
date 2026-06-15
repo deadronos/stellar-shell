@@ -10,6 +10,21 @@ import { VoxelQuery } from './voxel/VoxelQuery';
 import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
 import { BlueprintManager } from './BlueprintManager';
 
+const NEIGHBOR_DIRS: [number, number, number][] = [
+  [1, 0, 0],
+  [-1, 0, 0],
+  [0, 1, 0],
+  [0, -1, 0],
+  [0, 0, 1],
+  [0, 0, -1],
+];
+
+const MINE_TYPES = new Set<BlockType>([
+  BlockType.ASTEROID_SURFACE,
+  BlockType.ASTEROID_CORE,
+  BlockType.RARE_ORE,
+]);
+
 export class BvxEngine {
   private static readonly DYSON_BLUEPRINT_RADIUS = 24;
   private static readonly DYSON_BLUEPRINT_NODE_COUNT = 64;
@@ -28,6 +43,14 @@ export class BvxEngine {
     panels: 0,
     shells: 0,
   };
+
+  // Incremental spatial indexes (issue #66)
+  // Exposed blocks (ASTEROID_SURFACE, ASTEROID_CORE, RARE_ORE) with at least one AIR or FRAME neighbor
+  private exposedMines = new Set<string>();
+  // All FRAME blocks eligible for PANEL upgrade
+  private buildableFrames = new Set<string>();
+  // All PANEL blocks eligible for SHELL upgrade
+  private buildablePanels = new Set<string>();
 
   // Singleton pattern for the engine core
   private static instance: BvxEngine;
@@ -122,6 +145,78 @@ export class BvxEngine {
     this.counters = this.scanDysonCounts();
   }
 
+  // ── Incremental spatial index helpers ──────────────────────────────────────
+
+  private posKey(x: number, y: number, z: number): string {
+    return `${x},${y},${z}`;
+  }
+
+  private isMineType(block: BlockType): boolean {
+    return MINE_TYPES.has(block);
+  }
+
+  /** Check whether a block at (x,y,z) has at least one AIR or FRAME neighbor. */
+  private isExposed(x: number, y: number, z: number): boolean {
+    for (const [dx, dy, dz] of NEIGHBOR_DIRS) {
+      const neighbor = this.getBlock(x + dx, y + dy, z + dz);
+      if (neighbor === BlockType.AIR || neighbor === BlockType.FRAME) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Evaluate whether the block at (x,y,z) should appear in exposedMines.
+   * Call after any block change that could affect this position's exposure.
+   */
+  private evaluateBlockForMining(x: number, y: number, z: number): void {
+    const key = this.posKey(x, y, z);
+    this.exposedMines.delete(key);
+
+    const block = this.getBlock(x, y, z);
+    if (!this.isMineType(block)) return;
+
+    if (this.isExposed(x, y, z)) {
+      this.exposedMines.add(key);
+    }
+  }
+
+  /**
+   * Evaluate whether the block at (x,y,z) should appear in buildableFrames
+   * or buildablePanels. Building eligibility depends only on the block type
+   * itself, not on neighbors.
+   */
+  private evaluateBlockForBuilding(x: number, y: number, z: number): void {
+    const key = this.posKey(x, y, z);
+    this.buildableFrames.delete(key);
+    this.buildablePanels.delete(key);
+
+    const block = this.getBlock(x, y, z);
+    if (block === BlockType.FRAME) {
+      this.buildableFrames.add(key);
+    } else if (block === BlockType.PANEL) {
+      this.buildablePanels.add(key);
+    }
+  }
+
+  /**
+   * After a block change at (wx,wy,wz), re-evaluate the changed position
+   * and all 6 neighbors to keep spatial indexes consistent.
+   */
+  private updateSpatialIndexes(wx: number, wy: number, wz: number): void {
+    // Re-evaluate the changed position
+    this.evaluateBlockForMining(wx, wy, wz);
+    this.evaluateBlockForBuilding(wx, wy, wz);
+
+    // Re-evaluate neighbors (their exposure may have changed)
+    for (const [dx, dy, dz] of NEIGHBOR_DIRS) {
+      this.evaluateBlockForMining(wx + dx, wy + dy, wz + dz);
+      // Building sets only depend on the block itself, not on neighbors,
+      // so we only re-evaluate building for the changed position above.
+    }
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────────────
+
   public setBlock(wx: number, wy: number, wz: number, type: BlockType) {
     // 1. Update bvx-kit VoxelWorld
     // bvx-kit uses 4x4x4 chunks.
@@ -186,6 +281,9 @@ export class BvxEngine {
 
     // Mark neighbors dirty if on boundary
     this.markNeighborsDirty(wx, wy, wz, cx, cy, cz);
+
+    // 3. Update incremental spatial indexes
+    this.updateSpatialIndexes(wx, wy, wz);
   }
 
   private markNeighborsDirty(
@@ -245,12 +343,24 @@ export class BvxEngine {
     return (bChunk as VoxelChunk8).getMetaData(vIndex) as BlockType;
   }
 
-  // Find blocks of specific type
+  // Find blocks of specific type — queries incremental spatial indexes instead of full world scan.
   public findBlocksByType(
     type: BlockType,
     limit: number = 20,
   ): { x: number; y: number; z: number }[] {
-    return VoxelQuery.findBlocksByType(this.chunkEntities.values(), this, type, limit);
+    const blocks: { x: number; y: number; z: number }[] = [];
+
+    let source: Set<string>;
+    if (type === BlockType.FRAME) source = this.buildableFrames;
+    else if (type === BlockType.PANEL) source = this.buildablePanels;
+    else return []; // Unhandled types have no index
+
+    for (const key of source) {
+      if (blocks.length >= limit) break;
+      const [x, y, z] = key.split(',').map(Number);
+      blocks.push({ x, y, z });
+    }
+    return blocks;
   }
 
   // Compute the energy generation rate from actual voxel world state (single source of truth).
@@ -324,14 +434,25 @@ export class BvxEngine {
       shells: 0,
     };
 
+    // Reset incremental spatial indexes
+    this.exposedMines.clear();
+    this.buildableFrames.clear();
+    this.buildablePanels.clear();
+
     // Clear blueprint overlays so stale markers don't persist in the new system
     blueprints.reset();
     this.refreshDysonCountersFromWorld();
   }
 
-  // Find valid mining targets (Asteroids) - Prefer exposed surface blocks
+  // Find valid mining targets (Asteroids) — queries the incremental exposedMines index.
   public findMiningTargets(limit: number = 20): { x: number; y: number; z: number }[] {
-    return VoxelQuery.findMiningTargets(this.chunkEntities.values(), this, limit);
+    const targets: { x: number; y: number; z: number }[] = [];
+    for (const key of this.exposedMines) {
+      if (targets.length >= limit) break;
+      const [x, y, z] = key.split(',').map(Number);
+      targets.push({ x, y, z });
+    }
+    return targets;
   }
 
   // Procedural Generation
