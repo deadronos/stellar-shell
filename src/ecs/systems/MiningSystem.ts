@@ -9,6 +9,12 @@ import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 const ENGINE = BvxEngine.getInstance();
 const HUB_POSITION = new THREE.Vector3(0, 0, 0);
 
+// Scratch objects reused across frames to avoid per-frame allocation.
+const _scratchTarget = new THREE.Vector3();
+const _scratchOffset = new THREE.Vector3();
+const _scratchColor = new THREE.Color();
+const _scratchRed = new THREE.Color('#ff0000');
+
 interface MiningSystemProps {
   delta: number;
   elapsedTime: number;
@@ -52,12 +58,12 @@ export const MiningSystem = ({
 
   for (const drone of miningDrones) {
     if (drone.state === 'MOVING_TO_MINE' && drone.targetBlock) {
-      const worldTarget = new THREE.Vector3(
+      _scratchTarget.set(
         drone.targetBlock.x + orbitOffset.x,
         drone.targetBlock.y + orbitOffset.y,
         drone.targetBlock.z + orbitOffset.z,
       );
-      drone.target.copy(worldTarget);
+      drone.target.copy(_scratchTarget);
       const dist = drone.position.distanceTo(drone.target);
       // Arrival Check
       if (dist < 1.5) {
@@ -91,10 +97,10 @@ export const MiningSystem = ({
           // Visual feedback: If out of energy, emit red "exhaust" sparks instead of material-colored ones
           if (Math.random() < particleThreshold) {
             const color = hasEnergy
-              ? new THREE.Color(BLOCK_COLORS[block] || '#ffffff')
-              : new THREE.Color('#ff0000'); // Low power alert color
+              ? _scratchColor.set(BLOCK_COLORS[block] || '#ffffff')
+              : _scratchRed;
 
-            ParticleEvents.emit(worldTarget.clone(), color, 1);
+            ParticleEvents.emit(_scratchTarget, color, 1);
           }
 
           if (drone.miningProgress >= 100) {
@@ -105,14 +111,12 @@ export const MiningSystem = ({
             drone.miningProgress = 0;
 
             // Set new target: Hub
-            const returnPos = HUB_POSITION.clone().add(
-              new THREE.Vector3(
-                (Math.random() - 0.5) * 8,
-                (Math.random() - 0.5) * 4,
-                (Math.random() - 0.5) * 8,
-              ),
+            _scratchOffset.set(
+              (Math.random() - 0.5) * 8,
+              (Math.random() - 0.5) * 4,
+              (Math.random() - 0.5) * 8,
             );
-            drone.target.copy(returnPos);
+            drone.target.copy(HUB_POSITION).add(_scratchOffset);
             ECS.removeComponent(drone, 'targetBlock');
           }
           // Else: Stay here and keep mining next frame

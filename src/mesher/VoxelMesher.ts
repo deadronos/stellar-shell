@@ -1,7 +1,19 @@
-import * as THREE from 'three';
 import { BlockType } from '../types';
 import { CHUNK_SIZE, IS_TRANSPARENT, BLOCK_COLORS } from '../constants';
 import { IVoxelSource } from '../services/voxel/types';
+
+// Precompute base RGB values for each block type to avoid per-face THREE.Color allocation.
+const BASE_RGB: Record<number, [number, number, number]> = {};
+
+const hexToRgb = (hex: string): [number, number, number] => {
+  const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
+  const parsed = parseInt(normalized, 16);
+  return [((parsed >> 16) & 0xff) / 255, ((parsed >> 8) & 0xff) / 255, (parsed & 0xff) / 255];
+};
+
+for (const [type, hex] of Object.entries(BLOCK_COLORS)) {
+  BASE_RGB[Number(type)] = hexToRgb(hex);
+}
 
 export class VoxelMesher {
   public static generateChunkMesh(
@@ -141,20 +153,22 @@ export class VoxelMesher {
     norm.push(...normal, ...normal, ...normal, ...normal);
 
     // Color
-    const colorHex = BLOCK_COLORS[type] || '#ff00ff';
-    const c = new THREE.Color(colorHex);
+    const [br, bg, bb] = BASE_RGB[type] ?? [1, 0, 1];
+    let r = br;
+    let g = bg;
+    let b = bb;
 
     // Add visual noise to surface/core blocks for "texture" without actual textures
     if (type === BlockType.ASTEROID_SURFACE || type === BlockType.ASTEROID_CORE) {
       // Deterministic pseudo-random noise based on world position to avoid flickering
       const noiseVal = (Math.sin(x * 12.9898 + y * 78.233 + z * 53.53) * 43758.5453) % 1;
       const variance = (noiseVal - 0.5) * 0.15; // +/- 7% brightness
-      c.r = Math.max(0, Math.min(1, c.r + variance));
-      c.g = Math.max(0, Math.min(1, c.g + variance));
-      c.b = Math.max(0, Math.min(1, c.b + variance));
+      r = Math.max(0, Math.min(1, r + variance));
+      g = Math.max(0, Math.min(1, g + variance));
+      b = Math.max(0, Math.min(1, b + variance));
     }
 
-    col.push(c.r, c.g, c.b, c.r, c.g, c.b, c.r, c.g, c.b, c.r, c.g, c.b);
+    col.push(r, g, b, r, g, b, r, g, b, r, g, b);
 
     // Indices (2 triangles)
     ind.push(i, i + 1, i + 2);
