@@ -17,5 +17,5 @@
 
 - **Throttling**: `ChunkSystem` runs every frame in `useFrame`; only chunks with `needsUpdate: true` are dispatched to the worker pool.
 - **Logic Cadence**: `SystemRunner` may throttle expensive simulation slices on a fixed cadence (currently 10Hz) and should preserve leftover time between frames rather than discarding it.
-- **Hot-Path Allocation**: Prefer reusing scratch vectors/objects inside per-frame ECS systems instead of allocating new `THREE.Vector3` instances in tight loops.
+- **Hot-Path Allocation**: Prefer reusing scratch vectors/objects inside per-frame ECS systems instead of allocating new `THREE.Vector3` instances in tight loops. Apply the same rule to `THREE.Color` in renderers and meshers; use precomputed palettes where possible (see `src/mesher/VoxelMesher.ts`).
 - **Culling**: Meshing implements face culling in `src/mesher/VoxelMesher.ts` (`VoxelMesher.generateChunkMesh`).

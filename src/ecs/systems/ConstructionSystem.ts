@@ -10,6 +10,10 @@ import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 
 const ENGINE = BvxEngine.getInstance();
 
+// Scratch objects reused across frames to avoid per-frame allocation.
+const _scratchTarget = new THREE.Vector3();
+const _scratchColor = new THREE.Color();
+
 interface ConstructionSystemProps {
   elapsedTime: number;
   asteroidOrbitEnabled: boolean;
@@ -45,12 +49,12 @@ export const ConstructionSystem = ({
 
   for (const drone of buildingDrones) {
     if (drone.state === 'MOVING_TO_BUILD' && drone.targetBlock) {
-      const worldTarget = new THREE.Vector3(
+      _scratchTarget.set(
         drone.targetBlock.x + orbitOffset.x,
         drone.targetBlock.y + orbitOffset.y,
         drone.targetBlock.z + orbitOffset.z,
       );
-      drone.target.copy(worldTarget);
+      drone.target.copy(_scratchTarget);
       const dist = drone.position.distanceTo(drone.target);
 
       if (dist < 1.5) {
@@ -62,11 +66,7 @@ export const ConstructionSystem = ({
             ENGINE.setBlock(x, y, z, BlockType.FRAME);
             BlueprintManager.getInstance().removeBlueprint({ x, y, z });
             setDysonProgress(ENGINE.computeDysonProgress());
-            ParticleEvents.emit(
-              worldTarget.clone(),
-              new THREE.Color(BLOCK_COLORS[BlockType.FRAME]),
-              5,
-            );
+            ParticleEvents.emit(_scratchTarget, _scratchColor.set(BLOCK_COLORS[BlockType.FRAME]), 5);
           }
         } else if (currentBlock === BlockType.FRAME) {
           if (consumeMatter(FRAME_COST) && consumeEnergy(10)) {
@@ -74,7 +74,7 @@ export const ConstructionSystem = ({
             const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
             setEnergyRate(energyRate);
             setDysonProgress(dysonProgress);
-            ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0x00ffff), 8);
+            ParticleEvents.emit(_scratchTarget, _scratchColor.set(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
           if (consumeRareMatter(SHELL_COST) && consumeEnergy(50)) {
@@ -82,7 +82,7 @@ export const ConstructionSystem = ({
             const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
             setEnergyRate(energyRate);
             setDysonProgress(dysonProgress);
-            ParticleEvents.emit(worldTarget.clone(), new THREE.Color(0xffaa00), 15);
+            ParticleEvents.emit(_scratchTarget, _scratchColor.set(0xffaa00), 15);
           }
         }
 

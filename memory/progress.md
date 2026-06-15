@@ -32,11 +32,14 @@
   - Added inline SVG favicon to stop `/favicon.ico` 404s.
   - Excluded `dist` from `tsconfig.json` so local builds do not break `pnpm typecheck`.
 
+**What works:**
+
+- TASK022 completed: per-frame `THREE.Vector3` / `THREE.Color` allocations removed from `MiningSystem`, `ConstructionSystem`, `MovementSystem`, `Drones.tsx`, `LaserRenderer.tsx`, and `VoxelMesher`.
+
 **What's left / planned work:**
 
 - Gameplay balance tuning after deterministic auto-blueprint expansion changes.
 - Optional cleanup of any remaining non-blocking test-only lint warnings.
-- Continue next feature roadmap item (TBD).
 
 **Known issues / TODOs:**
 
@@ -46,4 +49,4 @@
 - Monitor how often players pin too many builders or explorers so future fallback-borrowing rules can be evaluated from playtesting rather than guesswork.
 - No remaining blocking issues from the review pass.
 
-**Last updated:** 2026-03-23
+**Last updated:** 2026-06-15

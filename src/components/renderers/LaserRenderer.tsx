@@ -10,6 +10,9 @@ export const LaserRenderer = () => {
     [],
   );
 
+  // Scratch target position reused each frame to avoid per-drone allocation.
+  const _targetPosition = useMemo(() => new THREE.Vector3(), []);
+
   // Laser Lines Geometry
   const laserGeo = useMemo(() => {
     const geo = new THREE.BufferGeometry();
@@ -32,9 +35,8 @@ export const LaserRenderer = () => {
         (drone.state === 'MOVING_TO_MINE' || drone.state === 'MOVING_TO_BUILD') &&
         drone.targetBlock
       ) {
-        const dist = drone.position.distanceTo(
-          new THREE.Vector3(drone.targetBlock.x, drone.targetBlock.y, drone.targetBlock.z),
-        );
+        _targetPosition.set(drone.targetBlock.x, drone.targetBlock.y, drone.targetBlock.z);
+        const dist = drone.position.distanceTo(_targetPosition);
         // Show laser if close enough
         if (dist < 3) {
           const idx = laserIdx * 6; // 2 points * 3 coords
@@ -42,9 +44,9 @@ export const LaserRenderer = () => {
           laserPositions[idx + 1] = drone.position.y;
           laserPositions[idx + 2] = drone.position.z;
 
-          laserPositions[idx + 3] = drone.targetBlock.x;
-          laserPositions[idx + 4] = drone.targetBlock.y;
-          laserPositions[idx + 5] = drone.targetBlock.z;
+          laserPositions[idx + 3] = _targetPosition.x;
+          laserPositions[idx + 4] = _targetPosition.y;
+          laserPositions[idx + 5] = _targetPosition.z;
 
           laserIdx++;
         }

@@ -7,6 +7,7 @@ const MAX_SEPARATION_DISTANCE_SQ = 6.25; // 2.5^2
 const steeringDesired = new THREE.Vector3();
 const steeringDelta = new THREE.Vector3();
 const separationPush = new THREE.Vector3();
+const separationSum = new THREE.Vector3();
 
 interface MovementSystemProps {
   delta: number;
@@ -75,7 +76,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
     const d1 = allDrones[i];
     if (!d1.velocity) continue;
 
-    const separation = new THREE.Vector3();
+    separationSum.set(0, 0, 0);
     let neighbors = 0;
 
     const pos = d1.position;
@@ -99,7 +100,7 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
             if (distSq > 0 && distSq < MAX_SEPARATION_DISTANCE_SQ) {
               separationPush.subVectors(d1.position, d2.position);
               separationPush.multiplyScalar(1 / distSq);
-              separation.add(separationPush);
+              separationSum.add(separationPush);
               neighbors++;
             }
           }
@@ -108,8 +109,8 @@ export const MovementSystem = ({ delta, energy, prestigeLevel, upgrades }: Movem
     }
 
     if (neighbors > 0) {
-      separation.divideScalar(neighbors).multiplyScalar(20 * delta);
-      d1.velocity.add(separation);
+      separationSum.divideScalar(neighbors).multiplyScalar(20 * delta);
+      d1.velocity.add(separationSum);
     }
 
     d1.velocity.clampLength(0, maxDroneSpeed);

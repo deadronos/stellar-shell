@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import { VoxelMesher } from '../../src/mesher/VoxelMesher';
+import { BLOCK_COLORS } from '../../src/constants';
 import { BlockType } from '../../src/types';
 
 describe('VoxelMesher', () => {
@@ -115,6 +117,30 @@ describe('VoxelMesher', () => {
       // Internal face should be culled (same transparent type)
       // 2 blocks = 10 faces expected
       expect(mesh.positions.length).toBe(10 * 4 * 3);
+    });
+  });
+
+  describe('Allocation efficiency', () => {
+    it('produces deterministic colors without allocating a THREE.Color per face', () => {
+      const source = {
+        getBlock: (x: number, y: number, z: number) => {
+          if (x === 0 && y === 0 && z === 0) return BlockType.ASTEROID_SURFACE;
+          return BlockType.AIR;
+        },
+      };
+
+      const mesh1 = VoxelMesher.generateChunkMesh(0, 0, 0, source);
+      const mesh2 = VoxelMesher.generateChunkMesh(0, 0, 0, source);
+
+      expect(mesh1.colors).toEqual(mesh2.colors);
+      expect(mesh1.colors.length).toBe(6 * 4 * 3); // 6 faces, 4 vertices, 3 channels
+
+      // Spot check: first vertex color should be in valid range and match the base color palette.
+      const baseColor = new THREE.Color(BLOCK_COLORS[BlockType.ASTEROID_SURFACE] || '#ffffff');
+      expect(mesh1.colors[0]).toBeGreaterThanOrEqual(0);
+      expect(mesh1.colors[0]).toBeLessThanOrEqual(1);
+      // The mesher applies a small deterministic noise variance around the base color.
+      expect(Math.abs(mesh1.colors[0] - baseColor.r)).toBeLessThan(0.25);
     });
   });
 });

@@ -4,6 +4,10 @@
 
 - No in progress tasks at the moment.
 
+## Completed
+
+- [TASK022] Reduce Per-Frame Object Allocations - Completed 2026-06-15 - Refactored six hot paths to use scratch vectors/colors or a precomputed RGB palette; issue #63.
+
 ## Pending
 
 - No pending tasks at the moment.

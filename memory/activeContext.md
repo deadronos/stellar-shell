@@ -1,9 +1,14 @@
 # Active Context — stellar-shell
 
-**Current focus:** Completed a maintenance bundle branch (`fix/maintenance-pass-5-items`) addressing five review findings plus one incidental TypeScript config fix. Awaiting review/merge before resuming roadmap work.
+**Current focus:** Completed `TASK022` (issue #63) — reduced per-frame `THREE.Vector3` / `THREE.Color` allocations across ECS systems, renderers, and chunk meshing. PR pending.
 
 **Recent changes:**
 
+- Completed `TASK022` (design `DES012`):
+  - Removed `THREE` dependency from `VoxelMesher` by switching to a precomputed RGB palette.
+  - Added module-level scratch vectors/colors in `MiningSystem`, `ConstructionSystem`, `MovementSystem`, `Drones.tsx`, and `LaserRenderer.tsx`.
+  - Added regression test for deterministic mesher colors.
+  - Validated with `pnpm lint`, `pnpm typecheck`, `pnpm test` (172 tests), and `pnpm build`.
 - Completed `TASK017` + `TASK018` + `TASK019` + `TASK020` + `TASK021` (design `DES011`):
   - Removed the broken `.github/workflows/profile.yml` (npm/pnpm mismatch + missing `scripts/profile.js`).
   - Updated `README.md` dev server port from `5173` to `3000` to match `vite.config.ts`.
