@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 
-interface ParticleOptions {
+export interface ParticleOptions {
   velocity?: THREE.Vector3;
   life?: number;
 }
 
-type ParticleCallback = (
+export type ParticleCallback = (
   position: THREE.Vector3,
   color: THREE.Color,
   count?: number,
   options?: ParticleOptions,
 ) => void;
 
-class ParticleEventsService {
+export class ParticleEventsService {
   private listeners: ParticleCallback[] = [];
 
   public subscribe(callback: ParticleCallback): () => void {
@@ -32,4 +32,9 @@ class ParticleEventsService {
   }
 }
 
+/**
+ * Legacy global singleton for non-system consumers that have not yet been migrated
+ * to dependency injection. New code should prefer receiving a `ParticleEventsService`
+ * instance through `RuntimeContext`.
+ */
 export const ParticleEvents = new ParticleEventsService();

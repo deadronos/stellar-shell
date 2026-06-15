@@ -30,12 +30,13 @@ export default function App() {
             </EffectComposer>
 
             {/* Game World */}
-            <SystemRunner />
-            <VoxelWorld />
-            <Drones />
+            <SystemRunner>
+              <VoxelWorld />
+              <Drones />
 
-            {/* Input & Camera */}
-            <PlayerController />
+              {/* Input & Camera */}
+              <PlayerController />
+            </SystemRunner>
           </Suspense>
         </Canvas>
 

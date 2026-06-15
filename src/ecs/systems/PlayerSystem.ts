@@ -1,16 +1,21 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
-import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { FRAME_COST } from '../../constants';
-import { BlueprintManager } from '../../services/BlueprintManager';
 import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
+import type { RuntimeContext } from '../RuntimeContext';
 
-const ENGINE = BvxEngine.getInstance();
 const SPEED = 15;
 
-export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
+interface PlayerSystemProps {
+  runtime: RuntimeContext;
+  delta: number;
+  elapsedTime: number;
+}
+
+export const PlayerSystem = ({ runtime, delta, elapsedTime = 0 }: PlayerSystemProps) => {
+  const { engine, blueprints } = runtime;
   const players = ECS.with('isPlayer', 'position', 'input', 'cameraQuaternion');
   const store = useStore.getState();
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
@@ -72,7 +77,7 @@ export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
         const by = Math.floor(testPos.y - orbitOffset.y);
         const bz = Math.floor(testPos.z - orbitOffset.z);
 
-        const block = ENGINE.getBlock(bx, by, bz);
+        const block = engine.getBlock(bx, by, bz);
         if (
           block !== BlockType.AIR &&
           !(store.selectedTool === 'BUILD' && block === BlockType.FRAME)
@@ -86,7 +91,7 @@ export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
 
       if (input.mine && store.selectedTool === 'LASER') {
         if (hitBlock) {
-          ENGINE.setBlock(hitPos.x, hitPos.y, hitPos.z, BlockType.AIR);
+          engine.setBlock(hitPos.x, hitPos.y, hitPos.z, BlockType.AIR);
           // Laser Capacitor upgrade: 2× resource yield
           const laserMult = store.upgrades['LASER_EFFICIENCY_1'] ? 2 : 1;
           // Determine resource
@@ -95,28 +100,28 @@ export const PlayerSystem = (delta: number, elapsedTime: number = 0) => {
           else if (hitBlock === BlockType.RARE_ORE) store.addRareMatter(1 * laserMult);
           else if (hitBlock === BlockType.FRAME) {
             store.addMatter(FRAME_COST); // Recycle
-            store.setDysonProgress(ENGINE.computeDysonProgress());
+            store.setDysonProgress(engine.computeDysonProgress());
           } else if (hitBlock === BlockType.BLUEPRINT_FRAME) {
-            BlueprintManager.getInstance().removeBlueprint({
+            blueprints.removeBlueprint({
               x: hitPos.x,
               y: hitPos.y,
               z: hitPos.z,
             });
-            store.setDysonProgress(ENGINE.computeDysonProgress());
+            store.setDysonProgress(engine.computeDysonProgress());
           } else if (hitBlock === BlockType.PANEL || hitBlock === BlockType.SHELL) {
             // Reconcile energy rate from actual world state after removal
-            const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
+            const { energyRate, dysonProgress } = engine.computeWorldDerivedMetrics();
             store.setEnergyRate(energyRate);
             store.setDysonProgress(dysonProgress);
           }
         }
       } else if (input.build && store.selectedTool === 'BUILD') {
         // Logic: Set voxel to 'BLUEPRINT_FRAME' (visual ghost) and register in manager.
-        const current = ENGINE.getBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z);
+        const current = engine.getBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z);
         if (current === BlockType.AIR) {
-          ENGINE.setBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z, BlockType.BLUEPRINT_FRAME);
-          BlueprintManager.getInstance().addBlueprint(lastAirPos);
-          store.setDysonProgress(ENGINE.computeDysonProgress());
+          engine.setBlock(lastAirPos.x, lastAirPos.y, lastAirPos.z, BlockType.BLUEPRINT_FRAME);
+          blueprints.addBlueprint(lastAirPos);
+          store.setDysonProgress(engine.computeDysonProgress());
         }
       }
 

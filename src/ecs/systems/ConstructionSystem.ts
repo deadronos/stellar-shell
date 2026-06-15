@@ -1,14 +1,10 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
-import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType, DysonProgressMetrics } from '../../types';
 import { FRAME_COST, SHELL_COST } from '../../constants';
-import { BlueprintManager } from '../../services/BlueprintManager';
-import { ParticleEvents } from '../../services/ParticleEvents';
 import { BLOCK_COLORS } from '../../constants';
 import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
-
-const ENGINE = BvxEngine.getInstance();
+import type { RuntimeContext } from '../RuntimeContext';
 
 // Scratch objects reused across frames to avoid per-frame allocation.
 const _scratchTarget = new THREE.Vector3();
@@ -25,6 +21,7 @@ interface ConstructionSystemProps {
   consumeEnergy: (amount: number) => boolean;
   setEnergyRate: (rate: number) => void;
   setDysonProgress: (progress: DysonProgressMetrics) => void;
+  runtime: RuntimeContext;
 }
 
 export const ConstructionSystem = ({
@@ -38,7 +35,9 @@ export const ConstructionSystem = ({
   consumeEnergy,
   setEnergyRate,
   setDysonProgress,
+  runtime,
 }: ConstructionSystemProps) => {
+  const { engine, blueprints, particles } = runtime;
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
     enabled: asteroidOrbitEnabled,
     radius: asteroidOrbitRadius,
@@ -59,30 +58,30 @@ export const ConstructionSystem = ({
 
       if (dist < 1.5) {
         const { x, y, z } = drone.targetBlock;
-        const currentBlock = ENGINE.getBlock(x, y, z);
+        const currentBlock = engine.getBlock(x, y, z);
 
-        if (BlueprintManager.getInstance().hasBlueprint({ x, y, z })) {
+        if (blueprints.hasBlueprint({ x, y, z })) {
           if (consumeMatter(FRAME_COST) && consumeEnergy(10)) {
-            ENGINE.setBlock(x, y, z, BlockType.FRAME);
-            BlueprintManager.getInstance().removeBlueprint({ x, y, z });
-            setDysonProgress(ENGINE.computeDysonProgress());
-            ParticleEvents.emit(_scratchTarget, _scratchColor.set(BLOCK_COLORS[BlockType.FRAME]), 5);
+            engine.setBlock(x, y, z, BlockType.FRAME);
+            blueprints.removeBlueprint({ x, y, z });
+            setDysonProgress(engine.computeDysonProgress());
+            particles.emit(_scratchTarget, _scratchColor.set(BLOCK_COLORS[BlockType.FRAME]), 5);
           }
         } else if (currentBlock === BlockType.FRAME) {
           if (consumeMatter(FRAME_COST) && consumeEnergy(10)) {
-            ENGINE.setBlock(x, y, z, BlockType.PANEL);
-            const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
+            engine.setBlock(x, y, z, BlockType.PANEL);
+            const { energyRate, dysonProgress } = engine.computeWorldDerivedMetrics();
             setEnergyRate(energyRate);
             setDysonProgress(dysonProgress);
-            ParticleEvents.emit(_scratchTarget, _scratchColor.set(0x00ffff), 8);
+            particles.emit(_scratchTarget, _scratchColor.set(0x00ffff), 8);
           }
         } else if (currentBlock === BlockType.PANEL) {
           if (consumeRareMatter(SHELL_COST) && consumeEnergy(50)) {
-            ENGINE.setBlock(x, y, z, BlockType.SHELL);
-            const { energyRate, dysonProgress } = ENGINE.computeWorldDerivedMetrics();
+            engine.setBlock(x, y, z, BlockType.SHELL);
+            const { energyRate, dysonProgress } = engine.computeWorldDerivedMetrics();
             setEnergyRate(energyRate);
             setDysonProgress(dysonProgress);
-            ParticleEvents.emit(_scratchTarget, _scratchColor.set(0xffaa00), 15);
+            particles.emit(_scratchTarget, _scratchColor.set(0xffaa00), 15);
           }
         }
 

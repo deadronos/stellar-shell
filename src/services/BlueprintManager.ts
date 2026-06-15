@@ -5,7 +5,7 @@ export class BlueprintManager {
   private blueprints: Set<string> = new Set();
   private listeners: (() => void)[] = [];
 
-  private constructor() {}
+  constructor() {}
 
   public static getInstance(): BlueprintManager {
     if (!BlueprintManager.instance) {

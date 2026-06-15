@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
-import { ParticleEvents } from '../../services/ParticleEvents';
+import type { RuntimeContext } from '../RuntimeContext';
 
 // Colors for different states
 const COLOR_MINING = new THREE.Color(0xff0000); // Red
@@ -15,7 +15,13 @@ const _velocity = new THREE.Vector3();
 let timeSinceLastEmission = 0;
 const EMISSION_RATE = 0.05; // 20 times per second
 
-export const TrailSystem = (delta: number) => {
+interface TrailSystemProps {
+  runtime: RuntimeContext;
+  delta: number;
+}
+
+export const TrailSystem = ({ runtime, delta }: TrailSystemProps) => {
+  const { particles } = runtime;
   timeSinceLastEmission += delta;
 
   if (timeSinceLastEmission < EMISSION_RATE) return;
@@ -41,7 +47,7 @@ export const TrailSystem = (delta: number) => {
     _velocity.z += (Math.random() - 0.5) * 0.5;
 
     // Emit particle
-    ParticleEvents.emit(
+    particles.emit(
       drone.position, // Start at drone position
       color,
       1,

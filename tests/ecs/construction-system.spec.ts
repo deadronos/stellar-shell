@@ -4,14 +4,15 @@ import { ConstructionSystem } from '../../src/ecs/systems/ConstructionSystem';
 import { ECS } from '../../src/ecs/world';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
-import { BvxEngine } from '../../src/services/BvxEngine';
 import { FRAME_COST, PANEL_ENERGY_RATE, SHELL_COST, SHELL_ENERGY_RATE } from '../../src/constants';
-import { BlueprintManager } from '../../src/services/BlueprintManager';
+import { createRuntimeContext, RuntimeContext } from '../../src/ecs/RuntimeContext';
 
 describe('ConstructionSystem', () => {
+  let runtime: RuntimeContext;
+
   beforeEach(() => {
     ECS.clear();
-    BlueprintManager.getInstance().resetForTests();
+    runtime = createRuntimeContext({ mesherWorkerCount: 0 });
     useStore.setState({
       matter: 10,
       rareMatter: 0,
@@ -26,6 +27,7 @@ describe('ConstructionSystem', () => {
 
   afterEach(() => {
     ECS.clear();
+    runtime.mesherPool.dispose();
   });
 
   const getSystemProps = (elapsedTime: number = 0) => {
@@ -41,12 +43,12 @@ describe('ConstructionSystem', () => {
       consumeEnergy: store.consumeEnergy,
       setEnergyRate: store.setEnergyRate,
       setDysonProgress: store.setDysonProgress,
+      runtime,
     };
   };
 
   it('builds correctly when asteroid orbit motion is enabled', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine } = runtime;
     engine.setBlock(1, 1, 1, BlockType.FRAME);
 
     const drone = ECS.add({
@@ -67,8 +69,7 @@ describe('ConstructionSystem', () => {
   });
 
   it('reconciles energy rate from world state when upgrading FRAME to PANEL', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine } = runtime;
 
     useStore.setState({
       matter: FRAME_COST,
@@ -102,8 +103,7 @@ describe('ConstructionSystem', () => {
   });
 
   it('reconciles energy rate from world state when upgrading PANEL to SHELL', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine } = runtime;
 
     useStore.setState({
       matter: 0,
@@ -137,8 +137,7 @@ describe('ConstructionSystem', () => {
   });
 
   it('does not upgrade when resources are insufficient', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine } = runtime;
 
     useStore.setState({
       matter: 0,
@@ -173,8 +172,7 @@ describe('ConstructionSystem', () => {
   });
 
   it('consumes blueprint targets to construct FRAME blocks', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine, blueprints } = runtime;
     const blueprint = { x: 3, y: 0, z: 0 };
 
     useStore.setState({
@@ -188,7 +186,7 @@ describe('ConstructionSystem', () => {
     });
 
     engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.BLUEPRINT_FRAME);
-    BlueprintManager.getInstance().addBlueprint(blueprint);
+    blueprints.addBlueprint(blueprint);
 
     ECS.add({
       isDrone: true,
@@ -204,12 +202,11 @@ describe('ConstructionSystem', () => {
     ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.FRAME);
-    expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
+    expect(blueprints.hasBlueprint(blueprint)).toBe(false);
   });
 
   it('does not rebuild a mined/removed blueprint target', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine, blueprints } = runtime;
     const blueprint = { x: 4, y: 0, z: 0 };
 
     useStore.setState({
@@ -223,10 +220,10 @@ describe('ConstructionSystem', () => {
     });
 
     engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.BLUEPRINT_FRAME);
-    BlueprintManager.getInstance().addBlueprint(blueprint);
+    blueprints.addBlueprint(blueprint);
 
     engine.setBlock(blueprint.x, blueprint.y, blueprint.z, BlockType.AIR);
-    BlueprintManager.getInstance().removeBlueprint(blueprint);
+    blueprints.removeBlueprint(blueprint);
 
     ECS.add({
       isDrone: true,
@@ -242,7 +239,7 @@ describe('ConstructionSystem', () => {
     ConstructionSystem(getSystemProps(0));
 
     expect(engine.getBlock(blueprint.x, blueprint.y, blueprint.z)).toBe(BlockType.AIR);
-    expect(BlueprintManager.getInstance().hasBlueprint(blueprint)).toBe(false);
+    expect(blueprints.hasBlueprint(blueprint)).toBe(false);
     expect(useStore.getState().matter).toBe(FRAME_COST);
   });
 });

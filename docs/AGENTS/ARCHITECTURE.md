@@ -8,7 +8,8 @@
 
 ## Core Components
 
-- **BvxEngine**: The canonical singleton (`BvxEngine.getInstance()`) for voxel metadata and world state.
+- **RuntimeContext**: `SystemRunner` owns a value object bundling `BvxEngine`, `BlueprintManager`, `ParticleEventsService`, and `MesherWorkerPool`, and passes it to ECS systems. This removes global singleton imports from systems and makes them testable with isolated contexts. The legacy `BvxEngine.getInstance()` singleton remains available for UI components outside the simulation boundary.
+- **BvxEngine**: Side-effect-free constructor; voxel metadata and world state queries/mutations are performed through an instance supplied by `RuntimeContext`.
 - **ECS (Miniplex)**: Entities live in `src/ecs/world.ts`. Simulation systems run in `useFrame` or via `SystemRunner`.
 - **Meshing**: Offloaded to a pool of Web Workers (`MesherWorkerPool.ts` / `worker.ts`) to keep the main thread fluid. `ChunkSystem` dispatches at most one job per chunk, tags it with the current chunk revision, only writes `meshData` back if the worker result still matches the latest revision, and requeues the chunk if the worker job fails.
 - **Chunking**: World is divided into chunks of `CHUNK_SIZE` (see `src/constants.ts`).

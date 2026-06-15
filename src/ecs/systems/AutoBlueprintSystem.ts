@@ -1,7 +1,6 @@
 import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
-import { BlueprintManager } from '../../services/BlueprintManager';
-import { BvxEngine } from '../../services/BvxEngine';
+import type { RuntimeContext } from '../RuntimeContext';
 
 // how often we generate a new blueprint (seconds)
 const AUTO_INTERVAL = 1.0;
@@ -49,7 +48,18 @@ export function resetAutoBlueprintTraversal() {
 
 export const resetAutoBlueprintSystemForTests = resetAutoBlueprintTraversal;
 
-export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => {
+interface AutoBlueprintSystemProps {
+  runtime: RuntimeContext;
+  delta: number;
+  elapsedTime: number;
+}
+
+export const AutoBlueprintSystem = ({
+  runtime,
+  delta: _delta,
+  elapsedTime = 0,
+}: AutoBlueprintSystemProps) => {
+  const { engine, blueprints } = runtime;
   const state = useStore.getState();
   if (!state.autoBlueprintEnabled) {
     wasEnabled = false;
@@ -66,9 +76,6 @@ export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => 
   // call will pass regardless of elapsedTime.
   if (elapsedTime - lastAddTime < AUTO_INTERVAL) return;
 
-  const engine = BvxEngine.getInstance();
-  const manager = BlueprintManager.getInstance();
-
   // Deterministic 3D radius-sorted scan around origin – sphere-aware expansion.
   // Candidates are ordered from closest to farthest from the star at (0,0,0),
   // covering the full sphere volume across all axes.
@@ -80,7 +87,7 @@ export const AutoBlueprintSystem = (_delta: number, elapsedTime: number = 0) => 
     const block = engine.getBlock(coord.x, coord.y, coord.z);
     if (block === BlockType.AIR) {
       engine.setBlock(coord.x, coord.y, coord.z, BlockType.BLUEPRINT_FRAME);
-      manager.addBlueprint(coord);
+      blueprints.addBlueprint(coord);
       state.setDysonProgress(engine.computeDysonProgress());
       lastAddTime = elapsedTime;
       break;

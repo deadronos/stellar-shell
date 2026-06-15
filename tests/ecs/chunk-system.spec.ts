@@ -2,9 +2,8 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import * as THREE from 'three';
 import { ChunkSystem } from '../../src/ecs/systems/ChunkSystem';
 import { ECS } from '../../src/ecs/world';
-import { BvxEngine } from '../../src/services/BvxEngine';
 import { MesherWorkerPool, MeshResult } from '../../src/mesher/MesherWorkerPool';
-import * as MesherWorkerPoolModule from '../../src/mesher/MesherWorkerPool';
+import { createRuntimeContext, RuntimeContext } from '../../src/ecs/RuntimeContext';
 
 type MockPool = Pick<MesherWorkerPool, 'generateMesh' | 'getQueueDepth' | 'getActiveWorkerCount'>;
 type MockEngine = {
@@ -35,6 +34,8 @@ const meshResult = (taskId: string, positions: number[]): MeshResult => ({
 
 describe('ChunkSystem', () => {
   let mockPool: MockPool;
+  let mockEngine: MockEngine;
+  let runtime: RuntimeContext;
 
   beforeEach(() => {
     ECS.clear();
@@ -45,9 +46,15 @@ describe('ChunkSystem', () => {
       getActiveWorkerCount: vi.fn().mockReturnValue(0),
     };
 
-    vi.spyOn(MesherWorkerPoolModule, 'getMesherPool').mockReturnValue(
-      mockPool as unknown as MesherWorkerPool,
-    );
+    mockEngine = {
+      getBlock: vi.fn().mockReturnValue(0),
+      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
+    };
+
+    runtime = createRuntimeContext({ mesherWorkerCount: 0 });
+    runtime.mesherPool.dispose();
+    runtime.mesherPool = mockPool as unknown as MesherWorkerPool;
+    runtime.engine = mockEngine as unknown as RuntimeContext['engine'];
   });
 
   afterEach(() => {
@@ -56,13 +63,6 @@ describe('ChunkSystem', () => {
   });
 
   it('dispatches a mesh job and writes mesh data when the result is current', async () => {
-    const mockEngine: MockEngine = {
-      getBlock: vi.fn().mockReturnValue(0),
-      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
-    };
-
-    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
-
     const chunk = ECS.add({
       isChunk: true,
       chunkKey: '0,0,0',
@@ -72,7 +72,7 @@ describe('ChunkSystem', () => {
       position: new THREE.Vector3(0, 0, 0),
     });
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
 
     expect(mockPool.generateMesh).toHaveBeenCalledWith(0, 0, 0, mockEngine);
     expect(chunk.meshPending).toBe(true);
@@ -85,12 +85,7 @@ describe('ChunkSystem', () => {
   });
 
   it('adds completedDysonSection when the chunk is classified as completed', async () => {
-    const mockEngine: MockEngine = {
-      getBlock: vi.fn().mockReturnValue(0),
-      isChunkCompletedDyson: vi.fn().mockReturnValue(true),
-    };
-
-    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
+    mockEngine.isChunkCompletedDyson.mockReturnValue(true);
 
     const chunk = ECS.add({
       isChunk: true,
@@ -101,7 +96,7 @@ describe('ChunkSystem', () => {
       position: new THREE.Vector3(16, 0, 0),
     });
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     await flushAsyncWork();
 
     expect(mockEngine.isChunkCompletedDyson).toHaveBeenCalledWith(1, 0, 0);
@@ -109,12 +104,7 @@ describe('ChunkSystem', () => {
   });
 
   it('removes completedDysonSection when the chunk is no longer classified as completed', async () => {
-    const mockEngine: MockEngine = {
-      getBlock: vi.fn().mockReturnValue(0),
-      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
-    };
-
-    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
+    mockEngine.isChunkCompletedDyson.mockReturnValue(false);
 
     const chunk = ECS.add({
       isChunk: true,
@@ -126,7 +116,7 @@ describe('ChunkSystem', () => {
       position: new THREE.Vector3(32, 0, 0),
     });
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     await flushAsyncWork();
 
     expect(mockEngine.isChunkCompletedDyson).toHaveBeenCalledWith(2, 0, 0);
@@ -137,13 +127,6 @@ describe('ChunkSystem', () => {
     const firstJob = deferred<MeshResult>();
     mockPool.generateMesh = vi.fn().mockReturnValue(firstJob.promise);
 
-    const mockEngine: MockEngine = {
-      getBlock: vi.fn().mockReturnValue(0),
-      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
-    };
-
-    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
-
     const chunk = ECS.add({
       isChunk: true,
       chunkKey: '3,0,0',
@@ -153,7 +136,7 @@ describe('ChunkSystem', () => {
       position: new THREE.Vector3(48, 0, 0),
     });
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     expect(mockPool.generateMesh).toHaveBeenCalledTimes(1);
     expect(chunk.meshPending).toBe(true);
 
@@ -176,13 +159,6 @@ describe('ChunkSystem', () => {
       .mockReturnValueOnce(firstJob.promise)
       .mockReturnValueOnce(secondJob.promise);
 
-    const mockEngine: MockEngine = {
-      getBlock: vi.fn().mockReturnValue(0),
-      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
-    };
-
-    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
-
     const chunk = ECS.add({
       isChunk: true,
       chunkKey: '4,0,0',
@@ -192,13 +168,13 @@ describe('ChunkSystem', () => {
       position: new THREE.Vector3(64, 0, 0),
     });
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     expect(mockPool.generateMesh).toHaveBeenCalledTimes(1);
 
     chunk.meshRevision = 2;
     ECS.addComponent(chunk, 'needsUpdate', true);
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     expect(mockPool.generateMesh).toHaveBeenCalledTimes(1);
 
     firstJob.resolve(meshResult('rev-1', [1, 1, 1, 2, 2, 2, 3, 3, 3]));
@@ -207,7 +183,7 @@ describe('ChunkSystem', () => {
     expect(chunk.needsUpdate).toBe(true);
     expect(chunk.meshData).toBeUndefined();
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     expect(mockPool.generateMesh).toHaveBeenCalledTimes(2);
 
     secondJob.resolve(meshResult('rev-2', [4, 4, 4, 5, 5, 5, 6, 6, 6]));
@@ -224,13 +200,6 @@ describe('ChunkSystem', () => {
       .mockRejectedValueOnce(meshFailure)
       .mockResolvedValueOnce(meshResult('retry', [7, 7, 7, 8, 8, 8, 9, 9, 9]));
 
-    const mockEngine: MockEngine = {
-      getBlock: vi.fn().mockReturnValue(0),
-      isChunkCompletedDyson: vi.fn().mockReturnValue(false),
-    };
-
-    vi.spyOn(BvxEngine, 'getInstance').mockReturnValue(mockEngine as unknown as BvxEngine);
-
     const chunk = ECS.add({
       isChunk: true,
       chunkKey: '5,0,0',
@@ -241,7 +210,7 @@ describe('ChunkSystem', () => {
       position: new THREE.Vector3(80, 0, 0),
     });
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     expect(chunk.meshPending).toBe(true);
 
     await flushAsyncWork();
@@ -250,7 +219,7 @@ describe('ChunkSystem', () => {
     expect(chunk.needsUpdate).toBe(true);
     expect(Array.from(chunk.meshData?.positions ?? [])).toEqual([1, 1, 1, 2, 2, 2, 3, 3, 3]);
 
-    ChunkSystem();
+    ChunkSystem({ runtime });
     await flushAsyncWork();
 
     expect(mockPool.generateMesh).toHaveBeenCalledTimes(2);

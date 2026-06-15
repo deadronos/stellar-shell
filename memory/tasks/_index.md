@@ -32,3 +32,4 @@
 - [TASK020] Remove Unused `multithreading` Dependency - Completed 2026-06-15 - Removed `multithreading` from `package.json` and `pnpm-lock.yaml`.
 - [TASK021] Add Favicon - Completed 2026-06-15 - Added an inline SVG favicon to `index.html` to stop `/favicon.ico` 404s.
 - [TASK022] Reduce Per-Frame Object Allocations - Completed 2026-06-15 - Refactored six hot paths to use scratch vectors/colors or a precomputed RGB palette; issue #63.
+- [TASK023] Decouple ECS Systems from Global Singletons - Completed 2026-06-15 - Introduced `RuntimeContext`, moved service lifetimes to `SystemRunner`, and migrated tests to isolated contexts; issue #67.

@@ -4,52 +4,8 @@ import { ECS } from '../../src/ecs/world';
 import * as THREE from 'three';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
-import { BvxEngine } from '../../src/services/BvxEngine';
 import { createTestUpgrades } from '../helpers/upgrades';
-
-const mockBlueprintManager = {
-  addBlueprint: vi.fn(),
-  removeBlueprint: vi.fn(),
-};
-
-// Mock BvxEngine
-vi.mock('../../src/services/BvxEngine', () => {
-  const mockEngine = {
-    getBlock: vi.fn(),
-    setBlock: vi.fn(),
-    computeEnergyRate: vi.fn().mockReturnValue(0),
-    computeWorldDerivedMetrics: vi.fn().mockReturnValue({
-      energyRate: 0,
-      dysonProgress: {
-        blueprintFrames: 0,
-        frames: 0,
-        panels: 0,
-        shells: 0,
-        milestones: 0,
-        prestigeReady: false,
-      },
-    }),
-    computeDysonProgress: vi.fn().mockReturnValue({
-      blueprintFrames: 0,
-      frames: 0,
-      panels: 0,
-      shells: 0,
-      milestones: 0,
-      prestigeReady: false,
-    }),
-  };
-  return {
-    BvxEngine: {
-      getInstance: () => mockEngine,
-    },
-  };
-});
-
-vi.mock('../../src/services/BlueprintManager', () => ({
-  BlueprintManager: {
-    getInstance: () => mockBlueprintManager,
-  },
-}));
+import type { RuntimeContext } from '../../src/ecs/RuntimeContext';
 
 describe('PlayerSystem', () => {
   type MockEngine = {
@@ -60,11 +16,15 @@ describe('PlayerSystem', () => {
     computeDysonProgress: ReturnType<typeof vi.fn>;
   };
 
-  const getMockEngine = (): MockEngine => BvxEngine.getInstance() as unknown as MockEngine;
+  let mockEngine: MockEngine;
+  let mockBlueprintManager: {
+    addBlueprint: ReturnType<typeof vi.fn>;
+    removeBlueprint: ReturnType<typeof vi.fn>;
+  };
+  let runtime: RuntimeContext;
 
   beforeEach(() => {
     ECS.clear();
-    vi.clearAllMocks();
     useStore.setState({
       matter: 0,
       rareMatter: 0,
@@ -76,8 +36,42 @@ describe('PlayerSystem', () => {
       upgrades: createTestUpgrades(),
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockReturnValue(BlockType.AIR);
+    mockEngine = {
+      getBlock: vi.fn().mockReturnValue(BlockType.AIR),
+      setBlock: vi.fn(),
+      computeEnergyRate: vi.fn().mockReturnValue(0),
+      computeWorldDerivedMetrics: vi.fn().mockReturnValue({
+        energyRate: 0,
+        dysonProgress: {
+          blueprintFrames: 0,
+          frames: 0,
+          panels: 0,
+          shells: 0,
+          milestones: 0,
+          prestigeReady: false,
+        },
+      }),
+      computeDysonProgress: vi.fn().mockReturnValue({
+        blueprintFrames: 0,
+        frames: 0,
+        panels: 0,
+        shells: 0,
+        milestones: 0,
+        prestigeReady: false,
+      }),
+    };
+
+    mockBlueprintManager = {
+      addBlueprint: vi.fn(),
+      removeBlueprint: vi.fn(),
+    };
+
+    runtime = {
+      engine: mockEngine as unknown as RuntimeContext['engine'],
+      blueprints: mockBlueprintManager as unknown as RuntimeContext['blueprints'],
+      particles: { subscribe: vi.fn(), emit: vi.fn() } as unknown as RuntimeContext['particles'],
+      mesherPool: {} as unknown as RuntimeContext['mesherPool'],
+    };
   });
 
   it('should move player when input is active', () => {
@@ -97,10 +91,8 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    // Run System
-    PlayerSystem(1.0); // Delta 1s
+    PlayerSystem({ runtime, delta: 1.0, elapsedTime: 0 });
 
-    // Speed is 15. Directions: Forward is -Z (0,0,-1)
     expect(player.position.z).toBeCloseTo(-15);
     expect(player.position.x).toBe(0);
     expect(player.position.y).toBe(0);
@@ -123,11 +115,8 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1.0);
+    PlayerSystem({ runtime, delta: 1.0, elapsedTime: 0 });
 
-    // Vector should be normalized. (0, 0, -1) + (1, 0, 0) = (1, 0, -1). Length sqrt(2).
-    // Normalized: (1/sqrt2, 0, -1/sqrt2) * 15 * 1
-    // 1/sqrt(2) approx 0.707 * 15 = 10.6
     expect(player.position.x).toBeGreaterThan(10);
     expect(player.position.z).toBeLessThan(-10);
   });
@@ -142,8 +131,7 @@ describe('PlayerSystem', () => {
       matter: 0,
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
     );
 
@@ -163,9 +151,9 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
     expect(useStore.getState().matter).toBe(1);
     expect(player.input.mine).toBe(false);
   });
@@ -179,8 +167,7 @@ describe('PlayerSystem', () => {
       asteroidOrbitVerticalAmplitude: 0,
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
     );
 
@@ -200,9 +187,9 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 1, BlockType.BLUEPRINT_FRAME);
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 1, BlockType.BLUEPRINT_FRAME);
     expect(mockBlueprintManager.addBlueprint).toHaveBeenCalledWith(
       expect.objectContaining({ x: 0, y: 0, z: 1 }),
     );
@@ -217,8 +204,7 @@ describe('PlayerSystem', () => {
       rareMatter: 0,
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.RARE_ORE : BlockType.AIR,
     );
 
@@ -238,9 +224,9 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
     expect(useStore.getState().rareMatter).toBe(1);
     expect(useStore.getState().matter).toBe(0);
   });
@@ -254,8 +240,7 @@ describe('PlayerSystem', () => {
       upgrades: createTestUpgrades({ LASER_EFFICIENCY_1: true }),
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.ASTEROID_SURFACE : BlockType.AIR,
     );
 
@@ -275,9 +260,9 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
     expect(useStore.getState().matter).toBe(2);
   });
 
@@ -288,11 +273,10 @@ describe('PlayerSystem', () => {
       energyGenerationRate: 5,
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.PANEL : BlockType.AIR,
     );
-    engine.computeWorldDerivedMetrics.mockReturnValue({
+    mockEngine.computeWorldDerivedMetrics.mockReturnValue({
       energyRate: 4,
       dysonProgress: {
         blueprintFrames: 0,
@@ -320,10 +304,10 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-    expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockEngine.computeWorldDerivedMetrics).toHaveBeenCalled();
     expect(useStore.getState().energyGenerationRate).toBe(4);
   });
 
@@ -334,11 +318,10 @@ describe('PlayerSystem', () => {
       energyGenerationRate: 6,
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.SHELL : BlockType.AIR,
     );
-    engine.computeWorldDerivedMetrics.mockReturnValue({
+    mockEngine.computeWorldDerivedMetrics.mockReturnValue({
       energyRate: 0,
       dysonProgress: {
         blueprintFrames: 0,
@@ -366,10 +349,10 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
-    expect(engine.computeWorldDerivedMetrics).toHaveBeenCalled();
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockEngine.computeWorldDerivedMetrics).toHaveBeenCalled();
     expect(useStore.getState().energyGenerationRate).toBe(0);
   });
 
@@ -379,8 +362,7 @@ describe('PlayerSystem', () => {
       asteroidOrbitEnabled: false,
     });
 
-    const engine = getMockEngine();
-    engine.getBlock.mockImplementation((x: number, y: number, z: number) =>
+    mockEngine.getBlock.mockImplementation((x: number, y: number, z: number) =>
       x === 0 && y === 0 && z === 0 ? BlockType.BLUEPRINT_FRAME : BlockType.AIR,
     );
 
@@ -400,9 +382,9 @@ describe('PlayerSystem', () => {
       cameraQuaternion: { x: 0, y: 0, z: 0, w: 1 },
     });
 
-    PlayerSystem(1 / 60, 0);
+    PlayerSystem({ runtime, delta: 1 / 60, elapsedTime: 0 });
 
-    expect(engine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
+    expect(mockEngine.setBlock).toHaveBeenCalledWith(0, 0, 0, BlockType.AIR);
     expect(mockBlueprintManager.removeBlueprint).toHaveBeenCalledWith(
       expect.objectContaining({ x: 0, y: 0, z: 0 }),
     );

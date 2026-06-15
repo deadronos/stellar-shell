@@ -3,32 +3,20 @@ import * as THREE from 'three';
 import { ECS } from '../../src/ecs/world';
 import { useStore } from '../../src/state/store';
 import { createEmptyDroneRoleTargets } from '../../src/utils/droneRoles';
-
-const { mockEngine, mockBlueprintManager } = vi.hoisted(() => ({
-  mockEngine: {
-    findMiningTargets: vi.fn(),
-    findBlocksByType: vi.fn(),
-  },
-  mockBlueprintManager: {
-    getBlueprints: vi.fn(),
-  },
-}));
-
-vi.mock('../../src/services/BvxEngine', () => ({
-  BvxEngine: {
-    getInstance: () => mockEngine,
-  },
-}));
-
-vi.mock('../../src/services/BlueprintManager', () => ({
-  BlueprintManager: {
-    getInstance: () => mockBlueprintManager,
-  },
-}));
-
 import { BrainSystem, resetBrainSystemCaches } from '../../src/ecs/systems/BrainSystem';
+import type { RuntimeContext } from '../../src/ecs/RuntimeContext';
 
 describe('BrainSystem', () => {
+  let mockEngine: {
+    findMiningTargets: ReturnType<typeof vi.fn>;
+    findBlocksByType: ReturnType<typeof vi.fn>;
+  };
+  let mockBlueprintManager: {
+    getBlueprints: ReturnType<typeof vi.fn>;
+    hasBlueprint: ReturnType<typeof vi.fn>;
+  };
+  let runtime: RuntimeContext;
+
   beforeEach(() => {
     ECS.clear();
     vi.clearAllMocks();
@@ -45,6 +33,23 @@ describe('BrainSystem', () => {
       asteroidOrbitSpeed: 0.08,
       asteroidOrbitVerticalAmplitude: 2,
     });
+
+    mockEngine = {
+      findMiningTargets: vi.fn(),
+      findBlocksByType: vi.fn(),
+    };
+
+    mockBlueprintManager = {
+      getBlueprints: vi.fn(),
+      hasBlueprint: vi.fn(),
+    };
+
+    runtime = {
+      engine: mockEngine as unknown as RuntimeContext['engine'],
+      blueprints: mockBlueprintManager as unknown as RuntimeContext['blueprints'],
+      particles: { subscribe: vi.fn(), emit: vi.fn() } as unknown as RuntimeContext['particles'],
+      mesherPool: {} as unknown as RuntimeContext['mesherPool'],
+    };
 
     mockBlueprintManager.getBlueprints.mockReturnValue([]);
     mockEngine.findBlocksByType.mockReturnValue([]);
@@ -70,7 +75,7 @@ describe('BrainSystem', () => {
       carryingType: null,
     });
 
-    BrainSystem({ elapsedTime: 0 } as THREE.Clock);
+    BrainSystem({ runtime, clock: { elapsedTime: 0 } as THREE.Clock });
 
     expect(drone.state).toBe('MOVING_TO_MINE');
     expect(drone.targetBlock).toEqual({ x: 0, y: 0, z: 0 });
@@ -96,7 +101,7 @@ describe('BrainSystem', () => {
       carryingType: null,
     });
 
-    BrainSystem({ elapsedTime: 0 } as THREE.Clock);
+    BrainSystem({ runtime, clock: { elapsedTime: 0 } as THREE.Clock });
 
     const target = drone.target as THREE.Vector3;
     const center = new THREE.Vector3(12, 0, 0);
@@ -122,7 +127,7 @@ describe('BrainSystem', () => {
       carryingType: null,
     });
 
-    BrainSystem({ elapsedTime: 1 } as THREE.Clock);
+    BrainSystem({ runtime, clock: { elapsedTime: 1 } as THREE.Clock });
 
     expect(drone.roleAssignment).toBe('BUILDER');
     expect(drone.state).toBe('MOVING_TO_BUILD');
@@ -146,7 +151,7 @@ describe('BrainSystem', () => {
       carryingType: null,
     });
 
-    BrainSystem({ elapsedTime: 1 } as THREE.Clock);
+    BrainSystem({ runtime, clock: { elapsedTime: 1 } as THREE.Clock });
 
     expect(drone.roleAssignment).toBe('MINER');
     expect(drone.state).toBe('MOVING_TO_MINE');
@@ -170,7 +175,7 @@ describe('BrainSystem', () => {
       carryingType: null,
     });
 
-    BrainSystem({ elapsedTime: 1 } as THREE.Clock);
+    BrainSystem({ runtime, clock: { elapsedTime: 1 } as THREE.Clock });
 
     expect(drone.roleAssignment).toBe('EXPLORER');
     expect(drone.state).toBe('EXPLORING');
@@ -190,7 +195,7 @@ describe('BrainSystem', () => {
       carryingType: null,
     });
 
-    BrainSystem({ elapsedTime: 1 } as THREE.Clock);
+    BrainSystem({ runtime, clock: { elapsedTime: 1 } as THREE.Clock });
 
     expect(drone.roleAssignment).toBe('MINER');
     expect(drone.state).toBe('IDLE');

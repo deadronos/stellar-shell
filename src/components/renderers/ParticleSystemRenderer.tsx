@@ -1,7 +1,7 @@
 import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { ParticleEvents } from '../../services/ParticleEvents';
+import { ParticleEventsService } from '../../services/ParticleEvents';
 
 const MAX_PARTICLES = 1000;
 
@@ -13,12 +13,16 @@ interface Particle {
   active: boolean;
 }
 
-export const ParticleSystemRenderer = () => {
+interface ParticleSystemRendererProps {
+  particles: ParticleEventsService;
+}
+
+export const ParticleSystemRenderer = ({ particles }: ParticleSystemRendererProps) => {
   const particleMeshRef = useRef<THREE.InstancedMesh>(null);
   const dummyParticle = useMemo(() => new THREE.Object3D(), []);
 
   // Use useMemo to initialize the pool once, instead of pushing to ref.current in render
-  const particles = useMemo(() => {
+  const particlePool = useMemo(() => {
     const pool: Particle[] = [];
     for (let i = 0; i < MAX_PARTICLES; i++) {
       pool.push({
@@ -34,9 +38,9 @@ export const ParticleSystemRenderer = () => {
 
   useEffect(() => {
     // Subscribe
-    return ParticleEvents.subscribe((pos, color, count = 1, options) => {
+    return particles.subscribe((pos, color, count = 1, options) => {
       let spawned = 0;
-      for (const p of particles) {
+      for (const p of particlePool) {
         if (!p.active) {
           p.active = true;
           p.position.copy(pos);
@@ -65,12 +69,12 @@ export const ParticleSystemRenderer = () => {
         }
       }
     });
-  }, [particles]);
+  }, [particles, particlePool]);
 
   useFrame((state, delta) => {
     if (!particleMeshRef.current) return;
 
-    particles.forEach((p, idx) => {
+    particlePool.forEach((p, idx) => {
       if (p.active) {
         p.life -= delta;
         p.velocity.multiplyScalar(0.95);

@@ -1,12 +1,10 @@
 import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { BrainSystem } from './systems/BrainSystem';
 import { MovementSystem } from './systems/MovementSystem';
 import { ChunkSystem } from './systems/ChunkSystem';
-import { useEffect } from 'react';
 import { ECS } from './world';
 import { useStore } from '../state/store';
-import { BvxEngine } from '../services/BvxEngine';
 import { EnergySystem } from './systems/EnergySystem';
 import { MiningSystem } from './systems/MiningSystem';
 import { ConstructionSystem } from './systems/ConstructionSystem';
@@ -16,20 +14,27 @@ import { AsteroidOrbitSystem } from './systems/AsteroidOrbitSystem';
 import { AutoBlueprintSystem } from './systems/AutoBlueprintSystem';
 import { ExplorerSystem, resetExplorerSystem } from './systems/ExplorerSystem';
 import { DroneFactory } from './DroneFactory';
+import { RuntimeContextReact } from './RuntimeContextProvider';
+import { createRuntimeContext } from './RuntimeContext';
 
 const THROTTLE_INTERVAL_MS = 100; // 10Hz
 
-export const SystemRunner = () => {
+export const SystemRunner = ({ children }: { children?: React.ReactNode }) => {
   // We can also handle Spawning logic here or in a separate SpawnerSystem
   const droneCount = useStore((state) => state.droneCount);
+
+  // Own the canonical runtime service instances for the app lifetime.
+  const runtime = useMemo(() => createRuntimeContext(), []);
 
   useEffect(() => {
     resetExplorerSystem();
   }, []);
 
   useEffect(() => {
-    // Ensure Engine is initialized and world is generated
-    BvxEngine.getInstance();
+    // Explicit world initialization (previously hidden inside BvxEngine.constructor).
+    // This keeps engine construction side-effect free and makes HMR/dev reloads safe.
+    runtime.engine.generateAsteroid(2, 0, 2, 20);
+    runtime.engine.generateDysonBlueprintSkeleton(runtime.blueprints);
 
     // Sync ECS Population
     const drones = ECS.with('isDrone').entities;
@@ -46,7 +51,13 @@ export const SystemRunner = () => {
         DroneFactory.destroy(drones[i]);
       }
     }
-  }, [droneCount]);
+  }, [droneCount, runtime]);
+
+  useEffect(() => {
+    return () => {
+      runtime.mesherPool.dispose();
+    };
+  }, [runtime]);
 
   const throttledTime = useRef(0);
 
@@ -58,9 +69,9 @@ export const SystemRunner = () => {
 
     if (throttledTime.current >= THROTTLE_INTERVAL_MS) {
       const throttledDelta = throttledTime.current / 1000;
-      BrainSystem(state.clock);
+      BrainSystem({ runtime, clock: state.clock });
       EnergySystem(throttledDelta);
-      AutoBlueprintSystem(throttledDelta, elapsedTime);
+      AutoBlueprintSystem({ runtime, delta: throttledDelta, elapsedTime });
       ExplorerSystem(throttledDelta);
       throttledTime.current -= THROTTLE_INTERVAL_MS;
     }
@@ -77,6 +88,7 @@ export const SystemRunner = () => {
       consumeEnergy: store.consumeEnergy,
       addMatter: store.addMatter,
       addRareMatter: store.addRareMatter,
+      runtime,
     });
 
     ConstructionSystem({
@@ -90,6 +102,7 @@ export const SystemRunner = () => {
       consumeEnergy: store.consumeEnergy,
       setEnergyRate: store.setEnergyRate,
       setDysonProgress: store.setDysonProgress,
+      runtime,
     });
 
     const movementStore = useStore.getState();
@@ -101,10 +114,10 @@ export const SystemRunner = () => {
     });
 
     AsteroidOrbitSystem(elapsedTime);
-    ChunkSystem();
-    PlayerSystem(delta, elapsedTime);
-    TrailSystem(delta);
+    ChunkSystem({ runtime });
+    PlayerSystem({ runtime, delta, elapsedTime });
+    TrailSystem({ runtime, delta });
   });
 
-  return null;
+  return <RuntimeContextReact.Provider value={runtime}>{children}</RuntimeContextReact.Provider>;
 };

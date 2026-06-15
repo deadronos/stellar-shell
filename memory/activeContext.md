@@ -1,9 +1,15 @@
 # Active Context — stellar-shell
 
-**Current focus:** No active task. Awaiting next roadmap item or user direction.
+**Current focus:** Completed `TASK023` (issue #67) — decoupled ECS systems from global singletons via `RuntimeContext`. PR pending.
 
 **Recent changes:**
 
+- Completed `TASK023` (design `DES013`):
+  - Introduced `RuntimeContext` value object and React provider.
+  - Removed side effects from `BvxEngine.constructor`; `SystemRunner` now owns service lifetimes and initializes the world explicitly.
+  - Refactored all ECS systems plus `PlayerSystem` and `TrailSystem` to receive runtime services instead of importing singletons.
+  - Migrated tests to isolated `createRuntimeContext` instances.
+  - Full validation green: 175 tests, lint, typecheck, production build.
 - Completed `TASK022` (design `DES012`):
   - Removed `THREE` dependency from `VoxelMesher` by switching to a precomputed RGB palette.
   - Added module-level scratch vectors/colors in `MiningSystem`, `ConstructionSystem`, `MovementSystem`, `Drones.tsx`, and `LaserRenderer.tsx`.

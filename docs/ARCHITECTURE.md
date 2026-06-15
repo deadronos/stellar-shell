@@ -11,3 +11,5 @@ Conventions:
   - Game design: `GAME###-*.md` (e.g., `GAME001-drone-mechanics.md`)
 
 See `/docs/ARCHITECTURE/TEC001-rendering-architecture.md` for an initial technical spec.
+
+- `/docs/ARCHITECTURE/DEC003-runtime-context.md` — Decision to inject runtime services into ECS systems via `RuntimeContext` instead of global singletons.

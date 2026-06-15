@@ -5,28 +5,13 @@ import { BlockType } from '../src/types';
 
 describe('Mining Targets Logic', () => {
   beforeEach(() => {
-    // Reset ECS
     ECS.clear();
-    // Reset Engine if possible, or just get instance (it's singleton)
-    // BvxEngine.getInstance().resetWorld(); // Assuming resetWorld clears internal state
   });
 
   it('should find mining targets after generating an asteroid', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
-
-    // Generate valid asteroid at chunk (2,0,2) -> world (32, 0, 32)
-    // Radius 5 ensure it fits in the chunk mostly
+    const engine = new BvxEngine();
     engine.generateAsteroid(2, 0, 2, 5);
 
-    // Verify blocks exist
-    // Center of asteroid: 2*16 + 8 = 40
-    // Actually generateAsteroid uses chunk coordinates for center?
-    // BvxEngine.ts: generateAsteroid(cx, cy, cz, radius)
-    // It likely calls VoxelGenerator which uses world coords or local?
-    // Usually (cx * 16 + 8, ...)
-
-    // Let's just check if ANY targets are found.
     const targets = engine.findMiningTargets(100);
 
     console.log(`Found ${targets.length} mining targets`);
@@ -41,10 +26,7 @@ describe('Mining Targets Logic', () => {
   });
 
   it('should include an exposed rare ore block as a mining target', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
-
-    // Place a rare ore block surrounded by air so it is exposed
+    const engine = new BvxEngine();
     engine.setBlock(10, 10, 10, BlockType.RARE_ORE);
 
     const targets = engine.findMiningTargets(100);
