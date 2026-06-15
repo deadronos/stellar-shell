@@ -24,6 +24,13 @@
 - TASK016 completed: Vite production builds now use `/stellar-shell/` as the base path so GitHub Pages assets load correctly from the repository subpath.
 - Maintenance pass completed: direct dependencies were upgraded to latest available compatible versions, including `@astrumforge/bvx-kit`, React 19.2.4, Vite 8, Vitest 4.1, Tailwind 4.2, Three 0.183, and updated tooling packages.
 - Full validation for the codebase remains green; the GitHub Pages base-path fix was validated with `pnpm build` and the generated `dist/index.html`.
+- Maintenance bundle completed:
+  - Removed broken Performance Profiling workflow.
+  - Corrected README dev server port to `localhost:3000`.
+  - Added `Digit1`/`Digit2` keyboard shortcuts for Laser/Build tools with unit-test coverage.
+  - Removed unused `multithreading` dependency.
+  - Added inline SVG favicon to stop `/favicon.ico` 404s.
+  - Excluded `dist` from `tsconfig.json` so local builds do not break `pnpm typecheck`.
 
 **What's left / planned work:**
 
@@ -37,6 +44,6 @@
 - Monitor the chunk meshing path during future rendering changes so revision bookkeeping remains aligned with ECS dirtying.
 - Monitor the new worker-recovery path during future meshing changes so retry semantics remain aligned with ECS dirtying.
 - Monitor how often players pin too many builders or explorers so future fallback-borrowing rules can be evaluated from playtesting rather than guesswork.
-- Remaining browser-observed issue is minor: the dev server still returns `404` for `favicon.ico`, which does not affect gameplay or UI behavior.
+- No remaining blocking issues from the review pass.
 
 **Last updated:** 2026-03-23

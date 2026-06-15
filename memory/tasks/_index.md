@@ -26,3 +26,8 @@
 - [TASK014] Fix Deploy pnpm Setup - Completed 2026-03-23 - Removed the pnpm cache dependency from `actions/setup-node` and installed pnpm explicitly in CI/deploy workflows.
 - [TASK015] Remove Duplicate pnpm Pin - Completed 2026-03-23 - Removed the explicit pnpm version from `pnpm/action-setup` so the workflows use `packageManager` as the single source of truth.
 - [TASK016] GitHub Pages Base Path - Completed 2026-03-23 - Set Vite's production base to `/stellar-shell/` so GitHub Pages loads assets from the repository subpath.
+- [TASK017] Fix Broken Performance Profiling Workflow - Completed 2026-06-15 - Removed `.github/workflows/profile.yml` because it used npm in a pnpm repo and referenced a missing script.
+- [TASK018] Reconcile Dev Server Port Documentation - Completed 2026-06-15 - Updated `README.md` to reference `localhost:3000`, matching `vite.config.ts`.
+- [TASK019] Implement Keyboard Tool Shortcuts - Completed 2026-06-15 - Wired `Digit1`/`Digit2` to Laser/Build tool selection in `PlayerController.tsx` with unit tests.
+- [TASK020] Remove Unused `multithreading` Dependency - Completed 2026-06-15 - Removed `multithreading` from `package.json` and `pnpm-lock.yaml`.
+- [TASK021] Add Favicon - Completed 2026-06-15 - Added an inline SVG favicon to `index.html` to stop `/favicon.ico` 404s.
