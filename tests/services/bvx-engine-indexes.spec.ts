@@ -192,6 +192,19 @@ describe('BvxEngine spatial indexes (issue #66)', () => {
 
       expect(engine.findBlocksByType(BlockType.PANEL, 10).length).toBe(0);
     });
+
+    it('respects the limit when finding PANEL blocks', () => {
+      // Place 5 PANEL blocks
+      engine.setBlock(0, 0, 0, BlockType.PANEL);
+      engine.setBlock(1, 0, 0, BlockType.PANEL);
+      engine.setBlock(2, 0, 0, BlockType.PANEL);
+      engine.setBlock(3, 0, 0, BlockType.PANEL);
+      engine.setBlock(4, 0, 0, BlockType.PANEL);
+
+      expect(engine.findBlocksByType(BlockType.PANEL, 3).length).toBe(3);
+      expect(engine.findBlocksByType(BlockType.PANEL, 10).length).toBe(5);
+      expect(engine.findBlocksByType(BlockType.PANEL, 0).length).toBe(0);
+    });
   });
 
   // ── World Reset ─────────────────────────────────────────────────────────

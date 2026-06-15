@@ -343,7 +343,20 @@ export class BvxEngine {
     return (bChunk as VoxelChunk8).getMetaData(vIndex) as BlockType;
   }
 
-  // Find blocks of specific type — queries incremental spatial indexes instead of full world scan.
+  /**
+   * Find blocks of a given type using incremental spatial indexes.
+   *
+   * Supported types:
+   * - `BlockType.FRAME` — queries the `buildableFrames` index
+   * - `BlockType.PANEL` — queries the `buildablePanels` index
+   *
+   * Other types (SHELL, BLUEPRINT_FRAME, ASTEROID_*, etc.) return `[]` since they
+   * have no dedicated index. Callers should handle empty results gracefully.
+   *
+   * @param type  Block type to look up.
+   * @param limit Maximum number of results to return (default 20).
+   * @returns Array of world-space positions matching the type.
+   */
   public findBlocksByType(
     type: BlockType,
     limit: number = 20,
@@ -444,7 +457,16 @@ export class BvxEngine {
     this.refreshDysonCountersFromWorld();
   }
 
-  // Find valid mining targets (Asteroids) — queries the incremental exposedMines index.
+  /**
+   * Find valid mining targets from the `exposedMines` index.
+   *
+   * Only blocks that are minable types (ASTEROID_SURFACE, ASTEROID_CORE, RARE_ORE)
+   * **and** have at least one AIR or FRAME neighbor are included. Buried blocks are
+   * excluded.
+   *
+   * @param limit Maximum number of targets to return (default 20).
+   * @returns Array of world-space positions of exposed minable blocks.
+   */
   public findMiningTargets(limit: number = 20): { x: number; y: number; z: number }[] {
     const targets: { x: number; y: number; z: number }[] = [];
     for (const key of this.exposedMines) {
