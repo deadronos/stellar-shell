@@ -1,12 +1,10 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
-import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
-import { ParticleEvents } from '../../services/ParticleEvents';
 import { BLOCK_COLORS } from '../../constants';
 import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
+import type { RuntimeContext } from '../RuntimeContext';
 
-const ENGINE = BvxEngine.getInstance();
 const HUB_POSITION = new THREE.Vector3(0, 0, 0);
 
 // Scratch objects reused across frames to avoid per-frame allocation.
@@ -27,6 +25,7 @@ interface MiningSystemProps {
   consumeEnergy: (amount: number) => boolean;
   addMatter: (amount: number) => void;
   addRareMatter: (amount: number) => void;
+  runtime: RuntimeContext;
 }
 
 export const MiningSystem = ({
@@ -41,7 +40,9 @@ export const MiningSystem = ({
   consumeEnergy,
   addMatter,
   addRareMatter,
+  runtime,
 }: MiningSystemProps) => {
+  const { engine, particles } = runtime;
   const orbitOffset = getAsteroidOrbitOffset(elapsedTime, {
     enabled: asteroidOrbitEnabled,
     radius: asteroidOrbitRadius,
@@ -68,7 +69,7 @@ export const MiningSystem = ({
       // Arrival Check
       if (dist < 1.5) {
         const { x, y, z } = drone.targetBlock;
-        const block = ENGINE.getBlock(x, y, z);
+        const block = engine.getBlock(x, y, z);
 
         if (
           block === BlockType.ASTEROID_SURFACE ||
@@ -100,11 +101,11 @@ export const MiningSystem = ({
               ? _scratchColor.set(BLOCK_COLORS[block] || '#ffffff')
               : _scratchRed;
 
-            ParticleEvents.emit(_scratchTarget, color, 1);
+            particles.emit(_scratchTarget, color, 1);
           }
 
           if (drone.miningProgress >= 100) {
-            ENGINE.setBlock(x, y, z, BlockType.AIR);
+            engine.setBlock(x, y, z, BlockType.AIR);
 
             drone.carryingType = block;
             drone.state = 'RETURNING_RESOURCE';

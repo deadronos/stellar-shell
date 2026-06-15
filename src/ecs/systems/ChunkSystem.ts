@@ -1,16 +1,18 @@
 import { ECS, Entity } from '../world';
-import { BvxEngine } from '../../services/BvxEngine';
-import { getMesherPool } from '../../mesher/MesherWorkerPool';
+import type { RuntimeContext } from '../RuntimeContext';
 
 // Track the currently in-flight revision for each chunk key.
 const pendingJobs: Map<string, number> = new Map();
 
+interface ChunkSystemProps {
+  runtime: RuntimeContext;
+}
+
 /**
  * Dispatch a mesh generation job to the worker pool.
  */
-function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
-  const engine = BvxEngine.getInstance();
-  const pool = getMesherPool();
+function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number, runtime: RuntimeContext) {
+  const { engine, mesherPool } = runtime;
   const chunkKey = entity.chunkKey as string;
   const revision = entity.meshRevision ?? 0;
 
@@ -26,7 +28,7 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
     pendingJobs.delete(chunkKey);
   };
 
-  pool
+  mesherPool
     .generateMesh(cx, cy, cz, engine)
     .then((meshResult) => {
       // Clear pending state first so a newer dirty revision can be re-dispatched next frame.
@@ -73,14 +75,14 @@ function dispatchMeshJob(entity: Entity, cx: number, cy: number, cz: number) {
  * 3. Mark entity as 'meshPending'
  * 4. When worker returns, only apply the result if it still matches the latest revision
  */
-export const ChunkSystem = () => {
+export const ChunkSystem = ({ runtime }: ChunkSystemProps) => {
   // 1. Dispatch new mesh jobs for dirty chunks
   const dirtyChunks = ECS.with('isChunk', 'chunkPosition', 'needsUpdate');
 
   for (const entity of [...dirtyChunks.entities]) {
     if (entity.needsUpdate && !entity.meshPending) {
       const { x, y, z } = entity.chunkPosition;
-      dispatchMeshJob(entity, x, y, z);
+      dispatchMeshJob(entity, x, y, z, runtime);
     }
   }
 

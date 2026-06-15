@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useStore } from '../state/store';
 import { BvxEngine } from '../services/BvxEngine';
 import { VoxelGenerator } from '../services/voxel/VoxelGenerator';
+import { BlueprintManager } from '../services/BlueprintManager';
 import { SettingsModal } from './SettingsModal';
 import { DroneDebugPanel } from './DroneDebugPanel';
 import { UpgradesPanel } from './UpgradesPanel';
@@ -170,8 +171,10 @@ export const HUD = () => {
             onClick={() => {
               const engine = BvxEngine.getInstance();
 
+              const blueprints = BlueprintManager.getInstance();
+
               // Reset engine (clears voxels, ECS chunks, and blueprint overlays)
-              engine.resetWorld();
+              engine.resetWorld(blueprints);
 
               // Advance prestige, grant stellar crystals, and update systemSeed
               useStore.getState().resetWorld();
@@ -182,7 +185,7 @@ export const HUD = () => {
 
               // Regenerate world with per-system variation
               engine.generateAsteroid(2, 0, 2, nextRadius, systemSeed);
-              engine.generateDysonBlueprintSkeleton();
+              engine.generateDysonBlueprintSkeleton(blueprints);
               useStore.getState().setDysonProgress(engine.computeDysonProgress());
             }}
           >

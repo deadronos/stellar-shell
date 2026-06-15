@@ -59,6 +59,22 @@ vi.mock('../../src/ecs/systems/ExplorerSystem', () => ({
   resetExplorerSystem: mockResetExplorer,
 }));
 
+const mockRuntime = vi.hoisted(() => ({
+  engine: {
+    generateAsteroid: vi.fn(),
+    generateDysonBlueprintSkeleton: vi.fn(),
+  },
+  blueprints: {},
+  particles: {},
+  mesherPool: {
+    dispose: vi.fn(),
+  },
+}));
+
+vi.mock('../../src/ecs/RuntimeContext', () => ({
+  createRuntimeContext: vi.fn(() => mockRuntime),
+}));
+
 // mock store for droneCount dependency
 vi.mock('../../src/state/store', () => ({
   useStore: Object.assign(
@@ -103,7 +119,7 @@ describe('SystemRunner integration', () => {
     // invoke the stored callback
     frameCallbacks[0](fakeState, fakeDelta);
 
-    expect(mockAuto).toHaveBeenCalledWith(fakeDelta, 2);
+    expect(mockAuto).toHaveBeenCalledWith(expect.objectContaining({ delta: fakeDelta, elapsedTime: 2 }));
   });
 
   it('assigns stable numeric ids when spawning drones', async () => {
@@ -135,6 +151,9 @@ describe('SystemRunner integration', () => {
 
     frameCallbacks[0](fakeStateC, 0.08);
     expect(mockAuto).toHaveBeenCalledTimes(2);
+
+    // Verify elapsed time is passed through (not delta)
+    expect(mockAuto).toHaveBeenLastCalledWith(expect.objectContaining({ elapsedTime: 0.2 }));
   });
 
   it('passes the fresh energy snapshot to MovementSystem after throttled systems run', () => {

@@ -5,7 +5,6 @@ import { ECS, Entity } from '../ecs/world';
 import { VoxelMesher } from '../mesher/VoxelMesher';
 import { VoxelGenerator } from './voxel/VoxelGenerator';
 import { VoxelQuery } from './voxel/VoxelQuery';
-import { resetAutoBlueprintTraversal } from '../ecs/systems/AutoBlueprintSystem';
 
 // bvx-kit imports
 import { VoxelWorld, VoxelChunk8, MortonKey, VoxelIndex } from '@astrumforge/bvx-kit';
@@ -50,12 +49,10 @@ export class BvxEngine {
       }
     }
 
-    // Generate initial world
-    // Note: If we really wanted to be HMR safe, we should probably check if chunks exist before generating?
-    // But for now, regenerating the voxel data into the new BvxWorld instance is necessary anyway since that data is lost.
-    // Reusing the ECS entities means we just update the existing render chunks.
-    this.generateAsteroid(2, 0, 2, 20); // Generate an asteroid at chunk (2,0,2)
-    this.generateDysonBlueprintSkeleton();
+    // NOTE: World generation is intentionally NOT performed in the constructor.
+    // SystemRunner (or tests) own service lifetimes and call generateAsteroid /
+    // generateDysonBlueprintSkeleton explicitly. This keeps construction side-effect
+    // free and avoids rebuilding the world on HMR/dev reload.
   }
 
   private getChunkKey(x: number, y: number, z: number): string {
@@ -306,7 +303,7 @@ export class BvxEngine {
   }
 
   // Reset World (Prestige)
-  public resetWorld(): void {
+  public resetWorld(blueprints: BlueprintManager): void {
     // Re-instantiate the VoxelWorld to clear all data
     this.bvxWorld = new VoxelWorld();
 
@@ -328,8 +325,7 @@ export class BvxEngine {
     };
 
     // Clear blueprint overlays so stale markers don't persist in the new system
-    BlueprintManager.getInstance().reset();
-    resetAutoBlueprintTraversal();
+    blueprints.reset();
     this.refreshDysonCountersFromWorld();
   }
 
@@ -347,10 +343,10 @@ export class BvxEngine {
    * Generates blueprint-frame construction nodes in a spherical pattern around the star at (0,0,0).
    */
   public generateDysonBlueprintSkeleton(
+    blueprints: BlueprintManager,
     radius: number = BvxEngine.DYSON_BLUEPRINT_RADIUS,
     nodeCount: number = BvxEngine.DYSON_BLUEPRINT_NODE_COUNT,
   ) {
-    const blueprints = BlueprintManager.getInstance();
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const seen = new Set<string>();
 

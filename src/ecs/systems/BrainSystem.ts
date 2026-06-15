@@ -1,15 +1,11 @@
 import * as THREE from 'three';
 import { ECS } from '../world';
-import { BvxEngine } from '../../services/BvxEngine';
 import { BlockType } from '../../types';
 import { useStore } from '../../state/store';
 import { FRAME_COST, SHELL_COST } from '../../constants';
-import { BlueprintManager } from '../../services/BlueprintManager';
 import { getAsteroidOrbitOffset } from '../../services/AsteroidOrbit';
 import { computeDroneRoleAllocation, DRONE_ROLE_ORDER } from '../../utils/droneRoles';
-
-const ENGINE = BvxEngine.getInstance();
-const BLUEPRINT_MANAGER = BlueprintManager.getInstance();
+import type { RuntimeContext } from '../RuntimeContext';
 
 // Query caches
 let cachedMines: { x: number; y: number; z: number }[] | null = null;
@@ -49,7 +45,13 @@ const syncDroneRoleAssignments = () => {
   }
 };
 
-export const BrainSystem = (clock: THREE.Clock) => {
+interface BrainSystemProps {
+  runtime: RuntimeContext;
+  clock: THREE.Clock;
+}
+
+export const BrainSystem = ({ runtime, clock }: BrainSystemProps) => {
+  const { engine, blueprints } = runtime;
   syncDroneRoleAssignments();
 
   const state = useStore.getState();
@@ -69,12 +71,12 @@ export const BrainSystem = (clock: THREE.Clock) => {
   }
 
   const getMines = () => {
-    if (!cachedMines) cachedMines = ENGINE.findMiningTargets(droneCount + 20);
+    if (!cachedMines) cachedMines = engine.findMiningTargets(droneCount + 20);
     return cachedMines;
   };
 
   // Get active blueprints directly from manager - efficient enough for now
-  const getBlueprints = () => BLUEPRINT_MANAGER.getBlueprints();
+  const getBlueprints = () => blueprints.getBlueprints();
 
   /* 
      Fix: Previously we used .without('target'), but IDLE drones have orbit targets.
@@ -99,7 +101,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
     // 1. Validation for active drones (Target Invalidation)
     if (drone.state !== 'IDLE' && drone.state !== 'EXPLORING' && drone.targetBlock) {
       const { x, y, z } = drone.targetBlock;
-      const block = ENGINE.getBlock(x, y, z);
+      const block = engine.getBlock(x, y, z);
       let stillValid = false;
 
       if (drone.state === 'MOVING_TO_MINE') {
@@ -108,7 +110,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
           block === BlockType.ASTEROID_CORE ||
           block === BlockType.RARE_ORE;
       } else if (drone.state === 'MOVING_TO_BUILD') {
-        const hasBlueprint = BLUEPRINT_MANAGER.hasBlueprint({ x, y, z });
+        const hasBlueprint = blueprints.hasBlueprint({ x, y, z });
         stillValid = hasBlueprint || block === BlockType.FRAME || block === BlockType.PANEL;
       }
 
@@ -134,7 +136,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       drone.carryingType = null;
     }
 
-    const blueprints = getBlueprints();
+    const blueprintsList = getBlueprints();
     const canBuild = currentMatter >= FRAME_COST;
 
     let bestTarget: { x: number; y: number; z: number } | null = null;
@@ -164,12 +166,12 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
     if (roleAssignment === 'BUILDER') {
       // Priority: BUILD (Blueprints) > UPGRADE (Frames -> Energy)
-      if (canBuild && blueprints.length > 0) {
-        findClosest(blueprints, 'BUILD');
+      if (canBuild && blueprintsList.length > 0) {
+        findClosest(blueprintsList, 'BUILD');
       }
 
       if (!bestTarget && canBuild && state.energy < 1000) {
-        const frames = ENGINE.findBlocksByType(BlockType.FRAME, 5);
+        const frames = engine.findBlocksByType(BlockType.FRAME, 5);
         if (frames.length > 0) {
           findClosest(frames, 'BUILD');
         }
@@ -177,7 +179,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
 
       const canUpgradeToShell = state.rareMatter >= SHELL_COST;
       if (!bestTarget && canUpgradeToShell) {
-        const panels = ENGINE.findBlocksByType(BlockType.PANEL, 5);
+        const panels = engine.findBlocksByType(BlockType.PANEL, 5);
         if (panels.length > 0) {
           findClosest(panels, 'BUILD');
         }
@@ -188,7 +190,7 @@ export const BrainSystem = (clock: THREE.Clock) => {
       const mines = getMines();
       if (Math.random() < 0.01) {
         console.log(
-          `[Brain] Drone ${drone.id} searching. Mines Found: ${mines?.length}. Blueprints: ${blueprints.length}. Reserved: ${reservedBlocks.size}`,
+          `[Brain] Drone ${drone.id} searching. Mines Found: ${mines?.length}. Blueprints: ${blueprintsList.length}. Reserved: ${reservedBlocks.size}`,
         );
       }
       findClosest(mines, 'MINE');

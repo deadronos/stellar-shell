@@ -4,11 +4,14 @@ import { MiningSystem } from '../../src/ecs/systems/MiningSystem';
 import { ECS } from '../../src/ecs/world';
 import { useStore } from '../../src/state/store';
 import { BlockType } from '../../src/types';
-import { BvxEngine } from '../../src/services/BvxEngine';
+import { createRuntimeContext, RuntimeContext } from '../../src/ecs/RuntimeContext';
 
 describe('MiningSystem', () => {
+  let runtime: RuntimeContext;
+
   beforeEach(() => {
     ECS.clear();
+    runtime = createRuntimeContext({ mesherWorkerCount: 0 });
     useStore.setState({
       matter: 0,
       rareMatter: 0,
@@ -31,6 +34,7 @@ describe('MiningSystem', () => {
 
   afterEach(() => {
     ECS.clear();
+    runtime.mesherPool.dispose();
   });
 
   const getSystemProps = (delta: number = 0.1, elapsedTime: number = 0) => {
@@ -47,12 +51,12 @@ describe('MiningSystem', () => {
       consumeEnergy: store.consumeEnergy,
       addMatter: store.addMatter,
       addRareMatter: store.addRareMatter,
+      runtime,
     };
   };
 
   it('mines correctly when asteroid orbit motion is enabled', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine } = runtime;
     engine.setBlock(0, 0, 0, BlockType.ASTEROID_SURFACE);
 
     const drone = ECS.add({
@@ -74,8 +78,7 @@ describe('MiningSystem', () => {
   });
 
   it('drone can mine a rare ore block and transitions to RETURNING_RESOURCE', () => {
-    const engine = BvxEngine.getInstance();
-    engine.resetWorld();
+    const { engine } = runtime;
     engine.setBlock(0, 0, 0, BlockType.RARE_ORE);
 
     const drone = ECS.add({
@@ -131,6 +134,7 @@ describe('MiningSystem', () => {
   it('applies MINING_SPEED_1 to increase mining progress rate', () => {
     const runWithDrillUpgrade = (enabled: boolean) => {
       ECS.clear();
+      runtime = createRuntimeContext({ mesherWorkerCount: 0 });
       useStore.setState({
         upgrades: {
           MINING_SPEED_1: enabled,
@@ -152,8 +156,7 @@ describe('MiningSystem', () => {
         miningProgress: 0,
       });
 
-      BvxEngine.getInstance().resetWorld();
-      BvxEngine.getInstance().setBlock(0, 0, 0, BlockType.ASTEROID_SURFACE);
+      runtime.engine.setBlock(0, 0, 0, BlockType.ASTEROID_SURFACE);
 
       MiningSystem(getSystemProps(1, 0));
       return drone.miningProgress || 0;

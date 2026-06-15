@@ -12,6 +12,7 @@
 - Prestige jump visibility now requires both energy threshold and Dyson milestone readiness.
 - Architecture alignment audit completed and documented in `ARCHITECTURE_ALIGNMENT.md`.
 - TASK022 completed: per-frame `THREE.Vector3` / `THREE.Color` allocations removed from `MiningSystem`, `ConstructionSystem`, `MovementSystem`, `Drones.tsx`, `LaserRenderer.tsx`, and `VoxelMesher`.
+- TASK023 completed: ECS systems decoupled from global singletons via `RuntimeContext`; `SystemRunner` owns service lifetimes; `BvxEngine` construction is side-effect free.
 - TASK008 completed: deterministic radius-aware auto-blueprint traversal, runtime Auto-Replicator toggle, and energy catch-up ticking are now implemented and tested.
 - Rare-resource policy is explicitly documented as noise-driven and backed by tests.
 - TASK009 completed: chunk meshing is now revision-safe, renderer geometries are disposed on unmount, duplicate mesher ownership was removed, and repository validation is green again.
@@ -49,6 +50,11 @@
 
 **Last updated:** 2026-06-15
 
+**In progress:**
+
+- No active tasks.
+
 **Recent completion:**
 
+- TASK023 implemented via PR #69: decoupled ECS systems from global singletons, introduced `RuntimeContext`, and migrated tests to isolated contexts.
 - TASK022 merged via PR #68: reduced per-frame allocations by introducing scratch vectors/colors and a precomputed RGB palette in the voxel mesher. Branch `perf/reduce-per-frame-allocations-63` deleted.

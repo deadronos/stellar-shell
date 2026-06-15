@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { useStore } from '../state/store';
 import { BLOCK_COLORS } from '../constants';
 import { ECS } from '../ecs/world';
+import { useRuntimeContext } from '../ecs/RuntimeContextProvider';
 import { ParticleSystemRenderer } from '../components/renderers/ParticleSystemRenderer';
 import { LaserRenderer } from '../components/renderers/LaserRenderer';
 
@@ -13,6 +14,7 @@ const _cargoOffset = new THREE.Vector3(0, -0.4, 0);
 const _cargoColor = new THREE.Color();
 
 export const Drones = () => {
+  const { particles } = useRuntimeContext();
   const droneCount = useStore((state) => state.droneCount);
   const droneMeshRef = useRef<THREE.InstancedMesh>(null);
   const cargoMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -89,7 +91,7 @@ export const Drones = () => {
         <meshStandardMaterial roughness={0.5} />
       </instancedMesh>
 
-      <ParticleSystemRenderer />
+      <ParticleSystemRenderer particles={particles} />
       <LaserRenderer />
     </group>
   );
