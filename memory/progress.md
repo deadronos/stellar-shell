@@ -11,6 +11,7 @@
 - Dyson progression metrics (frames/panels/shells/milestones) are computed from world state and shown in HUD.
 - Prestige jump visibility now requires both energy threshold and Dyson milestone readiness.
 - Architecture alignment audit completed and documented in `ARCHITECTURE_ALIGNMENT.md`.
+- TASK022 completed: per-frame `THREE.Vector3` / `THREE.Color` allocations removed from `MiningSystem`, `ConstructionSystem`, `MovementSystem`, `Drones.tsx`, `LaserRenderer.tsx`, and `VoxelMesher`.
 - TASK008 completed: deterministic radius-aware auto-blueprint traversal, runtime Auto-Replicator toggle, and energy catch-up ticking are now implemented and tested.
 - Rare-resource policy is explicitly documented as noise-driven and backed by tests.
 - TASK009 completed: chunk meshing is now revision-safe, renderer geometries are disposed on unmount, duplicate mesher ownership was removed, and repository validation is green again.
@@ -32,14 +33,11 @@
   - Added inline SVG favicon to stop `/favicon.ico` 404s.
   - Excluded `dist` from `tsconfig.json` so local builds do not break `pnpm typecheck`.
 
-**What works:**
-
-- TASK022 completed: per-frame `THREE.Vector3` / `THREE.Color` allocations removed from `MiningSystem`, `ConstructionSystem`, `MovementSystem`, `Drones.tsx`, `LaserRenderer.tsx`, and `VoxelMesher`.
-
 **What's left / planned work:**
 
 - Gameplay balance tuning after deterministic auto-blueprint expansion changes.
 - Optional cleanup of any remaining non-blocking test-only lint warnings.
+- Continue next feature roadmap item (TBD).
 
 **Known issues / TODOs:**
 
@@ -50,3 +48,7 @@
 - No remaining blocking issues from the review pass.
 
 **Last updated:** 2026-06-15
+
+**Recent completion:**
+
+- TASK022 merged via PR #68: reduced per-frame allocations by introducing scratch vectors/colors and a precomputed RGB palette in the voxel mesher. Branch `perf/reduce-per-frame-allocations-63` deleted.

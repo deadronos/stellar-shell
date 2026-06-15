@@ -4,10 +4,6 @@
 
 - No in progress tasks at the moment.
 
-## Completed
-
-- [TASK022] Reduce Per-Frame Object Allocations - Completed 2026-06-15 - Refactored six hot paths to use scratch vectors/colors or a precomputed RGB palette; issue #63.
-
 ## Pending
 
 - No pending tasks at the moment.
@@ -35,3 +31,4 @@
 - [TASK019] Implement Keyboard Tool Shortcuts - Completed 2026-06-15 - Wired `Digit1`/`Digit2` to Laser/Build tool selection in `PlayerController.tsx` with unit tests.
 - [TASK020] Remove Unused `multithreading` Dependency - Completed 2026-06-15 - Removed `multithreading` from `package.json` and `pnpm-lock.yaml`.
 - [TASK021] Add Favicon - Completed 2026-06-15 - Added an inline SVG favicon to `index.html` to stop `/favicon.ico` 404s.
+- [TASK022] Reduce Per-Frame Object Allocations - Completed 2026-06-15 - Refactored six hot paths to use scratch vectors/colors or a precomputed RGB palette; issue #63.

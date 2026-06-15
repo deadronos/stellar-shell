@@ -1,6 +1,6 @@
 # Active Context — stellar-shell
 
-**Current focus:** Completed `TASK022` (issue #63) — reduced per-frame `THREE.Vector3` / `THREE.Color` allocations across ECS systems, renderers, and chunk meshing. PR pending.
+**Current focus:** No active task. Awaiting next roadmap item or user direction.
 
 **Recent changes:**
 

@@ -34,5 +34,10 @@ Created DES012 and this task. Identified six hot paths with object churn.
 - Added regression test in `tests/mesher/voxel-mesher.spec.ts` for deterministic color output.
 - Full validation green: 172 tests, lint, typecheck, and production build.
 
+### 2026-06-15 — Merge & Cleanup
+- PR #68 merged into `main` via squash merge.
+- Feature branch `perf/reduce-per-frame-allocations-63` deleted locally and remotely.
+- Memory Bank updated to reflect completion.
+
 ### Next
-Open PR and link issue #63.
+Await next roadmap item or user direction.
