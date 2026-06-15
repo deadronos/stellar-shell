@@ -1,6 +1,6 @@
 # Active Context — stellar-shell
 
-**Current focus:** Completed `TASK023` (issue #67) — decoupled ECS systems from global singletons via `RuntimeContext`. PR pending.
+**Current focus:** No active task. Awaiting next roadmap item or user direction.
 
 **Recent changes:**
 

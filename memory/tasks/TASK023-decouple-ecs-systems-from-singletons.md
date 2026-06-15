@@ -49,5 +49,10 @@ Created DES013 and this task. Identified six systems importing global singletons
 ### 2026-06-15 — Open PR
 - Opened PR #69 linking issue #67.
 
+### 2026-06-15 — Merge & Cleanup
+- PR #69 merged into `main` via squash merge.
+- Feature branch `refactor/decouple-ecs-singletons-67` deleted locally and remotely.
+- Memory Bank updated to reflect completion.
+
 ### Next
-Await review/merge.
+Await next roadmap item or user direction.

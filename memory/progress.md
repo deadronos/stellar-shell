@@ -40,6 +40,10 @@
 - Optional cleanup of any remaining non-blocking test-only lint warnings.
 - Continue next feature roadmap item (TBD).
 
+**In progress:**
+
+- No active tasks.
+
 **Known issues / TODOs:**
 
 - Improve documentation for code contributors (design notes, examples).
@@ -50,11 +54,9 @@
 
 **Last updated:** 2026-06-15
 
-**In progress:**
 
-- No active tasks.
 
 **Recent completion:**
 
-- TASK023 implemented via PR #69: decoupled ECS systems from global singletons, introduced `RuntimeContext`, and migrated tests to isolated contexts.
+- TASK023 merged via PR #69: decoupled ECS systems from global singletons, introduced `RuntimeContext`, and migrated tests to isolated contexts. Branch `refactor/decouple-ecs-singletons-67` deleted.
 - TASK022 merged via PR #68: reduced per-frame allocations by introducing scratch vectors/colors and a precomputed RGB palette in the voxel mesher. Branch `perf/reduce-per-frame-allocations-63` deleted.
