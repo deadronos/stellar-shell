@@ -8,6 +8,8 @@ import {
   DroneRole,
   DroneRoleTargets,
 } from '../utils/droneRoles';
+import { clearSave, loadGame, saveGame } from './persistence';
+export { setStorageAdapter } from './persistence';
 
 interface StoreState {
   matter: number;
@@ -78,36 +80,23 @@ interface StoreState {
   toggleSettings: () => void;
   toggleUpgrades: () => void;
   toggleDebugPanel: () => void;
+
+  // Persistence
+  resetUniverse: () => void;
 }
 
-export const useStore = create<StoreState>((set, get) => ({
+// ── Hydrate from localStorage ────────────────────────────────────────────────
+
+const defaultState = {
   matter: 0,
   rareMatter: 0,
   energy: 100,
-  energyGenerationRate: 0,
   droneCount: 0,
   droneCost: 50,
   prestigeLevel: 0,
   stellarCrystals: 0,
   research: 0,
   systemSeed: 0,
-  selectedTool: 'LASER',
-  selectedBlueprint: BlockType.FRAME,
-  asteroidOrbitEnabled: false,
-  asteroidOrbitRadius: 24,
-  asteroidOrbitSpeed: 0.08,
-  asteroidOrbitVerticalAmplitude: 2,
-  autoBlueprintEnabled: false,
-  autoReplicatorEnabled: false,
-  manualDroneRoleTargets: createEmptyDroneRoleTargets(),
-  dysonProgress: {
-    blueprintFrames: 0,
-    frames: 0,
-    panels: 0,
-    shells: 0,
-    milestones: 0,
-    prestigeReady: false,
-  },
   upgrades: {
     MINING_SPEED_1: false,
     DRONE_SPEED_1: false,
@@ -116,6 +105,61 @@ export const useStore = create<StoreState>((set, get) => ({
     DEEP_SCAN_1: false,
     ADVANCED_EXPLORER: false,
   },
+  dysonProgress: {
+    blueprintFrames: 0,
+    frames: 0,
+    panels: 0,
+    shells: 0,
+    milestones: 0,
+    prestigeReady: false,
+  },
+  manualDroneRoleTargets: createEmptyDroneRoleTargets(),
+};
+
+function hydratePersistedState() {
+  const saved = loadGame();
+  if (!saved) return defaultState;
+  return {
+    ...defaultState,
+    matter: saved.matter,
+    rareMatter: saved.rareMatter,
+    energy: saved.energy,
+    droneCount: saved.droneCount,
+    droneCost: saved.droneCost,
+    prestigeLevel: saved.prestigeLevel,
+    stellarCrystals: saved.stellarCrystals,
+    research: saved.research,
+    systemSeed: saved.systemSeed,
+    upgrades: saved.upgrades,
+    dysonProgress: saved.dysonProgress,
+    manualDroneRoleTargets: saved.manualDroneRoleTargets,
+  };
+}
+
+const hydrated = hydratePersistedState();
+
+export const useStore = create<StoreState>((set, get) => ({
+  matter: hydrated.matter,
+  rareMatter: hydrated.rareMatter,
+  energy: hydrated.energy,
+  energyGenerationRate: 0,
+  droneCount: hydrated.droneCount,
+  droneCost: hydrated.droneCost,
+  prestigeLevel: hydrated.prestigeLevel,
+  stellarCrystals: hydrated.stellarCrystals,
+  research: hydrated.research,
+  systemSeed: hydrated.systemSeed,
+  selectedTool: 'LASER',
+  selectedBlueprint: BlockType.FRAME,
+  asteroidOrbitEnabled: false,
+  asteroidOrbitRadius: 24,
+  asteroidOrbitSpeed: 0.08,
+  asteroidOrbitVerticalAmplitude: 2,
+  autoBlueprintEnabled: false,
+  autoReplicatorEnabled: false,
+  manualDroneRoleTargets: hydrated.manualDroneRoleTargets,
+  dysonProgress: hydrated.dysonProgress,
+  upgrades: hydrated.upgrades,
   isSettingsOpen: false,
   isUpgradesOpen: false,
   showDebugPanel: false,
@@ -257,4 +301,53 @@ export const useStore = create<StoreState>((set, get) => ({
   setAsteroidOrbitSpeed: (speed) => set({ asteroidOrbitSpeed: speed }),
   setAsteroidOrbitVerticalAmplitude: (amplitude) =>
     set({ asteroidOrbitVerticalAmplitude: Math.max(0, amplitude) }),
+
+  // ── Persistence ────────────────────────────────────────────────────────────
+  resetUniverse: () => {
+    clearSave();
+    set({
+      matter: defaultState.matter,
+      rareMatter: defaultState.rareMatter,
+      energy: defaultState.energy,
+      energyGenerationRate: 0,
+      droneCount: defaultState.droneCount,
+      droneCost: defaultState.droneCost,
+      prestigeLevel: defaultState.prestigeLevel,
+      stellarCrystals: defaultState.stellarCrystals,
+      research: defaultState.research,
+      systemSeed: defaultState.systemSeed,
+      upgrades: { ...defaultState.upgrades },
+      dysonProgress: { ...defaultState.dysonProgress },
+      manualDroneRoleTargets: defaultState.manualDroneRoleTargets,
+      autoReplicatorEnabled: false,
+      autoBlueprintEnabled: false,
+    });
+  },
 }));
+
+// ── Debounced auto-save subscriber ────────────────────────────────────────────
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+useStore.subscribe((state) => {
+  if (saveTimer !== null) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveGame({
+      matter: state.matter,
+      rareMatter: state.rareMatter,
+      energy: state.energy,
+      droneCount: state.droneCount,
+      droneCost: state.droneCost,
+      prestigeLevel: state.prestigeLevel,
+      stellarCrystals: state.stellarCrystals,
+      research: state.research,
+      systemSeed: state.systemSeed,
+      upgrades: state.upgrades,
+      dysonProgress: state.dysonProgress,
+      manualDroneRoleTargets: state.manualDroneRoleTargets,
+      version: 1,
+    });
+  }, 5000);
+});
+
+
